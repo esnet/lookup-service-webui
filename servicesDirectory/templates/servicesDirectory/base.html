@@ -1,0 +1,35 @@
+{% load staticfiles %}
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN"
+	"http://www.w3.org/TR/html4/strict.dtd">
+<html>
+<head>
+	<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+	<meta name="description" content="{% block description %}{% endblock %}">
+	<meta name="author" content="asides@es.net">
+	<title>{% block title %}{% endblock %}</title>
+	<link rel="stylesheet" type="text/css" href="{% static "css/bootstrap.css" %}">
+	<link rel="stylesheet" type="text/css" href="{% static "servicesDirectory/css/base.css" %}">
+	<!--[if lt IE 9]>
+		<script src="{% static "js/html5shiv.js" %}"></script>
+    <![endif]-->
+</head>
+<body>
+	<div class="page-header">
+	<div class="container-fluid"><div class="row">
+		<div class="span3">
+			<a href="http://www.perfsonar.net/">
+				<img src="{% static "servicesDirectory/img/header.gif" %}" alt="perfSONAR Logo" class="img-polaroid" style="width: 200px;" id="header-image">
+			</a>
+		</div>
+		<div class="span7">
+			{% block header %}{% endblock %}
+		</div>
+	</div></div>
+	</div>
+	<div class="content"><div class="container-fluid">
+		{% block content %}{% endblock %}
+	</div></div>
+	<script type="text/javascript" src="{% static "js/jquery.js" %}"></script>
+	<script type="text/javascript" src="{% static "js/bootstrap.js" %}"></script>
+</body>
+</html>
