@@ -5,6 +5,7 @@ import urlparse
 import concurrent.futures
 import requests
 
+#_LS_HINTS = 'http://198.128.197.6:8096/lookup/activehosts.json'
 _LS_HINTS = 'http://ps1.es.net:8096/lookup/activehosts.json'
 _MAX_CONCURRENT_REQUESTS = 4
 
