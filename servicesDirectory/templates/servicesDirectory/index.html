@@ -1,18 +1,81 @@
 {% extends "servicesDirectory/base.html" %}
 
+{% load staticfiles %}
+
 {% block description %}Lookup Service Directory{% endblock %}
 
 {% block title %}Lookup Service Directory{% endblock %}
 
+{% block assets_pre %}
+	<style type="text/css">
+		.map-canvas label { width: auto; display: inline; }
+		.map-canvas img { max-width: none; }
+	</style>
+{% endblock %}
+
 {% block header %}<h3>perfSONAR Global Service and Data View</h3>{% endblock %}
 
 {% block content %}
-<div class="row-fluid">
-	<div class="span3" id="browser">
-		<h5>Browser</h5>
-	</div>
-	<div class="span9 separator-left" id="info">
-		<h5>Service Information</h5>
-	</div>
-</div>
+		<div class="row-fluid fill">
+			<div class="span2 fill" id="browser">
+				<h4 class="content-header">Browser</h5>
+			</div>
+			<div class="span6 separator-left fill" id="map">
+				<h4 class="content-header">Service Map</h5>
+				<div class="map-canvas" style="height: 85%;" id="map-canvas"></div>
+			</div>
+			<div class="span4 separator-left fill" id="info">
+				<h4 class="content-header">Service Information</h5>
+				<table class="table table-bordered">
+					<tr>
+						<td>Service Name</td>
+						<td>{{ service_name|join:", " }}</td>
+					</tr><tr>
+						<td>Address</td>
+						<td>{{ service_locator|join:", " }}</td>
+					</tr><tr>
+						<td>Geographic Location</td>
+						<td>{{ location }}</td>
+					</tr><tr>
+						<td>Communities</td>
+						<td>{{ group_communities|join:", " }}</td>
+					</tr><tr>
+						<td>Example Command-Line</td>
+						<td>{{ command_line }}</td>
+					</tr><tr>
+						<td>Actions</td>
+						<td>{{ actions|join:", " }}</td>
+					</tr>
+				</table>
+			</div>
+		</div>
+{% endblock %}
+{% block assets_post %}
+	<script type="text/javascript" src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDM9EqM1k7MiJnslQpropqmvUbwXPhEI1U&sensor=false"></script>
+	<script type="text/javascript" src="{% static "js/jquery.ui.map.js" %}"></script>
+	<script type="text/javascript">
+		var map = $("#map-canvas").gmap({
+			"center": new google.maps.LatLng(0, 0),
+			"zoom": 2,
+			"streetViewControl": false,
+			"mapTypeId": google.maps.MapTypeId.ROADMAP
+		});
+		var geocoder = new google.maps.Geocoder();
+		geocoder.geocode({ "address": "United States" }, function(results, status)
+		{
+			if ((status == google.maps.GeocoderStatus.OK) && results && results[0] && results[0].geometry && results[0].geometry.viewport)
+				map.gmap("get", "map").fitBounds(results[0].geometry.viewport);
+		});
+		var json = $.getJSON(window.location.href + "query", function(data)
+		{
+			$.each(data, function(index, value)
+			{
+				if ((value["location-latitude"]) && (value["location-longitude"]))
+				{
+					var position = value["location-latitude"] + "," + value["location-longitude"];
+					map.gmap('addMarker', { "position": position });
+				}
+			});
+		});
+	</script>
 {% endblock %}
