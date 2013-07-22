@@ -1,2 +1,3 @@
 {% load joinlist %}
-{% for record in json %}<table border=1 cellspacing=0><tr><th>Key</th><th>Value</th></tr>{% for key, values in record.iteritems %}<tr><td>{{ key }}</td><td>{{ values|joinlist:"<br />"|safe }}</td></tr>{% endfor %}</table><br />{% endfor %}
+{% load sort %}
+{% for record in records %}<table border=1 cellspacing=0><tr><th>Key</th><th>Value</th></tr>{% for key, values in record.items|sort:pretty %}<tr><td>{{ key }}</td><td>{{ values|joinlist:"<br />"|safe }}</td></tr>{% endfor %}</table><br />{% endfor %}

@@ -10,38 +10,56 @@ def index(request):
 	return render(request, 'servicesDirectory/index.html')
 
 def detail(request, uri):
-	result = models.query_ls({ "uri": "lookup/service/" + uri })[0]
-	context = { "service_name": result.get("service-name", ""),
-				"service_locator": result.get("service-locator", ""),
-				"location": result.get("location-sitename", ""),
-				"group_communities": result.get("group-communities", ""),
-				"command_line": result.get("command-line", "test"),
-				"actions": result.get("psservice-eventtypes", "") }
+	record = models.query_ls({ "uri": "lookup/service/" + uri })[0]
+	context = { "service_name": record.get("service-name", ""),
+				"service_locator": record.get("service-locator", ""),
+				"location": record.get("location-sitename", ""),
+				"group_communities": record.get("group-communities", ""),
+				"command_line": record.get("command-line", "test"),
+				"actions": record.get("psservice-eventtypes", "") }
 	return render(request, 'servicesDirectory/index.html', context)
 
 def query(request):
 	query = request.GET.copy()
-	sort = ""
-	try:
-		sort = query.pop("sort")[0]
-	except KeyError, IndexError:
-		pass
 	format = ""
 	try:
 		format = query.pop("format")[0]
 	except KeyError, IndexError:
 		pass
-	result = models.query_ls(query)
+	geocode = ""
+	try:
+		geocode = query.pop("geocode")[0]
+	except KeyError, IndexError:
+		pass
+	pretty = ""
+	try:
+		pretty = query.pop("pretty")[0]
+	except KeyError, IndexError:
+		pass
+	sort = ""
+	try:
+		sort = query.pop("sort")[0]
+	except KeyError, IndexError:
+		pass
+	
+	records = models.query_ls(query)
+	
+	if geocode.lower() in ("yes", "true"):
+		records = models.geocode_records(records)
 	if sort:
-		result = sorted(result, key = lambda v: v.get(sort, ""))
+		records = sorted(records, key = lambda v: v.get(sort, ""))
 	
 	response = ""
-	if "html" in format:
-		context = { "json": result }
+	if "html" in format.lower():
+		context = {}
+		if pretty.lower() in ("yes", "true"):
+			context = { "records": records, "pretty": True }
+		else:
+			context = { "records": records, "pretty": False }
 		return render(request, 'servicesDirectory/query.html', context)
-	elif "pretty" in format:
-		response = simplejson.dumps(result, sort_keys = True, indent = 4)
-		return HttpResponse(response, mimetype = "application/json")
 	else:
-		response = simplejson.dumps(result)
+		if pretty.lower() in ("yes", "true") or "pretty" in format.lower():
+			response = simplejson.dumps(records, sort_keys = True, indent = 4)
+		else:
+			response = simplejson.dumps(records)
 		return HttpResponse(response, mimetype = "application/json")

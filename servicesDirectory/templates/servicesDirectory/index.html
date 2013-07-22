@@ -19,6 +19,7 @@
 		<div class="row-fluid fill">
 			<div class="span2 fill" id="browser">
 				<h4 class="content-header">Browser</h5>
+				<div class="fill" id="tree"></div>
 			</div>
 			<div class="span6 separator-left fill" id="map">
 				<h4 class="content-header">Service Map</h5>
@@ -51,6 +52,8 @@
 		</div>
 {% endblock %}
 {% block assets_post %}
+	<script type="text/javascript" src="{% static "js/jquery.ui.js" %}"></script>
+	<script type="text/javascript" src="{% static "js/jquery.dynatree.js" %}"></script>
 	<script type="text/javascript" src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDM9EqM1k7MiJnslQpropqmvUbwXPhEI1U&sensor=false"></script>
 	<script type="text/javascript" src="{% static "js/jquery.ui.map.js" %}"></script>
 	<script type="text/javascript">
@@ -63,19 +66,54 @@
 		var geocoder = new google.maps.Geocoder();
 		geocoder.geocode({ "address": "United States" }, function(results, status)
 		{
-			if ((status == google.maps.GeocoderStatus.OK) && results && results[0] && results[0].geometry && results[0].geometry.viewport)
+			if ((status == google.maps.GeocoderStatus.OK) && results[0].geometry && results[0].geometry.viewport)
 				map.gmap("get", "map").fitBounds(results[0].geometry.viewport);
 		});
-		var json = $.getJSON(window.location.href + "query", function(data)
+		var treeData = []
+		var markers = {};
+		var markerInfo = {};
+		var json = $.getJSON(window.location.href + "query?geocode=true", function(data)
 		{
-			$.each(data, function(index, value)
+			for (var i = 0 ; i < data.length ; i++)
 			{
-				if ((value["location-latitude"]) && (value["location-longitude"]))
+				var record = data[i];
+				if (record["type"][0] == "service")
+					if (! $.inArray(record["service-type"][0], treeData))
+						treeData.push({ "title": record["service-type"], "isFolder": true })
+					console.log(treeData)
+				var latlng = null;
+				var bounds = null;
+				if ((record["location-latitude"]) && (record["location-longitude"]))
 				{
-					var position = value["location-latitude"] + "," + value["location-longitude"];
-					map.gmap('addMarker', { "position": position });
+					latlng = new google.maps.LatLng(record["location-latitude"], record["location-longitude"]);
 				}
-			});
+				if (latlng != null)
+				{
+					var marker = null;
+					for (var key in markers)
+					{
+						if (key == latlng)
+						{
+							marker = markers[latlng];
+							break;
+						}
+					}
+					if (marker != null)
+					{
+						markerInfo[latlng] = markerInfo[latlng] + "<br />" + record["type"] + ": " + record[record["type"] + "-name"];
+					}
+					else
+					{
+						marker = map.gmap("addMarker", { "position": latlng });
+						markerInfo[latlng] = record["type"] + ": " + record[record["type"] + "-name"];
+						marker.click(function()
+						{
+							map.gmap("openInfoWindow", { "content": markerInfo[this.getPosition()] }, this);
+						});
+						markers[latlng] = marker;
+					}
+				}
+			}
 		});
 	</script>
 {% endblock %}

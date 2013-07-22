@@ -34,7 +34,7 @@ def query(query = "", hosts = _ls_hosts):
 
 def hash_to_query(hash = {}):
     query = ""
-    for k, v in hash.iteritems():
+    for k, v in hash.items():
         query += k + "=" + v + "&"
     if query:
         query = "?" + query[:-1]
