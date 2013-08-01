@@ -1,6 +1,5 @@
-from operator import itemgetter
-
 from django.http import HttpResponse
+from django.middleware.gzip import GZipMiddleware
 from django.shortcuts import render
 from django.utils import simplejson
 
@@ -15,51 +14,44 @@ def detail(request, uri):
 				"service_locator": record.get("service-locator", ""),
 				"location": record.get("location-sitename", ""),
 				"group_communities": record.get("group-communities", ""),
-				"command_line": record.get("command-line", "test"),
-				"actions": record.get("psservice-eventtypes", "") }
+				"command_line": "test",
+				"actions": "test" }
 	return render(request, 'servicesDirectory/index.html', context)
 
 def query(request):
 	query = request.GET.copy()
-	format = ""
-	try:
-		format = query.pop("format")[0]
-	except KeyError, IndexError:
-		pass
-	geocode = ""
-	try:
-		geocode = query.pop("geocode")[0]
-	except KeyError, IndexError:
-		pass
-	pretty = ""
-	try:
-		pretty = query.pop("pretty")[0]
-	except KeyError, IndexError:
-		pass
-	sort = ""
-	try:
-		sort = query.pop("sort")[0]
-	except KeyError, IndexError:
-		pass
+	compress = query.pop("compress", ["true"])[0]
+	record_filter = query.pop("filter", ["none"])[0]
+	format = query.pop("format", ["json"])[0]
+	geocode = query.pop("geocode", ["false"])[0]
+	pretty = query.pop("pretty", ["false"])[0]
+	sort = query.pop("sort", ["none"])[0]
 	
 	records = models.query_ls(query)
 	
-	if geocode.lower() in ("yes", "true"):
+	if record_filter.lower() in ("default",):
+		records = list(models.get_default_filter(records))
+	if geocode.lower() in ("yes", "true",):
 		records = models.geocode_records(records)
 	if sort:
 		records = sorted(records, key = lambda v: v.get(sort, ""))
 	
-	response = ""
-	if "html" in format.lower():
+	content = ""
+	if format.lower() in ("html",):
 		context = {}
-		if pretty.lower() in ("yes", "true"):
+		if pretty.lower() in ("yes", "true",):
 			context = { "records": records, "pretty": True }
 		else:
 			context = { "records": records, "pretty": False }
-		return render(request, 'servicesDirectory/query.html', context)
+		response = render(request, 'servicesDirectory/query.html', context)
 	else:
-		if pretty.lower() in ("yes", "true") or "pretty" in format.lower():
-			response = simplejson.dumps(records, sort_keys = True, indent = 4)
+		if pretty.lower() in ("yes", "true",) or format.lower() in ("pretty",):
+			content = simplejson.dumps(records, sort_keys = True, indent = 4)
 		else:
-			response = simplejson.dumps(records)
-		return HttpResponse(response, mimetype = "application/json")
+			content = simplejson.dumps(records)
+		response = HttpResponse(content, content_type = "application/json")
+	if compress.lower() in ("yes", "true",):
+		gzip = GZipMiddleware()
+		return gzip.process_response(request, response)
+	else:
+		return response

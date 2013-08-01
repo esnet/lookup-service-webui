@@ -18,11 +18,11 @@
 	<div class="container-fluid"><div class="row">
 		<div class="span3">
 			<a href="http://www.perfsonar.net/">
-				<img src="{% static "servicesDirectory/img/header.gif" %}" alt="perfSONAR Logo" class="img-polaroid" style="width: 200px;" id="header-image">
+				<img src="{% static "servicesDirectory/img/header.gif" %}" alt="perfSONAR Logo" class="img-polaroid header-image" id="header-image">
 			</a>
 		</div>
-		<div class="span7">
-			{% block header %}{% endblock %}
+		<div class="span9">
+			<div class="header-content">{% block header %}{% endblock %}</div>
 		</div>
 	</div></div>
 	</div>

@@ -7,9 +7,12 @@
 {% block title %}Lookup Service Directory{% endblock %}
 
 {% block assets_pre %}
+	<link rel="stylesheet" type="text/css" href="{% static "css/dynatree/skin-lion/ui.dynatree.css" %}">
 	<style type="text/css">
+		.map-canvas { height: 75%; }
 		.map-canvas label { width: auto; display: inline; }
 		.map-canvas img { max-width: none; }
+		.tree { height: 75%; }
 	</style>
 {% endblock %}
 
@@ -17,37 +20,43 @@
 
 {% block content %}
 		<div class="row-fluid fill">
-			<div class="span2 fill" id="browser">
-				<h4 class="content-header">Browser</h5>
-				<div class="fill" id="tree"></div>
+			<div class="span3 fill" id="browser">
+				<h4 class="content-header">Browser</h4>
+				<div class="content">
+					<div class="tree" id="tree"></div>
+				</div>
 			</div>
-			<div class="span6 separator-left fill" id="map">
-				<h4 class="content-header">Service Map</h5>
-				<div class="map-canvas" style="height: 85%;" id="map-canvas"></div>
+			<div class="span5 separator-left fill" id="map">
+				<h4 class="content-header">Service Map</h4>
+				<div class="content">
+					<div class="map-canvas" id="map-canvas"></div>
+				</div>
 			</div>
 			<div class="span4 separator-left fill" id="info">
-				<h4 class="content-header">Service Information</h5>
-				<table class="table table-bordered">
-					<tr>
-						<td>Service Name</td>
-						<td>{{ service_name|join:", " }}</td>
-					</tr><tr>
-						<td>Address</td>
-						<td>{{ service_locator|join:", " }}</td>
-					</tr><tr>
-						<td>Geographic Location</td>
-						<td>{{ location }}</td>
-					</tr><tr>
-						<td>Communities</td>
-						<td>{{ group_communities|join:", " }}</td>
-					</tr><tr>
-						<td>Example Command-Line</td>
-						<td>{{ command_line }}</td>
-					</tr><tr>
-						<td>Actions</td>
-						<td>{{ actions|join:", " }}</td>
-					</tr>
-				</table>
+				<h4 class="content-header">Service Information</h4>
+				<div class="content">
+					<table class="table table-bordered">
+						<tr>
+							<td>Service Name</td>
+							<td id="service-name">{{ service_name|join:", " }}</td>
+						</tr><tr>
+							<td>Address</td>
+							<td id="service-locator">{{ service_locator|join:", " }}</td>
+						</tr><tr>
+							<td>Geographic Location</td>
+							<td id="service-location">{{ location }}</td>
+						</tr><tr>
+							<td>Communities</td>
+							<td id="group-communities">{{ group_communities|join:", " }}</td>
+						</tr><tr>
+							<td>Example Command-Line</td>
+							<td id="command-line">{{ command_line }}</td>
+						</tr><tr>
+							<td>Actions</td>
+							<td id="psservice-eventtypes">{{ actions|join:", " }}</td>
+						</tr>
+					</table>
+				</div>
 			</div>
 		</div>
 {% endblock %}
@@ -61,7 +70,8 @@
 			"center": new google.maps.LatLng(0, 0),
 			"zoom": 2,
 			"streetViewControl": false,
-			"mapTypeId": google.maps.MapTypeId.ROADMAP
+			"mapTypeId": google.maps.MapTypeId.ROADMAP,
+			"noClear": true
 		});
 		var geocoder = new google.maps.Geocoder();
 		geocoder.geocode({ "address": "United States" }, function(results, status)
@@ -69,27 +79,38 @@
 			if ((status == google.maps.GeocoderStatus.OK) && results[0].geometry && results[0].geometry.viewport)
 				map.gmap("get", "map").fitBounds(results[0].geometry.viewport);
 		});
-		var treeData = []
+		var hosts = [];
+		var interfaces = [];
+		var services = [];
+		var treeData = [
+			{ "title": "BWCTL", "isFolder": true, "children": [] },
+			{ "title": "MA", "isFolder": true, "children": [] },
+			{ "title": "NDT", "isFolder": true, "children": [] },
+			{ "title": "NPAD", "isFolder": true, "children": [] },
+			{ "title": "OWAMP", "isFolder": true, "children": [] },
+			{ "title": "Ping", "isFolder": true, "children": [] },
+			{ "title": "Traceroute", "isFolder": true, "children": [] },
+		];
+		var tree = $("#tree").dynatree({ "onActivate": function(node)
+		{
+			if (("marker" in node.data) && (node.data["marker"] != null))
+				map.gmap("openInfoWindow", { "content": markerData[node.data["marker"][0].getPosition()] }, node.data["marker"][0]);
+			else
+				map.gmap("closeInfoWindow");
+		}, "children": treeData });
+		var markerData = {};
 		var markers = {};
-		var markerInfo = {};
-		var json = $.getJSON(window.location.href + "query?geocode=true", function(data)
+		$.getJSON(window.location.href + "query?filter=default&geocode=true", function(data)
 		{
 			for (var i = 0 ; i < data.length ; i++)
 			{
 				var record = data[i];
-				if (record["type"][0] == "service")
-					if (! $.inArray(record["service-type"][0], treeData))
-						treeData.push({ "title": record["service-type"], "isFolder": true })
-					console.log(treeData)
+				var marker = null;
 				var latlng = null;
-				var bounds = null;
 				if ((record["location-latitude"]) && (record["location-longitude"]))
-				{
 					latlng = new google.maps.LatLng(record["location-latitude"], record["location-longitude"]);
-				}
 				if (latlng != null)
 				{
-					var marker = null;
 					for (var key in markers)
 					{
 						if (key == latlng)
@@ -100,20 +121,46 @@
 					}
 					if (marker != null)
 					{
-						markerInfo[latlng] = markerInfo[latlng] + "<br />" + record["type"] + ": " + record[record["type"] + "-name"];
+						markerData[latlng] = markerData[latlng] + "<br />" + record["type"] + ": " + record[record["type"] + "-name"];
 					}
 					else
 					{
 						marker = map.gmap("addMarker", { "position": latlng });
-						markerInfo[latlng] = record["type"] + ": " + record[record["type"] + "-name"];
+						markerData[latlng] = record["type"] + ": " + record[record["type"] + "-name"];
 						marker.click(function()
 						{
-							map.gmap("openInfoWindow", { "content": markerInfo[this.getPosition()] }, this);
+							map.gmap("openInfoWindow", { "content": markerData[this.getPosition()] }, this);
 						});
 						markers[latlng] = marker;
 					}
 				}
+				if (record["type"][0] == "host")
+				{
+					hosts.push(record);
+				}
+				else if (record["type"][0] == "interface")
+				{
+					interfaces.push(record);
+				}
+				else if (record["type"][0] == "service")
+				{
+					services.push(record);
+					var found = false;
+					for (var j = 0 ; j < treeData.length ; j++)
+					{
+						if (treeData[j]["title"].toLowerCase() == record["service-type"][0].toLowerCase())
+						{
+							treeData[j]["children"].push({ "title": record["service-name"][0], "marker": marker });
+							found = true;
+							break;
+						}
+					}
+					if (!found)
+						treeData.push({ "title": record["service-type"][0], "isFolder": true, "children": [ { "title": record["service-name"][0], "marker": marker } ] });
+				}
 			}
+			$("#tree").dynatree("getTree").reload()
+			$("#tree").dynatree("getRoot").sortChildren(null, true);
 		});
 	</script>
 {% endblock %}

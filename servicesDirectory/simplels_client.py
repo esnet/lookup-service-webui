@@ -9,8 +9,7 @@ _LS_HINTS = 'http://ps1.es.net:8096/lookup/activehosts.json'
 _MAX_CONCURRENT_REQUESTS = 4
 
 def get_hosts():
-	hosts = [host for host in get_hosts_gen()]
-	return hosts
+	return list(get_hosts_gen())
 
 def get_hosts_gen():
 	hosts = requests.get(_LS_HINTS).json()["hosts"]
