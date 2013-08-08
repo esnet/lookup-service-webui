@@ -1,4 +1,5 @@
 import math
+from urlparse import urlparse
 
 from django.db import models
 from django.core.cache import cache
@@ -139,9 +140,9 @@ def geocode(query):
 			try:
 				results = get_geocoder().geocode(query)
 				result = results[0].raw
-				cache.set("GEO_QUERY(" + key + ")", result)
+				cache.set("GEO_QUERY(" + key + ")", result, settings.GEOCODE_CACHE_TIMEOUT)
 			except:
-				cache.set("GEO_QUERY(" + key + ")", [ False ])
+				cache.set("GEO_QUERY(" + key + ")", [ False ], settings.GEOCODE_CACHE_TIMEOUT)
 		elif not result[0]:
 			result = {}
 	else:
@@ -155,15 +156,15 @@ def geocode(query):
 def reverse_geocode(latitude, longitude):
 	result = {}
 	if settings.GEOCODE_CACHE_QUERIES:
-		key = latitude + "," + longitude
+		key = "".join((latitude + "," + longitude).split())
 		result = cache.get("GEO_QUERY(" + key + ")")
 		if result is None:
 			try:
 				results = get_geocoder().reverse_geocode(float(latitude), float(longitude))
 				result = results[0].raw
-				cache.set("GEO_QUERY(" + key + ")", result)
+				cache.set("GEO_QUERY(" + key + ")", result, settings.GEOCODE_CACHE_TIMEOUT)
 			except:
-				cache.set("GEO_QUERY(" + key + ")", [ False ])
+				cache.set("GEO_QUERY(" + key + ")", [ False ], settings.GEOCODE_CACHE_TIMEOUT)
 		elif not result[0]:
 			result = {}
 	else:
@@ -173,3 +174,59 @@ def reverse_geocode(latitude, longitude):
 		except:
 			pass
 	return result
+
+def remap_records(records):
+	hosts = []
+	interfaces = []
+	services = []
+	for record in records:
+		record_type = record["type"][0]
+		if record_type == "host":
+			hosts.append(record)
+		elif record_type == "interface":
+			interfaces.append(record)
+		elif record_type == "service":
+			services.append(record)
+	for service in services:
+		host = get_host(service, hosts, interfaces)
+		if host:
+			service_hosts = service.get("service-host", [])
+			if service_hosts and service_hosts[0]:
+				if host["uri"] not in service_hosts:
+					service["service-host"].insert(0, host["uri"])
+			else:
+				service["service-host"] = [ host["uri"] ]
+	return records
+
+def get_host(record, hosts, interfaces = []):
+	record_type = record["type"][0]
+	if record_type == "host":
+		return record
+	elif record_type == "interface":
+		for host in hosts:
+			if record["uri"] in host.get("host-net-interfaces", []):
+				return host
+	elif record_type == "service":
+		service_hosts = record.get("service-host", [])
+		if service_hosts and service_hosts[0]:
+			for host in hosts:
+				if host["uri"] in service_hosts:
+					return host
+		service_locators = record.get("service-locator", [])
+		if service_locators:
+			for locator in service_locators:
+				address = urlparse(locator).hostname
+				for host in hosts:
+					if address in host.get("host-name", []) or locator in host.get("host-name", []):
+						return host
+				for interface in interfaces:
+					if address in interface.get("interface-addresses", []) or locator in interface.get("interface-addresses", []):
+						host = get_host(interface, hosts)
+						if host is not None:
+							return host
+		service_sitename = record.get("location-sitename", [])
+		if service_sitename:
+			for host in hosts:
+				if service_sitename == host.get("location-sitename", []):
+					return host
+	return None

@@ -24,8 +24,9 @@ def query(request):
 	record_filter = query.pop("filter", ["none"])[0]
 	format = query.pop("format", ["json"])[0]
 	geocode = query.pop("geocode", ["false"])[0]
+	record_remap = query.pop("remap", ["false"])[0]
 	pretty = query.pop("pretty", ["false"])[0]
-	sort = query.pop("sort", ["none"])[0]
+	sort = query.pop("sort", [False])[0]
 	
 	records = models.query_ls(query)
 	
@@ -33,6 +34,8 @@ def query(request):
 		records = list(models.get_default_filter(records))
 	if geocode.lower() in ("yes", "true",):
 		records = models.geocode_records(records)
+	if record_remap.lower() in ("yes", "true",):
+		records = models.remap_records(records)
 	if sort:
 		records = sorted(records, key = lambda v: v.get(sort, ""))
 	

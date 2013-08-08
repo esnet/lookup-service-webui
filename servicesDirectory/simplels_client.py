@@ -32,7 +32,10 @@ def query(query = "", hosts = _ls_hosts):
 	urls = [(host + "?" + query) for host in _ls_hosts]
 	with concurrent.futures.ThreadPoolExecutor(max_workers = _MAX_CONCURRENT_REQUESTS) as pool:
 		for response in pool.map(requests.get, urls):
-			json += response.json()
+			ls_host = response.url.split("lookup/records")[0]
+			for record in response.json():
+				record["ls-host"] = ls_host
+				json.append(record)
 	return json
 	
 def hash_to_query(query_hash = {}):

@@ -5,7 +5,7 @@ LS_CACHE_QUERIES = True
 # Cached LS query timeout in seconds
 LS_CACHE_TIMEOUT = 3600
 # Maximum number of records storable in single cache
-# (Longer lists will be split up into multiple parts)
+# (If exceeded records will be divided into multiple caches)
 LS_CACHE_MAX_RECORDS = 1024
 
 # Allow Google geocoding of records
