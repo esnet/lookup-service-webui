@@ -9,7 +9,7 @@
 {% block assets_pre %}
 	<link rel="stylesheet" type="text/css" href="{% static "css/dynatree/skin-lion/ui.dynatree.css" %}">
 	<style type="text/css">
-		.map-canvas { height: 75%; }
+		.map-canvas { height: 100%; }
 		.map-canvas label { width: auto; display: inline; }
 		.map-canvas img { max-width: none; }
 		.tree { height: 75%; }
@@ -20,42 +20,36 @@
 
 {% block content %}
 		<div class="row-fluid fill">
-			<div class="span3 fill" id="browser">
+			<div class="span4 fill" id="browser">
 				<h4 class="content-header">Browser</h4>
 				<div class="content">
 					<div class="tree" id="tree"></div>
 				</div>
 			</div>
-			<div class="span5 separator-left fill" id="map">
-				<h4 class="content-header">Service Map</h4>
-				<div class="content">
-					<div class="map-canvas" id="map-canvas"></div>
-				</div>
-			</div>
-			<div class="span4 separator-left fill" id="info">
+			<div class="span8 separator-left fill" id="info">
 				<h4 class="content-header">Service Information</h4>
-				<div class="content">
+				<div class="content" style="height: 25%">
 					<table class="table table-bordered">
 						<tr>
-							<td>Service Name</td>
-							<td id="service-name">{{ service_name|join:", " }}</td>
+							<th>Service Name</th>
+							<th>Address</th>
+							<th>Geographic Location</th>
+							<th>Communities</th>
+							<th>Example Command-Line</th>
+							<th>Actions</th>
 						</tr><tr>
-							<td>Address</td>
-							<td id="service-locator">{{ service_locator|join:", " }}</td>
-						</tr><tr>
-							<td>Geographic Location</td>
-							<td id="service-location">{{ location }}</td>
-						</tr><tr>
-							<td>Communities</td>
-							<td id="group-communities">{{ group_communities|join:", " }}</td>
-						</tr><tr>
-							<td>Example Command-Line</td>
-							<td id="command-line">{{ command_line }}</td>
-						</tr><tr>
-							<td>Actions</td>
-							<td id="psservice-eventtypes">{{ actions|join:", " }}</td>
+							<td id="service-name"></td>
+							<td id="service-locator"></td>
+							<td id="service-location"></td>
+							<td id="group-communities"></td>
+							<td id="command-line"></td>
+							<td id="psservice-eventtypes"></td>
 						</tr>
 					</table>
+				</div>
+				<h4 class="content-header">Service Map</h4>
+				<div class="content" style="height: 60%">
+					<div class="map-canvas" id="map-canvas"></div>
 				</div>
 			</div>
 		</div>

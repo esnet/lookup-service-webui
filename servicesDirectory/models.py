@@ -187,11 +187,20 @@ def remap_records(records):
 			interfaces.append(record)
 		elif record_type == "service":
 			services.append(record)
+	for interface in interfaces:
+		host = get_host(interface, hosts)
+		if host:
+			host_interfaces = host.get("host-net-interfaces", [])
+			if host_interfaces:
+				if interface["uri"] not in host_interfaces:
+					host["host-net-interfaces"].insert(0, interface["uri"])
+			else:
+				host["host-net-interfaces"] = [ interface["uri"] ]
 	for service in services:
 		host = get_host(service, hosts, interfaces)
 		if host:
 			service_hosts = service.get("service-host", [])
-			if service_hosts and service_hosts[0]:
+			if service_hosts:
 				if host["uri"] not in service_hosts:
 					service["service-host"].insert(0, host["uri"])
 			else:
@@ -206,6 +215,13 @@ def get_host(record, hosts, interfaces = []):
 		for host in hosts:
 			if record["uri"] in host.get("host-net-interfaces", []):
 				return host
+		interface_addresses = record.get("interface-addresses", [])
+		if interface_addresses:
+			for address in interface_addresses:
+				hostname = urlparse(address).hostname
+				for host in hosts:
+					if hostname in host.get("host-name", []) or address in host.get("host-name", []):
+						return host
 	elif record_type == "service":
 		service_hosts = record.get("service-host", [])
 		if service_hosts and service_hosts[0]:
@@ -215,12 +231,12 @@ def get_host(record, hosts, interfaces = []):
 		service_locators = record.get("service-locator", [])
 		if service_locators:
 			for locator in service_locators:
-				address = urlparse(locator).hostname
+				hostname = urlparse(locator).hostname
 				for host in hosts:
-					if address in host.get("host-name", []) or locator in host.get("host-name", []):
+					if hostname in host.get("host-name", []) or locator in host.get("host-name", []):
 						return host
 				for interface in interfaces:
-					if address in interface.get("interface-addresses", []) or locator in interface.get("interface-addresses", []):
+					if hostname in interface.get("interface-addresses", []) or locator in interface.get("interface-addresses", []):
 						host = get_host(interface, hosts)
 						if host is not None:
 							return host

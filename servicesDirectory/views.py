@@ -8,16 +8,6 @@ from servicesDirectory import models
 def index(request):
 	return render(request, 'servicesDirectory/index.html')
 
-def detail(request, uri):
-	record = models.query_ls({ "uri": "lookup/service/" + uri })[0]
-	context = { "service_name": record.get("service-name", ""),
-				"service_locator": record.get("service-locator", ""),
-				"location": record.get("location-sitename", ""),
-				"group_communities": record.get("group-communities", ""),
-				"command_line": "test",
-				"actions": "test" }
-	return render(request, 'servicesDirectory/index.html', context)
-
 def query(request):
 	query = request.GET.copy()
 	compress = query.pop("compress", ["true"])[0]
