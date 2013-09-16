@@ -74,6 +74,7 @@ def get_default_filter(records):
 			yield record
 
 def geocode_records(records):
+	global _MAX_CONCURRENT_GEOCODES
 	if not settings.GEOCODE:
 		return records
 	with concurrent.futures.ThreadPoolExecutor(max_workers = _MAX_CONCURRENT_GEOCODES) as pool:
