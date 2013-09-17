@@ -9,10 +9,13 @@
 {% block assets_pre %}
 	<link rel="stylesheet" type="text/css" href="{% static "css/dynatree/skin-lion/ui.dynatree.css" %}">
 	<style type="text/css">
-		.map-canvas { height: 100%; }
+		#browser { max-height: 100%; overflow: auto; }
+		#info { max-height: 100%; overflow: auto; }
 		.map-canvas label { width: auto; display: inline; }
 		.map-canvas img { max-width: none; }
-		.tree { height: 75%; }
+		.map-canvas { height: 600px; }
+		.tree { height: 400px; }
+		.table { margin-bottom: 0px; }
 	</style>
 {% endblock %}
 
@@ -20,36 +23,88 @@
 
 {% block content %}
 		<div class="row-fluid fill">
-			<div class="span4 fill" id="browser">
-				<h4 class="content-header">Browser</h4>
-				<div class="content">
-					<div class="tree" id="tree"></div>
+			<div class="span3 fill">
+				<div id="browser">
+					<h4 class="content-header">Browser</h4>
+					<div class="content">
+						<strong>Communities:</strong>&nbsp;
+						<select multiple="true" size="6" id="communities"></select>
+						<div>Select one more more communities and click update to refine results.</div>
+						<strong>Search:</strong>&nbsp;
+						<input type="text" id="search">
+						<br />
+						<div class="tree" id="tree"></div>
+					</div>
 				</div>
 			</div>
-			<div class="span8 separator-left fill" id="info">
-				<h4 class="content-header">Service Information</h4>
-				<div class="content" style="height: 25%">
-					<table class="table table-bordered">
-						<tr>
-							<th>Service Name</th>
-							<th>Address</th>
-							<th>Geographic Location</th>
-							<th>Communities</th>
-							<th>Example Command-Line</th>
-							<th>Actions</th>
-						</tr><tr>
-							<td id="service-name"></td>
-							<td id="service-locator"></td>
-							<td id="service-location"></td>
-							<td id="group-communities"></td>
-							<td id="command-line"></td>
-							<td id="psservice-eventtypes"></td>
-						</tr>
-					</table>
-				</div>
-				<h4 class="content-header">Service Map</h4>
-				<div class="content" style="height: 60%">
-					<div class="map-canvas" id="map-canvas"></div>
+			<div class="span9 separator-left fill">
+				<div class="accordion" id="info">
+					<div class="accordion-group content-group" id="service-info">
+						<div class="accordion-heading">
+							<a class="accordion-toggle content-toggle" data-toggle="collapse" href="#collapseInfo1">
+								<h4 class="content-header">Service Information</h4>
+							</a>
+						</div>
+						<div class="accordion-body collapse in" id="collapseInfo1">
+							<div class="content">
+								<table class="table table-bordered">
+									<tr>
+										<th>Service Name</th>
+										<th>Addresses</th>
+										<th>Geographic Location</th>
+										<th>Communities</th>
+										<th>Example Command-Line</th>
+										<th>Actions</th>
+									</tr><tr>
+										<td id="service-name"></td>
+										<td id="service-locator"></td>
+										<td id="service-location"></td>
+										<td id="service-communities"></td>
+										<td id="service-command-line"></td>
+										<td id="service-action"></td>
+									</tr>
+								</table>
+							</div>
+						</div>
+					</div>
+					<div class="accordion-group content-group" id="host-info">
+						<div class="accordion-heading">
+							<a class="accordion-toggle content-toggle" data-toggle="collapse" href="#collapseInfo2">
+								<h4 class="content-header">Host Information</h4>
+							</a>
+						</div>
+						<div class="accordion-body collapse in" id="collapseInfo2">
+							<div class="content">
+								<table class="table table-bordered">
+									<tr>
+										<th>Host Name</th>
+										<th>Hardware</th>
+										<th>Operating System</th>
+										<th>Toolkit Version</th>
+										<th>Communities</th>
+									</tr><tr>
+										<td id="host-name"></td>
+										<td id="host-hardware"></td>
+										<td id="host-os"></td>
+										<td id="host-version"></td>
+										<td id="host-communities"></td>
+									</tr>
+								</table>
+							</div>
+						</div>
+					</div>
+					<div class="accordion-group content-group" id="service-map">
+						<div class="accordion-heading">
+							<a class="accordion-toggle content-toggle" data-toggle="collapse" href="#collapseMap">
+								<h4 class="content-header">Service Map</h4>
+							</a>
+						</div>
+						<div class="accordion-body collapse in" id="collapseMap">
+							<div class="content">
+								<div class="map-canvas" sytle="height: 1000px" id="map-canvas"></div>
+							</div>
+						</div>
+					</div>
 				</div>
 			</div>
 		</div>

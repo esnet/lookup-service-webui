@@ -109,7 +109,7 @@ def geocode_record(record):
 		elif code:
 			query += code + ", "
 		if country:
-			query += country + " "
+			query += country
 		if query:
 			result = geocode(query)
 	if result:

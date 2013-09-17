@@ -3,7 +3,7 @@
 # Cache queries to the Lookup Service
 LS_CACHE_QUERIES = True
 # Cached LS query timeout in seconds
-LS_CACHE_TIMEOUT = 3600
+LS_CACHE_TIMEOUT = 86400
 # Maximum number of records storable in single cache
 # (If exceeded records will be divided into multiple caches)
 LS_CACHE_MAX_RECORDS = 1024
