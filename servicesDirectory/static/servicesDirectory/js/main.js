@@ -6,10 +6,10 @@ var services = [];
 var communities = [];
 
 var serviceTypes = {
-	"bwctl": { "title": "BWCTL Server", "defaults": [ "bwctl server" ], "command": "bwctl -T iperf -t 20 -i 1 -c -f m <address>:<port>", "action": "" },
+ 	"bwctl": { "title": "BWCTL Server", "defaults": [ "bwctl server" ], "command": "bwctl -T iperf -t 20 -i 1 -f m -c <address>:<port>", "action": "" },
 	"ndt": { "title": "NDT Server", "defaults": [ "ndt server" ], "command": "web100clt -n <address> -ll", "action": "Test" },
 	"npad": { "title": "NPAD Server", "defaults": [ "npad server" ], "command": "", "action": "Test" },
-	"owamp": { "title": "OWAMP Server", "defaults": [ "owamp server" ], "command": "owping <address>:<port>", "action": "" },
+ 	"owamp": { "title": "OWAMP Server", "defaults": [ "owamp server" ], "command": "owping  -c 10000 -i .01 <address>:<port>", "action": "" },
 	"ma": { "title": "MA", "types": {
 		"bwctl": { "title": "BWCTL MA", "defaults": [ "perfsonarbuoy ma", "perfsonar-buoy ma" ], "command": "", "action": "Query" },
 		"owamp": { "title": "OWAMP MA", "defaults": [ "perfsonarbuoy ma", "perfsonar-buoy ma" ], "command": "", "action": "Query" },
