@@ -13,7 +13,6 @@ def index(request):
 	return render(request, 'servicesDirectory/index.html')
 
 def query(request):
-	print "** Query **"
 	query = request.GET.copy()
 	no_cache = False
 	if query.pop("nocache", ["false"])[0].lower() in ("yes", "true"):
@@ -30,9 +29,7 @@ def query(request):
 	records = models.cache_get_records(cache_key)
 	if no_cache or records is None: 
 		logger.info("Not using GUI cache for %s" % cache_key)
-		records = models.query_ls(query=query, no_cache=no_cache)
-		print records
-	
+		records = models.query_ls(query=query, no_cache=no_cache)	
 		if record_filter.lower() in ("default",):
 			records = list(models.get_default_filter(records))
 		if geocode.lower() in ("yes", "true",):
