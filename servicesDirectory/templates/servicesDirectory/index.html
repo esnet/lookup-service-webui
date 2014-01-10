@@ -22,6 +22,39 @@
 {% block header %}<h3>perfSONAR Global Service and Data View</h3>{% endblock %}
 
 {% block content %}
+
+<!-- Modal -->
+<div class="modal fade" id="help" tabindex="-1" role="dialog" aria-labelledby="helpLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+        <h4 class="modal-title" id="helpLabel">Filter help</h4>
+      </div>
+      <div class="modal-body">
+
+        <h5>Text Filter</h5>
+        The text filter further refines the result of the communities filter. It does a substring search across many data
+        fields. Note that currently spaces etc have no special meaning, so for best results use a single term. Search is case insensitive.
+
+        Searched fields: 
+        <ul>
+            <li>title ("Fermilab")</li>
+            <li>location (City ("Berkeley"), State ("Minnesota"), Country ("Canada").  </li>
+            <li>host ("psonar3.fnal.gov")</li>
+            <li>tool kit version ("3.3.1")</li>
+            <li>NIC speed ("10G")</li>
+            <li>community ("internet2")</li>
+        </ui>
+
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-default" data-dismiss="modal">Done</button>
+      </div>
+    </div><!-- /.modal-content -->
+  </div><!-- /.modal-dialog -->
+</div><!-- /.modal -->
+
 		<div class="row-fluid fill">
 			<div class="span3 fill">
 				<div id="browser">
@@ -118,44 +151,7 @@
 			</div>
 		</div>
 
-<!-- Modal -->
-<div class="modal fade" id="help" tabindex="-1" role="dialog" aria-labelledby="helpLabel" aria-hidden="true">
-  <div class="modal-dialog">
-    <div class="modal-content">
-      <div class="modal-header">
-        <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
-        <h4 class="modal-title" id="helpLabel">Filter help</h4>
-      </div>
-      <div class="modal-body">
 
-      	<h4>Filtering</h4>
-        The tree view shows all services. In order to reduce this list and explore this data you may filter this list.
-        There are two filters, a communities filer and a text filter. Each is used to to refine the list.<p>
-
-        <h5>Communities Filter</h5>
-        You may select multiple communities from this list. Only services which are tagged with those communities are included in the resulting filtered list of services. <p>
-
-        <h5>Text Filter</h5>
-        The text filter further refines the result of the communities filter. It does a substring search across many data
-        fields. Note that currently spaces etc have no special meaning, so for best results use a single term. Search is case insensitive.
-
-        Searched fields: 
-        <ul>
-        	<li>title ("Fermilab")</li>
-        	<li>location (City ("Berkeley"), State ("Minnesota"), Country ("Canada").  </li>
-        	<li>host ("psonar3.fnal.gov")</li>
-        	<li>tool kit version ("3.3.1")</li>
-        	<li>NIC speed ("10G")</li>
-        	<li>community ("internet2")</li>
-        </ui>
-
-      </div>
-      <div class="modal-footer">
-        <button type="button" class="btn btn-default" data-dismiss="modal">Done</button>
-      </div>
-    </div><!-- /.modal-content -->
-  </div><!-- /.modal-dialog -->
-</div><!-- /.modal -->
 
 {% endblock %}
 {% block assets_post %}

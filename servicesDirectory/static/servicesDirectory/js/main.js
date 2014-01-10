@@ -167,7 +167,7 @@ $('#search').tooltip({
 // Load data
 //
 
-console.log("making request", window.location.href + "query?filter=default&geocode=true");
+console.log("Requesting", window.location.href + "query?filter=default&geocode=true");
 $.getJSON(window.location.href + "query?filter=default&geocode=true", function(records) { initialize(records); });
 
 //
@@ -176,8 +176,6 @@ $.getJSON(window.location.href + "query?filter=default&geocode=true", function(r
 
 function initialize(records)
 {
-    console.log("Init");
-
     for (var i = 0 ; i < records.length ; i++)
     {
         var record = records[i];
@@ -193,13 +191,6 @@ function initialize(records)
         if ((record["group-communities"]) && (record["group-communities"][0]))
             communities = communities.concat(record["group-communities"]);
     }
-
-    console.log("Number of services:", services.length);
-    console.log("Number of hosts:", hosts.length);
-    console.log("Number of interfaces:", interfaces.length);
-    console.log("Number of people:", people.length);
-
-    //$("#info").html("Showing: " + services.length + " services");
 
     $("#info").html("Processing...");
 
@@ -245,6 +236,7 @@ function buildSearchString(service) {
     }
     var locationString = city + " " + state + " " + country;
     var titleString = getTitle(service);
+    var serviceName = service["service-name"] && service["service-name"][0] ? service["service-name"] : "";
     var hostName = service["service-locator"] && service["service-locator"][0] ? getAddressString(getHostname(service["service-locator"][0])): "";
     var host = getHost(service, hosts);
 
@@ -260,7 +252,7 @@ function buildSearchString(service) {
         }
     }
 
-    return [titleString, locationString, hostName, hostToolkitString, communitiesString, speedString].join(" ").toLowerCase();
+    return [serviceName, titleString, locationString, hostName, hostToolkitString, communitiesString, speedString].join(" ").toLowerCase();
 }
 
 //
@@ -565,8 +557,6 @@ function onNodeActivate(node)
             infoWindow.close();
     }
 
-    console.log("onNodeActivate", service, host);
-
     showServiceInfo(service);
     showHostInfo(host);
 }
@@ -596,6 +586,7 @@ function onInfoWindowActivate(element)
 
 function showServiceInfo(service)
 {
+
     if (service["service-name"])
         $("#service-name").html(service["service-name"].join("<br />"));
     else
@@ -605,7 +596,7 @@ function showServiceInfo(service)
     if (service["service-locator"]) {
         for (var s = 0; s < service["service-locator"].length; s++) {
             var address = service["service-locator"][s];
-            $("#service-locator").append("<a href='" + getAddressLink(address) + "'>" + 
+            $("#service-locator").append("<a href='" + getAddressLink(address) + "' target='_blank'>" + 
                 getAddressString(address) + "</a><br />");
         }
     }
@@ -641,32 +632,39 @@ function clearServiceInfo()
 function getAddressLink(address)
 {
     var url;
-    var parts = address.split(':');
-    if (parts.length >= 2) {
-        url = "http:" + parts.slice(1,parts.length-1).join(":");
+
+    //Fix URLs that start with tcp://
+    if (address.indexOf("tcp://") != -1 || address.indexOf("http://") != -1) 
+    {
+        var parts = address.split(':');
+        if (parts.length >= 2) {
+            url = "http:" + parts.slice(1,parts.length-1).join(":");
+        }
+        if (parts.length > 2) {
+            var leftParts = parts[parts.length-1].split("/");
+            url += leftParts.length > 1 ? leftParts[leftParts.length-1] : "";
+        }
+    } else {
+        url = "http://" + address + "/";
     }
-    if (parts.length > 2) {
-        var leftParts = parts[parts.length-1].split("/");
-        url += leftParts.length > 1 ? leftParts[leftParts.length-1] : "";
-    }
+
     return url;
 }
 
 function getAddressString(address)
 {
-    var url;
-    var parts = address.split(':');
-    if (parts.length >= 2) {
-        return parts.slice(1,parts.length-1).join(":").replace("//","");
+    if (address.indexOf("tcp://") != -1 || address.indexOf("http://") != -1) 
+    {
+        var parts = address.split(':');
+        if (parts.length >= 2) {
+            return parts.slice(1,parts.length-1).join(":").replace("//","").replace("[","").replace("]","");
+        }
     }
-    return "";
+    return address;
 }
 
 function showHostInfo(host)
 {
-
-    console.log("SHOW HOST INFO:", host);
-
     if (!host)
         host = { "type": "host" };
 
@@ -713,8 +711,9 @@ function showHostInfo(host)
     else
         $("#host-os").html("");
 
-    var adminEmailList = getAdminEmailList(host);
-    //console.log(adminEmailList);
+    var contact = getContactInfo(host);
+    if (contact)
+        $("#host-os").append("<br>" + "Contact: " + contact);
 
     //
     // Toolkit version
@@ -816,17 +815,15 @@ function getAdministrators(host, people)
 {
     var result = [];
     var administrators = host["host-administrators"]; 
-
-    console.log(administrators);
-
-    for (var j = 0 ; j < administrators.length; j++) {
-        var administrator = administrators[j];
-        for (var i = 0 ; i < people.length ; i++)
-        {
-            var person = people[i]; 
-            console.log("//", person, administrator);
-            if (person["uri"] == administrator)
-                result.push(person);
+    if (administrators) {
+        for (var j = 0 ; j < administrators.length; j++) {
+            var administrator = administrators[j];
+            for (var i = 0 ; i < people.length ; i++)
+            {
+                var person = people[i]; 
+                if (person["uri"] == administrator)
+                    result.push(person);
+            }
         }
     }
     return result;
@@ -865,18 +862,14 @@ function getCPUString(record)
 }
 
 function getTrafficRate(record, places) {
-    console.log("getTrafficRate");
     var host = getHost(record);
     if (host)
     {
-        console.log(host);
         var iface = getInterface(host, interfaces);
         if (iface)
         {
-            console.log(iface);
             if (iface["interface-capacity"] && iface["interface-capacity"][0])
             {
-                console.log(iface);
                 var bitsPerSecond = parseInt(iface["interface-capacity"][0], 10);
                 if (bitsPerSecond <= 0 || isNaN(bitsPerSecond))
                     return 0;
@@ -896,20 +889,27 @@ function getTrafficRate(record, places) {
     return null;
 }
 
-function getAdminEmailList(host) {
+function getContactInfo(host) {
     var name;
     var email;
     if (host)
     {
         adminList = getAdministrators(host, people);
         if (adminList[0]) {
-            name = adminList[0]["person-name"][0];
-            email = adminList[0]["person-emails"][0];
+            name = adminList[0]["person-name"] ? adminList[0]["person-name"][0] : null;
+            email = adminList[0]["person-emails"] ? adminList[0]["person-emails"][0] : null;
+
+            if (name && email)
+                return name + " (" + email + ")";
+            else if (email)
+                return email;
+            else if (name)
+                return name;
+            else
+                return null;
         }
-        console.log(name, email);
     }
 }
-
 
 function getKernelString(record)
 {
@@ -1237,7 +1237,6 @@ function getCountryString(code) {
     return code;
 }
   
-
 function getLocationString(record)
 {
     var locationString = "";
@@ -1337,6 +1336,10 @@ function getTitle(record)
             }
             for (type in serviceTypes)
             {
+                var address = record["service-locator"][0];
+                return getAddressString(address).toLowerCase();
+
+                /*
                 if ($.inArray(record["service-name"][0].toLowerCase(), serviceTypes[type]["defaults"]) >= 0)
                 {
                     if ((record["location-sitename"]) && (record["location-sitename"][0])) {
@@ -1355,6 +1358,7 @@ function getTitle(record)
                         return getHostname(record["service-locator"][0]).replace("/[[]]/", "");
                     }
                 }
+                */
 
             }
             if ((record["service-type"]) && record["service-type"][0])
