@@ -586,6 +586,7 @@ function onInfoWindowActivate(element)
 
 function showServiceInfo(service)
 {
+    console.log("SERVICE", service);
 
     if (service["service-name"])
         $("#service-name").html(service["service-name"].join("<br />"));
@@ -667,6 +668,8 @@ function showHostInfo(host)
 {
     if (!host)
         host = { "type": "host" };
+
+    console.log("HOST", host);
 
     if (host["host-name"])
         $("#host-name").html(host["host-name"].join("<br />"));
@@ -1267,6 +1270,10 @@ function getMemoryString(record)
     var type = record["type"][0];
     if ((record[type + "-hardware-memory"]) && (record[type + "-hardware-memory"][0]))
         memoryString += record[type + "-hardware-memory"][0];
+    var memoryParts = memoryString.split(' ');
+    if (memoryParts.length == 2) {
+        memoryString = parseInt(memoryParts[0]) + " " + memoryParts[1];
+    }
     return memoryString;
 }
 
