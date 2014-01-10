@@ -78,6 +78,8 @@ h1, h2, h3, h4, h5, h6 {
 .simplebox
 {
   outline: none;
+  padding-left: 2px;
+  padding-right: 2px;
   border:none !important;
   box-shadow:none !important;
   background-image:none !important;
@@ -91,4 +93,21 @@ h1, h2, h3, h4, h5, h6 {
 #search {
 	margin-top: 9px;
 	margin-right: 10px;
+}
+
+.badge {
+	font-size: 11px;
+	font-weight: normal;
+	line-height: 14px;
+	color: #fff;
+	text-shadow: none;
+	white-space: nowrap;
+	vertical-align: baseline;
+	background-color: rgba(221, 221, 221, 255);
+	margin-left: 10px;
+}
+
+span.dynatree-node {
+	font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+	font-size: 14px;
 }

@@ -110,10 +110,10 @@ function initTreeNodes() {
         var title = serviceTypes[type]["title"];
         var expanded = false;
 
-        if (title in expandedMap) {
-            expanded = expandedMap[title];
+        if (type in expandedMap) {
+            expanded = expandedMap[type];
         } else {
-            expandedMap[title] = true;
+            expandedMap[type] = false;
         }
 
         treeNodes.push({ "title": title, 
@@ -167,8 +167,7 @@ $('#search').tooltip({
 // Load data
 //
 
-console.log("Requesting", window.location.href + "query?filter=default&geocode=false&remap=true");
-$.getJSON(window.location.href + "query?filter=default&geocode=false&remap=true", function(records) { initialize(records); });
+$.getJSON(window.location.href + "query?filter=default&geocode=true", function(records) { initialize(records); });
 
 //
 // Once data is loaded...
@@ -259,23 +258,27 @@ function buildSearchString(service) {
 // Returns the intersection of two arrays
 //
 
-function intersect(a, b)
-{
-    var ai=0, bi=0;
-    var result = new Array();
+function intersect(firstArray, secondArray) {
+    var result = [];
+    var map = {};
+    var val;
+    var i; 
 
-    while (ai < a.length && bi < b.length)
-    {
-        if (a[ai] < b[bi]){ ai++; }
-        else if (a[ai] > b[bi]){ bi++; }
-        else /* they're equal */
-        {
-            result.push(a[ai]);
-            ai++;
-            bi++;
-        }
+    //Make an associative array of the second array to
+    //speed things up below
+    var l2 = secondArray.length;
+    for (i = 0; i < l2; i++) {
+        map[secondArray[i]] = true;
     }
 
+    //Loop through first array and find what is in second array map
+    var l1 = firstArray.length;
+    for (i = 0; i < l1; i++) {
+        val = firstArray[i];
+        if (val in map) {
+            result.push(val);
+        }
+    }
     return result;
 }
 
@@ -291,6 +294,8 @@ function filteredServices() {
         var service = services[i];
 
         //Substring match the filter text string against the records searchFields string
+        //If there's no searchString, match anyway.
+
         var searchFields = service["search"].toLowerCase();
         if (filter.search && filter.search !== "" && searchFields.search(filter.search) == -1) {
             matched = false;
@@ -303,10 +308,9 @@ function filteredServices() {
         //    with no communities.
         //  - some type of filter is specified (at least one community is selected)
 
-        var serviceCommunities = service["group-communities"] ? service["group-communities"] : [];
+        var groupCommunities = service["group-communities"] ? service["group-communities"] : [];
         if (filter.communities.length < communities.length) {
-            if (filter.communities.length > 0 && 
-                intersect(filter.communities, serviceCommunities).length == 0) {
+            if (filter.communities.length > 0 && intersect(filter.communities, groupCommunities).length == 0) {
                 matched = false;
             }
         }
@@ -337,6 +341,7 @@ function rebuild() {
         }
     }
 
+    serviceNodeCounts();
     $("#info").html("Showing: " + filtered.length + " of " + services.length + " services");
 
     updateTree();
@@ -487,6 +492,45 @@ function addServiceNode(service)
         node["children"].push({ "title": title, "type": "service", "records": [ service ] });
 }
 
+function serviceNodeCounts()
+{
+    for (var i = 0 ; i < treeNodes.length ; i++)
+    {
+        var childCount = 0;
+        var treeNode = treeNodes[i];
+        for (var childIndex = 0; childIndex < treeNode.children.length; childIndex++)
+        {
+            childCount += serviceNodeChildCount(treeNode.children[childIndex]);
+        }
+        //If there's any children then we display a child number
+        if (treeNode.children.length)
+            treeNode.title = treeNode.title + "<span class='badge' pull-right>" + childCount + "</span>";
+    }
+}
+
+function serviceNodeChildCount(node)
+{
+    if (node.isFolder && node.isFolder == true && node.children.length == 0) {
+        return 0;
+    }
+    if (!node.children || node.children.length == 0) //leaf node
+        return 1;
+
+    var childCount = 0;
+    if (node.children) 
+    {
+        for (var childIndex = 0; childIndex < node.children.length; childIndex++)
+        {
+            childCount += serviceNodeChildCount(node.children[childIndex]);
+        } 
+    }
+    //If there's any children then we display a child number
+    if (node.children.length)
+        node.title = node.title + "<span class='badge' pull-right>" + childCount + "</span>";
+
+    return childCount;
+}
+
 function onMarkerActivate(marker)
 {
     if ((!marker["records"]) || ((!marker["records"]["hosts"]) && (!marker["records"]["services"])))
@@ -572,7 +616,7 @@ function onNodeActivate(node)
 }
 
 function onNodeExpand(expanded, dtnode) {
-    var folder = dtnode.data.title;
+    var folder = dtnode.data.type;
     expandedMap[folder] = expanded;
 }
 
@@ -596,8 +640,6 @@ function onInfoWindowActivate(element)
 
 function showServiceInfo(service)
 {
-    console.log("SERVICE", service);
-
     if (service["service-name"])
         $("#service-name").html(service["service-name"].join("<br />"));
     else
@@ -678,8 +720,6 @@ function showHostInfo(host)
 {
     if (!host)
         host = { "type": "host" };
-
-    console.log("HOST", host);
 
     if (host["host-name"])
         $("#host-name").html(host["host-name"].join("<br />"));
