@@ -1332,6 +1332,9 @@ function getTitle(record)
         }
         else if (type == "service")
         {
+            if(record["service-display-title"]){
+                return record["service-display-title"];
+            }
             for (type in serviceTypes)
             {
                 if ($.inArray(record["service-name"][0].toLowerCase(), serviceTypes[type]["defaults"]) >= 0)

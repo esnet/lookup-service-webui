@@ -1,4 +1,6 @@
+import logging
 import math
+import socket
 from urlparse import urlparse
 
 from django.db import models
@@ -15,6 +17,8 @@ try:
 	_geocoder = None	
 except ImportError:
 	raise
+
+logger = logging.getLogger(__name__)
 
 def get_services():
 	return query_ls({ "type": "service" })
@@ -153,6 +157,8 @@ def geocode(query):
 		except:
 			pass
 	return result
+
+
 	
 def reverse_geocode(latitude, longitude):
 	result = {}
@@ -176,6 +182,20 @@ def reverse_geocode(latitude, longitude):
 			pass
 	return result
 
+def ip_to_hostname(ip):
+	try:
+		socket.inet_pton(socket.AF_INET, ip)
+		return socket.gethostbyaddr(ip)[0]
+	except:
+		pass
+	try:
+		socket.inet_pton(socket.AF_INET6, ip)
+		return socket.gethostbyaddr(ip)[0]
+	except:
+		pass
+		
+	return ip
+	
 def remap_records(records):
 	hosts = []
 	interfaces = []
@@ -199,6 +219,16 @@ def remap_records(records):
 				host["host-net-interfaces"] = [ interface["uri"] ]
 	for service in services:
 		host = get_host(service, hosts, interfaces)
+		service_locators = service.get("service-locator", [])
+		for locator in service_locators:
+			service_hostname = urlparse(locator).hostname
+			if service_hostname is None:
+				service_hostname = locator
+			elif service_hostname.startswith('['):
+				#hack since urlparse doesn't handle ipv6
+				service_hostname = locator[(locator.find('[')+1):locator.find(']')]
+			service['service-display-title'] = ip_to_hostname(service_hostname)
+			break
 		if host:
 			service_hosts = service.get("service-host", [])
 			if service_hosts:
@@ -206,7 +236,10 @@ def remap_records(records):
 					service["service-host"].insert(0, host["uri"])
 			else:
 				service["service-host"] = [ host["uri"] ]
+			
 	return records
+
+
 
 def get_host(record, hosts, interfaces = []):
 	record_type = record["type"][0]
