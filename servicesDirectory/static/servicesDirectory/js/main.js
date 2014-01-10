@@ -296,9 +296,19 @@ function filteredServices() {
             matched = false;
         }
 
-        var communities = service["group-communities"] ? service["group-communities"] : [];
-        if (communities.length > 0 && filter.communities.length > 0 && intersect(filter.communities, communities).length == 0) {
-            matched = false;
+        //Only test the communities lists against each other if
+        //  - the filter has less that all the communities possible to select (communities.length)
+        //    since when we select ALL in the filter we want to match everything, even services with
+        //    no communities listed. But if we select a specific filter we don't want to match services
+        //    with no communities.
+        //  - some type of filter is specified (at least one community is selected)
+
+        var serviceCommunities = service["group-communities"] ? service["group-communities"] : [];
+        if (filter.communities.length < communities.length) {
+            if (filter.communities.length > 0 && 
+                intersect(filter.communities, serviceCommunities).length == 0) {
+                matched = false;
+            }
         }
 
         if (matched)
