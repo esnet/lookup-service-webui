@@ -1,9 +1,13 @@
+import logging
 from django.http import HttpResponse
 from django.middleware.gzip import GZipMiddleware
 from django.shortcuts import render
 from django.utils import simplejson
 
 from servicesDirectory import models
+from servicesDirectory.simplels_client import hash_to_query
+
+logger = logging.getLogger(__name__)
 
 def index(request):
 	return render(request, 'servicesDirectory/index.html')
@@ -11,6 +15,10 @@ def index(request):
 def query(request):
 	print "** Query **"
 	query = request.GET.copy()
+	no_cache = False
+	if query.pop("nocache", ["false"])[0].lower() in ("yes", "true"):
+		no_cache = True
+	cache_key = "GUI_REQUEST(%s)" % hash_to_query(query)
 	compress = query.pop("compress", ["true"])[0]
 	record_filter = query.pop("filter", ["none"])[0]
 	format = query.pop("format", ["json"])[0]
@@ -19,18 +27,24 @@ def query(request):
 	pretty = query.pop("pretty", ["false"])[0]
 	sort = query.pop("sort", [False])[0]
 	
-	records = models.query_ls(query)
-	print records
+	records = models.cache_get_records(cache_key)
+	if no_cache or records is None: 
+		logger.info("Not using GUI cache for %s" % cache_key)
+		records = models.query_ls(query=query, no_cache=no_cache)
+		print records
 	
-	if record_filter.lower() in ("default",):
-		records = list(models.get_default_filter(records))
-	if geocode.lower() in ("yes", "true",):
-		records = models.geocode_records(records)
-	if record_remap.lower() in ("yes", "true",):
-		records = models.remap_records(records)
-	if sort:
-		records = sorted(records, key = lambda v: v.get(sort, ""))
-	
+		if record_filter.lower() in ("default",):
+			records = list(models.get_default_filter(records))
+		if geocode.lower() in ("yes", "true",):
+			records = models.geocode_records(records)
+		if record_remap.lower() in ("yes", "true",):
+			records = models.remap_records(records)
+		if sort:
+			records = sorted(records, key = lambda v: v.get(sort, ""))
+		models.cache_set_records(cache_key, records)
+	else:
+		logger.info("Using GUI cache for %s" % cache_key)
+		
 	content = ""
 	if format.lower() in ("html",):
 		context = {}

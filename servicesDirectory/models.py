@@ -30,13 +30,13 @@ def get_communities():
 			communities.add(community)
 	return communities
 
-def query_ls(query = ""):
+def query_ls(query = "", no_cache=False):
 	try:
 		query = simplels_client.hash_to_query(query)
 	except TypeError:
 		pass
 	records = []
-	if settings.LS_CACHE_QUERIES:
+	if settings.LS_CACHE_QUERIES and not no_cache:
 		records = cache_get_records("LS_QUERY(" + query + ")")
 		if records is None:
 			records = simplels_client.query(query)
