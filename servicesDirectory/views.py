@@ -9,6 +9,7 @@ def index(request):
 	return render(request, 'servicesDirectory/index.html')
 
 def query(request):
+	print "** Query **"
 	query = request.GET.copy()
 	compress = query.pop("compress", ["true"])[0]
 	record_filter = query.pop("filter", ["none"])[0]
@@ -19,6 +20,7 @@ def query(request):
 	sort = query.pop("sort", [False])[0]
 	
 	records = models.query_ls(query)
+	print records
 	
 	if record_filter.lower() in ("default",):
 		records = list(models.get_default_filter(records))

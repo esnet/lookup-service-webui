@@ -27,12 +27,23 @@
 				<div id="browser">
 					<h4 class="content-header">Browser</h4>
 					<div class="content">
-						<strong>Communities:</strong>&nbsp;
-						<select multiple="true" size="6" id="communities"></select>
-						<div>Select one more more communities and click update to refine results.</div>
-						<strong>Search:</strong>&nbsp;
-						<input type="text" id="search">
-						<br />
+						<strong>Communities Filter:</strong>&nbsp;<br>
+						<div class="info muted">Select one or more communities to refine results.</div>
+						<div class="filter"><select multiple="true" size="6" id="communities" class="fill-width"></select></div>
+						
+						<strong>Text Filter:</strong>&nbsp;<br>
+						<span class="info muted">Further refine results by text matching across multiple fields.</span>
+						<span><button class="btn btn-default btn-lg simplebox" data-toggle="modal" data-target="#help">
+						  <i class="icon-question-sign"></i>
+						</button>
+						</span><br>
+					
+						<span><input type="search" id="search"></span>
+						<span><button class="btn btn-primary" id="update">Filter</button></span>
+							
+						<hr>
+						<div id="info" class="muted">Loading...</div>
+						<hr>
 						<div class="tree" id="tree"></div>
 					</div>
 				</div>
@@ -54,14 +65,12 @@
 										<th>Geographic Location</th>
 										<th>Communities</th>
 										<th>Example Command-Line</th>
-										<th>Actions</th>
 									</tr><tr>
 										<td id="service-name"></td>
 										<td id="service-locator"></td>
 										<td id="service-location"></td>
 										<td id="service-communities"></td>
 										<td id="service-command-line"></td>
-										<td id="service-action"></td>
 									</tr>
 								</table>
 							</div>
@@ -79,7 +88,7 @@
 									<tr>
 										<th>Host Name</th>
 										<th>Hardware</th>
-										<th>Operating System</th>
+										<th>System Info</th>
 										<th>Toolkit Version</th>
 										<th>Communities</th>
 									</tr><tr>
@@ -108,6 +117,46 @@
 				</div>
 			</div>
 		</div>
+
+<!-- Modal -->
+<div class="modal fade" id="help" tabindex="-1" role="dialog" aria-labelledby="helpLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+        <h4 class="modal-title" id="helpLabel">Filter help</h4>
+      </div>
+      <div class="modal-body">
+
+      	<h4>Filtering</h4>
+        The tree view shows all services. In order to reduce this list and explore this data you may filter this list.
+        There are two filters, a communities filer and a text filter. Each is used to to refine the list.<p>
+
+        <h5>Communities Filter</h5>
+        You may select multiple communities from this list. Only services which are tagged with those communities are included in the resulting filtered list of services. <p>
+
+        <h5>Text Filter</h5>
+        The text filter further refines the result of the communities filter. It does a substring search across many data
+        fields. Note that currently spaces etc have no special meaning, so for best results use a single term. Search is case insensitive.
+
+        Searched fields: 
+        <ul>
+        	<li>title ("Fermilab")</li>
+        	<li>location (City ("Berkeley"), State ("Minnesota"), Country ("Canada").  </li>
+        	<li>host ("psonar3.fnal.gov")</li>
+        	<li>tool kit version ("3.3.1")</li>
+        	<li>NIC speed ("10G")</li>
+        	<li>community ("internet2")</li>
+        </ui>
+
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-default" data-dismiss="modal">Done</button>
+      </div>
+    </div><!-- /.modal-content -->
+  </div><!-- /.modal-dialog -->
+</div><!-- /.modal -->
+
 {% endblock %}
 {% block assets_post %}
 	<script type="text/javascript" src="{% static "js/jquery.ui.js" %}"></script>

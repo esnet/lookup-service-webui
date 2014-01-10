@@ -12,9 +12,9 @@ try:
 	from pygeocoder import Geocoder
 	from pygeolib import GeocoderResult
 	_MAX_CONCURRENT_GEOCODES = 8
-	_geocoder = None
+	_geocoder = None	
 except ImportError:
-	pass
+	raise
 
 def get_services():
 	return query_ls({ "type": "service" })
