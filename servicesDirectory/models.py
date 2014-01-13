@@ -2,6 +2,7 @@ import logging
 import math
 import socket
 from urlparse import urlparse
+from IPy import IP
 
 from django.db import models
 from django.core.cache import cache
@@ -181,20 +182,6 @@ def reverse_geocode(latitude, longitude):
 		except:
 			pass
 	return result
-
-def ip_to_hostname(ip):
-	try:
-		socket.inet_pton(socket.AF_INET, ip)
-		return socket.gethostbyaddr(ip)[0]
-	except:
-		pass
-	try:
-		socket.inet_pton(socket.AF_INET6, ip)
-		return socket.gethostbyaddr(ip)[0]
-	except:
-		pass
-		
-	return ip
 	
 def remap_records(records):
 	hosts = []
@@ -227,7 +214,15 @@ def remap_records(records):
 			elif service_hostname.startswith('['):
 				#hack since urlparse doesn't handle ipv6
 				service_hostname = locator[(locator.find('[')+1):locator.find(']')]
-			service['service-display-title'] = ip_to_hostname(service_hostname)
+			try:
+				ip_form = IP(service_hostname)
+				if(ip_form.iptype() == 'PRIVATE'):
+					records.remove(service)
+				else:
+					service['service-display-title'] = socket.gethostbyaddr(ip_form.strNormal())[0]
+			except:
+				#not an IP
+				pass
 			break
 		if host:
 			service_hosts = service.get("service-host", [])
