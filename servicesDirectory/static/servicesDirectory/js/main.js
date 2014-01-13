@@ -833,7 +833,7 @@ function getHost(record, hosts)
     {
         for (var i = 0 ; i < hosts.length ; i++)
         {
-            if ($.inArray(record["uri"], hosts[i]["host-net-interfaces"]))
+            if ($.inArray(record["uri"], hosts[i]["host-net-interfaces"]) >= 0)
                 return hosts[i];
         }
     }
@@ -853,11 +853,10 @@ function getInterface(host, interfaces)
     var type = host["type"][0];
     if (type !== "host")
         return null;
-
     for (var i = 0 ; i < interfaces.length ; i++)
     {
-        var iface = interfaces[i]; 
-        if ($.inArray(iface["uri"], host["host-net-interfaces"]))
+        var iface = interfaces[i];
+        if ($.inArray(iface["uri"], host["host-net-interfaces"]) >= 0)
             return iface;
     }
 

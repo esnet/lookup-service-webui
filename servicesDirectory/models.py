@@ -195,15 +195,6 @@ def remap_records(records):
 			interfaces.append(record)
 		elif record_type == "service":
 			services.append(record)
-	for interface in interfaces:
-		host = get_host(interface, hosts)
-		if host:
-			host_interfaces = host.get("host-net-interfaces", [])
-			if host_interfaces:
-				if interface["uri"] not in host_interfaces:
-					host["host-net-interfaces"].insert(0, interface["uri"])
-			else:
-				host["host-net-interfaces"] = [ interface["uri"] ]
 	for service in services:
 		host = get_host(service, hosts, interfaces)
 		service_locators = service.get("service-locator", [])
@@ -224,13 +215,6 @@ def remap_records(records):
 				#not an IP
 				pass
 			break
-		if host:
-			service_hosts = service.get("service-host", [])
-			if service_hosts:
-				if host["uri"] not in service_hosts:
-					service["service-host"].insert(0, host["uri"])
-			else:
-				service["service-host"] = [ host["uri"] ]
 			
 	return records
 
