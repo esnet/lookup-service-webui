@@ -2,7 +2,6 @@ import os
 # Django settings for servicesDirectory project.
 
 APP_ROOT = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..")
-print APP_ROOT
 DEBUG = True
 TEMPLATE_DEBUG = DEBUG
 
@@ -64,15 +63,13 @@ MEDIA_URL = ''
 # Don't put anything in this directory yourself; store your static files
 # in apps' "static/" subdirectories and in STATICFILES_DIRS.
 # Example: "/var/www/example.com/static/"
-STATIC_ROOT = APP_ROOT + '/static'
-print STATIC_ROOT
+STATIC_ROOT = APP_ROOT + '/static_root'
 # URL prefix for static files.
 # Example: "http://example.com/static/", "http://static.example.com/"
-STATIC_URL = 'http://localhost:8000/static/'
+STATIC_URL = '/static/'
 
 # Additional locations of static files
 STATICFILES_DIRS = (
-    
     # Put strings here, like "/home/html/static" or "C:/www/django/static".
     # Always use forward slashes, even on Windows.
     # Don't forget to use absolute paths, not relative paths.
