@@ -30,3 +30,21 @@ application = get_wsgi_application()
 # Apply WSGI middleware here.
 # from helloworld.wsgi import HelloWorldApplication
 # application = HelloWorldApplication(application)
+
+
+"""
+Add the following to your apache config:
+
+WSGIScriptAlias /ServicesDirectory /opt/perfsonar_ps/django-serviceDir/wsgi.py
+WSGIPythonPath /opt/perfsonar_ps/django-serviceDir/:/opt/perfsonar_ps/django-serviceDir/servicesDirectory
+WSGIPassAuthorization Off
+
+<Directory /opt/perfsonar_ps/django-serviceDir/>
+<Files wsgi.py>
+AuthType None
+Order deny,allow
+Allow from all
+</Files>
+</Directory>
+"""
+
