@@ -1,6 +1,7 @@
-Django==1.5.5
+Django==1.6.2
 IPy==0.81
 futures==2.1.6
 pygeocoder==1.2.1.1
-requests==2.2.0
+python-memcached==1.53
+requests==2.2.1
 wsgiref==0.1.2

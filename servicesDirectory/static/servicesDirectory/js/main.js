@@ -941,7 +941,8 @@ function getTrafficRate(record, places) {
     return null;
 }
 
-function getContactInfo(host) {
+function getContactInfo(host)
+{
     var name;
     var email;
     if (host)
@@ -963,83 +964,10 @@ function getContactInfo(host) {
     }
 }
 
-function getKernelString(record)
+function getCountryString(code)
 {
-    var kernelString = "";
-    var type = record["type"][0];
-    if ((record[type + "-os-kernel"]) && (record[type + "-os-kernel"][0]))
-        kernelString += record[type + "-os-kernel"][0];
-    return kernelString;
-}
-
-function getLatLngString(record)
-{
-    var latlngString = "";
-    if ((record["location-latitude"]) && (record["location-latitude"][0]))
-        if ((record["location-longitude"]) && (record["location-longitude"][0]))
-            latlngString += "(" + (parseFloat(record["location-latitude"][0])).toFixed(4) + ", " + (parseFloat(record["location-longitude"][0])).toFixed(4) + ")";
-    return latlngString;
-}
-
-function getStateString(code) {
-    switch (code.toUpperCase()) {
-       case "AL": code = "Alabama"; break;        
-       case "AK": code = "Alaska"; break;         
-       case "AZ": code = "Arizona"; break;        
-       case "AR": code = "Arkansas"; break;       
-       case "CA": code = "California"; break;     
-       case "CO": code = "Colorado"; break;       
-       case "CT": code = "Connecticut"; break;    
-       case "DE": code = "Delaware"; break;       
-       case "FL": code = "Florida"; break;        
-       case "GA": code = "Georgia"; break;        
-       case "HI": code = "Hawaii"; break;         
-       case "ID": code = "Idaho"; break;          
-       case "IL": code = "Illinois"; break;       
-       case "IN": code = "Indiana"; break;        
-       case "IA": code = "Iowa"; break;           
-       case "KS": code = "Kansas"; break;         
-       case "KY": code = "Kentucky"; break;       
-       case "LA": code = "Louisiana"; break;      
-       case "ME": code = "Maine"; break;          
-       case "MD": code = "Maryland"; break;       
-       case "MA": code = "Massachusetts"; break;  
-       case "MI": code = "Michigan"; break;       
-       case "MN": code = "Minnesota"; break;      
-       case "MS": code = "Mississippi"; break;    
-       case "MO": code = "Missouri"; break;       
-       case "MT": code = "Montana"; break;        
-       case "NE": code = "Nebraska"; break;       
-       case "NV": code = "Nevada"; break;         
-       case "NH": code = "New Hampshire"; break;  
-       case "NJ": code = "New Jersey"; break;     
-       case "NM": code = "New Mexico"; break;     
-       case "NY": code = "New York"; break;       
-       case "NC": code = "North Carolina"; break; 
-       case "ND": code = "North Dakota"; break;   
-       case "OH": code = "Ohio"; break;           
-       case "OK": code = "Oklahoma"; break;       
-       case "OR": code = "Oregon"; break;         
-       case "PA": code = "Pennsylvania"; break;   
-       case "RI": code = "Rhode Island"; break;   
-       case "SC": code = "South Carolina"; break; 
-       case "SD": code = "South Dakota"; break;   
-       case "TN": code = "Tennessee"; break;      
-       case "TX": code = "Texas"; break;          
-       case "UT": code = "Utah"; break;           
-       case "VT": code = "Vermont"; break;        
-       case "VA": code = "Virginia"; break;       
-       case "WA": code = "Washington"; break;     
-       case "WV": code = "West Virginia"; break;  
-       case "WI": code = "Wisconsin"; break;      
-       case "WY": code = "Wyoming"; break;        
-       default:   code = null;
-    }
-    return code;
-}
-
-function getCountryString(code) {
-    switch (code.toUpperCase()) {
+    switch (code.toUpperCase())
+    {
         case "AC": code = "Ascension Island"; break;
         case "AD": code = "Andorra"; break;
         case "AE": code = "United Arab Emirates"; break;
@@ -1284,11 +1212,29 @@ function getCountryString(code) {
         case "ZM": code = "Zambia"; break;
         case "ZR": code = "Zaire"; break;
         case "ZW": code = "Zimbabwe"; break;
-        default:   code = null;
+        default:   break;
      }
     return code;
 }
-  
+
+function getKernelString(record)
+{
+    var kernelString = "";
+    var type = record["type"][0];
+    if ((record[type + "-os-kernel"]) && (record[type + "-os-kernel"][0]))
+        kernelString += record[type + "-os-kernel"][0];
+    return kernelString;
+}
+
+function getLatLngString(record)
+{
+    var latlngString = "";
+    if ((record["location-latitude"]) && (record["location-latitude"][0]))
+        if ((record["location-longitude"]) && (record["location-longitude"][0]))
+            latlngString += "(" + (parseFloat(record["location-latitude"][0])).toFixed(4) + ", " + (parseFloat(record["location-longitude"][0])).toFixed(4) + ")";
+    return latlngString;
+}
+ 
 function getLocationString(record)
 {
     var locationString = "";
@@ -1335,6 +1281,63 @@ function getOSString(record)
     if ((record[type + "-os-version"]) && (record[type + "-os-version"][0]))
         osString += record[type + "-os-version"][0];
     return osString;
+}
+
+function getStateString(code) {
+    switch (code.toUpperCase()) {
+       case "AL": code = "Alabama"; break;        
+       case "AK": code = "Alaska"; break;         
+       case "AZ": code = "Arizona"; break;        
+       case "AR": code = "Arkansas"; break;       
+       case "CA": code = "California"; break;     
+       case "CO": code = "Colorado"; break;       
+       case "CT": code = "Connecticut"; break;    
+       case "DE": code = "Delaware"; break;       
+       case "FL": code = "Florida"; break;        
+       case "GA": code = "Georgia"; break;        
+       case "HI": code = "Hawaii"; break;         
+       case "ID": code = "Idaho"; break;          
+       case "IL": code = "Illinois"; break;       
+       case "IN": code = "Indiana"; break;        
+       case "IA": code = "Iowa"; break;           
+       case "KS": code = "Kansas"; break;         
+       case "KY": code = "Kentucky"; break;       
+       case "LA": code = "Louisiana"; break;      
+       case "ME": code = "Maine"; break;          
+       case "MD": code = "Maryland"; break;       
+       case "MA": code = "Massachusetts"; break;  
+       case "MI": code = "Michigan"; break;       
+       case "MN": code = "Minnesota"; break;      
+       case "MS": code = "Mississippi"; break;    
+       case "MO": code = "Missouri"; break;       
+       case "MT": code = "Montana"; break;        
+       case "NE": code = "Nebraska"; break;       
+       case "NV": code = "Nevada"; break;         
+       case "NH": code = "New Hampshire"; break;  
+       case "NJ": code = "New Jersey"; break;     
+       case "NM": code = "New Mexico"; break;     
+       case "NY": code = "New York"; break;       
+       case "NC": code = "North Carolina"; break; 
+       case "ND": code = "North Dakota"; break;   
+       case "OH": code = "Ohio"; break;           
+       case "OK": code = "Oklahoma"; break;       
+       case "OR": code = "Oregon"; break;         
+       case "PA": code = "Pennsylvania"; break;   
+       case "RI": code = "Rhode Island"; break;   
+       case "SC": code = "South Carolina"; break; 
+       case "SD": code = "South Dakota"; break;   
+       case "TN": code = "Tennessee"; break;      
+       case "TX": code = "Texas"; break;          
+       case "UT": code = "Utah"; break;           
+       case "VT": code = "Vermont"; break;        
+       case "VA": code = "Virginia"; break;       
+       case "WA": code = "Washington"; break;     
+       case "WV": code = "West Virginia"; break;  
+       case "WI": code = "Wisconsin"; break;      
+       case "WY": code = "Wyoming"; break;        
+       default:   break;
+    }
+    return code;
 }
 
 function getServiceTypeTitle(service)
