@@ -11,17 +11,28 @@ from IPy import IP
 from servicesDirectory import settings
 from servicesDirectory import simplels_client
 
+_concurrency_enabled=False
 try:
     import concurrent.futures
+    _MAX_CONCURRENT_REQUESTS = 128
+    _concurrency_enabled=True
+except ImportError:
+    pass
+
+_geocoder_enabled=False
+try:
     from pygeocoder import Geocoder
     from pygeolib import GeocoderResult
-    _MAX_CONCURRENT_GEOCODES = 8
     _geocoder = None
+    _geocoder_enabled=True
 except ImportError:
     pass
 
 logger = logging.getLogger(__name__)
 
+##############################
+# Query Lookup Service
+##############################
 def get_services():
     return query_ls({ "type": "service" })
 
@@ -35,7 +46,7 @@ def get_communities():
 def query_ls(query = "", cached_records=True):
     try:
         query = simplels_client.hash_to_query(query)
-    except TypeError:
+    except:
         pass
     records = None
     if settings.LS_CACHE_QUERIES:
@@ -48,7 +59,10 @@ def query_ls(query = "", cached_records=True):
     else:
         records = simplels_client.query(query)
     return records
-    
+
+##############################
+# Record Caching
+##############################
 def cache_set_records(cache_key, records, timeout = settings.LS_CACHE_TIMEOUT):
     max_records = settings.SINGLE_CACHE_MAX_RECORDS
     if max_records < 1:
@@ -72,7 +86,7 @@ def cache_get_records(cache_key):
             records += chunk
             i += 1
             if len(chunk) < max_records:
-                break        
+                break
         else:
             break
     if i == 0:
@@ -80,23 +94,45 @@ def cache_get_records(cache_key):
     else:
         return records
 
-def get_default_filter(records):
+##############################
+# Record Filtering
+##############################
+def filter_default(records):
     for record in records:
         record_type = record["type"][0]
         if record_type != "pstest":
             if record_type == "service":
+                service_locators = record.get("service-locator", [])
+                for locator in service_locators:
+                    service_hostname = urlparse(locator).hostname
+                    if service_hostname is None:
+                        service_hostname = locator
+                    elif service_hostname.startswith('['):
+                        service_hostname = locator[(locator.find('[')+1):locator.find(']')]
+                    try:
+                        ip_form = IP(service_hostname)
+                        if(ip_form.iptype() == 'PRIVATE'):
+                            records.remove(record)
+                            break
+                    except:
+                        pass
                 record.pop("ma-tests", None)
                 record.pop("psservice-eventtypes", None)
             record.pop("ttl", None)
             record.pop("expires", None)
-            yield record
+    return records
 
+##############################
+# Record Geocoding
+##############################
 def geocode_records(records):
-    global _MAX_CONCURRENT_GEOCODES
-    if not settings.GEOCODE:
-        return records
-    with concurrent.futures.ThreadPoolExecutor(max_workers = _MAX_CONCURRENT_GEOCODES) as pool:
-        list(pool.map(geocode_record, records))
+    if settings.GEOCODE and _geocoder_enabled:
+        if _concurrency_enabled:
+            with concurrent.futures.ThreadPoolExecutor(max_workers = _MAX_CONCURRENT_REQUESTS) as pool:
+                list(pool.map(geocode_record, records))
+        else:
+            for record in records:
+                geocode_record(record)
     return records
 
 def geocode_record(record):
@@ -143,7 +179,7 @@ def geocode_record(record):
 def get_geocoder():
     if _geocoder:
         return _geocoder
-    else:    
+    else:
         if settings.GEOCODE_API_PRIVATE_KEY and settings.GEOCODE_API_CLIENT_ID:
             return Geocoder(settings.GEOCODE_API_CLIENT_ID, settings.GEOCODE_API_PRIVATE_KEY)
         else:
@@ -160,9 +196,7 @@ def geocode(query):
                 result = results[0].raw
                 cache.set(cache_key, result, settings.GEOCODE_CACHE_TIMEOUT)
             except:
-                cache.set(cache_key, [ False ], settings.GEOCODE_CACHE_TIMEOUT)
-        elif not result[0]:
-            result = {}
+                cache.set(cache_key, {}, settings.GEOCODE_CACHE_TIMEOUT)
     else:
         try:
             results = get_geocoder().geocode(query)
@@ -174,7 +208,7 @@ def geocode(query):
 def reverse_geocode(latitude, longitude):
     result = {}
     if settings.GEOCODE_CACHE_QUERIES:
-        cache_key = "GEO_QUERY(%s)" % "".join(query.lower().split())
+        cache_key = "GEO_QUERY(%s)" % "".join((latitude +  "," + longitude).split())
         result = cache.get(cache_key)
         if result is None:
             try:
@@ -182,9 +216,7 @@ def reverse_geocode(latitude, longitude):
                 result = results[0].raw
                 cache.set(cache_key, result, settings.GEOCODE_CACHE_TIMEOUT)
             except:
-                cache.set(cache_key, [ False ], settings.GEOCODE_CACHE_TIMEOUT)
-        elif not result[0]:
-            result = {}
+                cache.set(cache_key, {}, settings.GEOCODE_CACHE_TIMEOUT)
     else:
         try:
             results = get_geocoder().reverse_geocode(latitude, longitude)
@@ -193,6 +225,9 @@ def reverse_geocode(latitude, longitude):
             pass
     return result
 
+##############################
+# Record Remapping
+##############################
 def remap_records(records):
     hosts = []
     interfaces = []
@@ -205,26 +240,60 @@ def remap_records(records):
             interfaces.append(record)
         elif record_type == "service":
             services.append(record)
-    for service in services:
-        host = get_host(service, hosts, interfaces)
-        service_locators = service.get("service-locator", [])
-        for locator in service_locators:
-            service_hostname = urlparse(locator).hostname
-            if service_hostname is None:
-                service_hostname = locator
-            elif service_hostname.startswith('['):
-                service_hostname = locator[(locator.find('[')+1):locator.find(']')]
-            try:
-                ip_form = IP(service_hostname)
-                if(ip_form.iptype() == 'PRIVATE'):
-                    records.remove(service)
-                else:
-                    service['service-display-title'] = socket.gethostbyaddr(ip_form.strNormal())[0]
-            except:
-                pass
-            break
-            
+    def remap_interface_helper(interface):
+        remap_interface(interface, hosts, interfaces)
+    def remap_service_helper(service):
+        pass
+        #remap_service(service, hosts, interfaces)
+    if _concurrency_enabled:
+        with concurrent.futures.ThreadPoolExecutor(max_workers = _MAX_CONCURRENT_REQUESTS) as pool:
+            list(pool.map(remap_interface_helper, interfaces))
+        with concurrent.futures.ThreadPoolExecutor(max_workers = _MAX_CONCURRENT_REQUESTS) as pool:
+            list(pool.map(remap_service_helper, services))
+    else:
+        for interface in interfaces:
+            remap_interface_helper(interface)
+        for service in services:
+            remap_service_helper(service)
     return records
+
+def remap_interface(interface, hosts, interfaces = []):
+    host = get_host(interface, hosts)
+    if host:
+        host_interfaces = host.get("host-net-interfaces", [])
+        if host_interfaces:
+            if interface["uri"] not in host_interfaces:
+                host["host-net-interfaces"].insert(0, interface["uri"])
+        else:
+            host["host-net-interfaces"] = [ interface["uri"] ]
+
+def remap_service(service, hosts, interfaces = []):
+    service_locators = service.get("service-locator", [])
+    for locator in service_locators:
+        service_hostname = urlparse(locator).hostname
+        if service_hostname is None:
+            service_hostname = locator
+        elif service_hostname.startswith('['):
+            service_hostname = locator[(locator.find('[')+1):locator.find(']')]
+        try:
+            from datetime import datetime
+            startTime = datetime.now()
+            ip_form = IP(service_hostname)
+            service["test"] = socket.gethostbyaddr(ip_form.strNormal())[0]
+            elapsed = (datetime.now() - startTime).microseconds
+            if elapsed > 1000:
+                print "Elapsed: " + str(elapsed) + "Locator: " + locator
+            break
+        except:
+            pass
+    host = get_host(service, hosts, interfaces)
+    if host:
+        service_hosts = service.get("service-host", [])
+        if service_hosts:
+            if host["uri"] not in service_hosts:
+                service["service-host"].insert(0, host["uri"])
+        else:
+            service["service-host"] = [ host["uri"] ]
 
 def get_host(record, hosts, interfaces = []):
     record_type = record["type"][0]

@@ -167,7 +167,7 @@ $('#search').tooltip({
 // Load data
 //
 
-$.getJSON(window.location.href + "query?filter=default&geocode=false&remap=true", function(records) { initialize(records); });
+$.getJSON(window.location.href + "query?filter=default&geocode=true&remap=true", function(records) { initialize(records); });
 
 //
 // Once data is loaded...
