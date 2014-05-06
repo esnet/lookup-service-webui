@@ -6,54 +6,56 @@ var services = [];
 var communities = [];
 var people = [];
 
-var filter = {"communities": [],
-              "search": ""};
+var filter = {
+    "communities": [],
+    "search": ""
+};
 
 var serviceTypes = {
-    "bwctl": {  "title": "BWCTL Server", 
-                "defaults": [ "bwctl server" ], 
-                "command": "bwctl -T iperf -t 20 -i 1 -f m -c <address>:<port>", 
+    "bwctl": {  "title": "BWCTL Server",
+                "defaults": [ "bwctl server" ],
+                "command": "bwctl -T iperf -t 20 -i 1 -f m -c <address>:<port>",
                 "action": "" },
-    "ndt": {    "title": "NDT Server", 
-                "defaults": [ "ndt server" ], 
-                "command": "web100clt -n <address> -ll", 
+    "ndt": {    "title": "NDT Server",
+                "defaults": [ "ndt server" ],
+                "command": "web100clt -n <address> -ll",
                 "action": "Test" },
-    "npad": {   "title": "NPAD Server", 
-                "defaults": [ "npad server" ], 
-                "command": "", 
+    "npad": {   "title": "NPAD Server",
+                "defaults": [ "npad server" ],
+                "command": "",
                 "action": "Test" },
-    "owamp": {  "title": "OWAMP Server", 
-                "defaults": [ "owamp server" ], 
-                "command": "owping  -c 10000 -i .01 <address>:<port>", 
+    "owamp": {  "title": "OWAMP Server",
+                "defaults": [ "owamp server" ],
+                "command": "owping  -c 10000 -i .01 <address>:<port>",
                 "action": "" },
-    "ma": {     "title": "MA", 
-                "types": {
-                    "bwctl": {  "title": "BWCTL MA", 
-                                "defaults": [ "perfsonarbuoy ma", "perfsonar-buoy ma" ], 
-                                "command": "", 
-                                "action": "Query" },
-                    "owamp": {  "title": "OWAMP MA", 
-                                "defaults": [ "perfsonarbuoy ma", "perfsonar-buoy ma" ], 
-                                "command": "", 
-                                "action": "Query" },
-                    "traceroute": { "title": 
-                                    "Traceroute MA", 
-                                    "defaults": [ "traceroute ma" ], 
-                                    "command": "", 
-                                    "action": "Query" }
-                }, 
-                "defaults": [ "perfsonar-buoy ma", "perfsonarbuoy ma", "traceroute ma" ], 
-                "command": "", 
-                "action": "Query" },
-    "ping": {   "title": "Ping Responder", 
-                "defaults": [ "ping responder" ], 
+    "ping": {   "title": "Ping Responder",
+                "defaults": [ "ping responder" ],
                 "command": "ping <address>",
-                "action": "" },
-    "traceroute": { 
-                "title": "Traceroute Responder", 
-                "defaults": [ "traceroute responder" ], 
-                "command": "traceroute <address>", 
-                "action": "" }
+                "action": "Ping" },
+    "traceroute": {
+                "title": "Traceroute Responder",
+                "defaults": [ "traceroute responder" ],
+                "command": "traceroute <address>",
+                "action": "Traceroute" },
+    "ma": {     "title": "MA",
+                "types": {
+                    "bwctl": {  "title": "BWCTL MA",
+                                "defaults": [ "perfsonarbuoy ma", "perfsonar-buoy ma" ],
+                                "command": "",
+                                "action": "Query" },
+                    "owamp": {  "title": "OWAMP MA",
+                                "defaults": [ "perfsonarbuoy ma", "perfsonar-buoy ma" ],
+                                "command": "",
+                                "action": "Query" },
+                    "traceroute": { "title":
+                                    "Traceroute MA",
+                                    "defaults": [ "traceroute ma" ],
+                                    "command": "",
+                                    "action": "Query" }
+                },
+                "defaults": [ "perfsonar-buoy ma", "perfsonarbuoy ma", "traceroute ma" ],
+                "command": "",
+                "action": "Query" }
 };
 
 //
@@ -65,24 +67,25 @@ var mapOptions = {
     "zoom": 2,
     "streetViewControl": false,
     "mapTypeId": google.maps.MapTypeId.ROADMAP,
-    "noClear": true    
+    "noClear": true
 }
 var map = new google.maps.Map($("#map-canvas").get(0), mapOptions);
+/*
 var geocoder = new google.maps.Geocoder();
 geocoder.geocode({ "address": "United States" }, function(results, status)
 {
     if ((status == google.maps.GeocoderStatus.OK) && (results[0].geometry) && (results[0].geometry.viewport))
         map.fitBounds(results[0].geometry.viewport);
 });
-google.maps.visualRefresh = true;
+*/
 
 var circleMarker = {
-    path: google.maps.SymbolPath.CIRCLE,
-    scale: 4.0,
-    fillColor: '#EF706C',
-    fillOpacity: 1,
-    strokeColor: '#E36C65',
-    strokeWeight: 1
+    "path": google.maps.SymbolPath.CIRCLE,
+    "scale": 4.0,
+    "fillColor": '#EF706C',
+    "fillOpacity": 1,
+    "strokeColor": '#E36C65',
+    "strokeWeight": 1
 };
 
 var activeMarker = null;
@@ -90,45 +93,45 @@ var infoWindow = null;
 var markers = {};
 
 //
-// Initialize Tree 
+// Initialize Tree
 //
 
 var expandedMap = {};
 function initTreeNodes() {
-    var treeNodes = []; 
-
+    var treeNodes = [];
+    
     for (var type in serviceTypes)
     {
         var children = [];
         if (serviceTypes[type]["types"])
             for (var subtype in serviceTypes[type]["types"])
-                children.push({ "title": serviceTypes[type]["types"][subtype]["title"], 
-                                "type": subtype, 
-                                "isFolder": true, 
+                children.push({ "title": serviceTypes[type]["types"][subtype]["title"],
+                                "type": subtype,
+                                "isFolder": true,
                                 "children": [] });
-
+        
         var title = serviceTypes[type]["title"];
         var expanded = false;
-
+        
         if (type in expandedMap) {
             expanded = expandedMap[type];
         } else {
             expandedMap[type] = false;
         }
-
-        treeNodes.push({ "title": title, 
-                         "type": type, 
+        
+        treeNodes.push({ "title": title,
+                         "type": type,
                          "expand": expanded,
-                         "isFolder": true, 
+                         "isFolder": true,
                          "children": children });
-    }   
+    }
     return treeNodes;
 }
 
-function initTree(treeNodes) { 
-    var tree = $("#tree").dynatree({ "onActivate": function(node) { onNodeActivate(node); }, 
+function initTree(treeNodes) {
+    var tree = $("#tree").dynatree({ "onActivate": function(node) { onNodeActivate(node); },
                                      "onExpand": function(state, node) { onNodeExpand(state, node); },
-                                     "children": treeNodes, 
+                                     "children": treeNodes,
                                      "debugLevel": 0 });
     return tree;
 }
@@ -139,38 +142,41 @@ var tree = initTree(treeNodes);
 // Initialize community select box
 //
 
-$("#communities").change(function() {
+$("#communities").change(function(event) {
     updateFilter();
-}) 
+})
 
 //
-// Initialize search 
+// Initialize search
 //
 
-var update = $("#update").click(function(event) {
+$("#update").click(function(event) {
     updateFilter();
 });
 
-$("#search").keypress(function(e) 
+$("#clear").click(function(event) {
+    clearFilter();
+	updateFilter();
+});
+
+$("#search").keypress(function(event)
 {
-    if (e.keyCode == 13) 
+    if (event.keyCode == 13)
     {
         updateFilter();
-        e.preventDefault();
+        event.preventDefault();
     }
 });
-$('#search').tooltip({
-    text: "Some sample text"
-})
 
 //
 // Load data
 //
 
-$.getJSON(window.location.href + "query?filter=default&geocode=true&remap=true", function(records) { initialize(records); });
+//$.getJSON(window.location.href + "query?filter=default&geocode=true&remap=true", function(records) { initialize(records); });
+$.getJSON(window.location.href + "query?filter=default&geocode=true&remap=false", function(records) { initialize(records); });
 
 //
-// Once data is loaded...
+// Initialize display
 //
 
 function initialize(records)
@@ -190,38 +196,44 @@ function initialize(records)
         if ((record["group-communities"]) && (record["group-communities"][0]))
             communities = communities.concat(record["group-communities"]);
     }
-
-    $("#info").html("Processing...");
-
+    
+    $("#status").html("Processing...");
+    
     for (var i = 0 ; i < services.length ; i++)
     {
         var service = services[i];
         services[i]["search"] = buildSearchString(service);
     }
-
+    
     updateFilter();
     rebuild();
     updateCommunities();
-
+    
     initialized = true;
 }
 
-function updateFilter() {
-    $("#info").html("Updating...");
+function clearFilter()
+{
+	$("#search").val("");
+	$("#communities option:not(:selected)").each(function(i, unselected) {
+		$(unselected).attr("selected", "true");
+	});
+}
 
+function updateFilter() {
+    $("#status").html("Updating...");
+    
     var searchString = $("#search").val();
     filter.search = searchString.toLowerCase();
-
-    var communities = []; 
-    $('#communities :selected').each(function(i, selected){ 
-        communities.push($(selected).text()); 
+    
+    var communities = [];
+    $('#communities option:selected').each(function(i, selected){
+        communities.push($(selected).text());
     });
     filter.communities = communities;
-
-    clearServiceInfo();
-    clearHostInfo() 
+    
     clearServiceMarkers();
-
+    
     rebuild();
 }
 
@@ -238,10 +250,10 @@ function buildSearchString(service) {
     var serviceName = service["service-name"] && service["service-name"][0] ? service["service-name"] : "";
     var hostName = service["service-locator"] && service["service-locator"][0] ? getAddressString(getHostname(service["service-locator"][0])): "";
     var host = getHost(service, hosts);
-
+    
     if (host) {
         var hostToolkitString = host["pshost-toolkitversion"] ? host["pshost-toolkitversion"] : "";
-
+        
         var iface = getInterface(host, interfaces);
         if (iface)
         {
@@ -250,7 +262,7 @@ function buildSearchString(service) {
                 speedString += "g";
         }
     }
-
+    
     return [serviceName, titleString, locationString, hostName, hostToolkitString, communitiesString, speedString].join(" ").toLowerCase();
 }
 
@@ -262,15 +274,15 @@ function intersect(firstArray, secondArray) {
     var result = [];
     var map = {};
     var val;
-    var i; 
-
+    var i;
+    
     //Make an associative array of the second array to
     //speed things up below
     var l2 = secondArray.length;
     for (i = 0; i < l2; i++) {
         map[secondArray[i]] = true;
     }
-
+    
     //Loop through first array and find what is in second array map
     var l1 = firstArray.length;
     for (i = 0; i < l1; i++) {
@@ -288,44 +300,44 @@ function intersect(firstArray, secondArray) {
 
 function filteredServices() {
     var filtered = [];
-
+    
     for (var i = 0; i < services.length; i++) {
         var matched = true;
         var service = services[i];
-
+        
         //Substring match the filter text string against the records searchFields string
         //If there's no searchString, match anyway.
-
+        
         var searchFields = service["search"].toLowerCase();
         if (filter.search && filter.search !== "" && searchFields.search(filter.search) == -1) {
             matched = false;
         }
-
+        
         //Only test the communities lists against each other if
         //  - the filter has less that all the communities possible to select (communities.length)
         //    since when we select ALL in the filter we want to match everything, even services with
         //    no communities listed. But if we select a specific filter we don't want to match services
         //    with no communities.
         //  - some type of filter is specified (at least one community is selected)
-
+        
         var groupCommunities = service["group-communities"] ? service["group-communities"] : [];
         if (filter.communities.length < communities.length) {
             if (filter.communities.length > 0 && intersect(filter.communities, groupCommunities).length == 0) {
                 matched = false;
             }
         }
-
+        
         if (matched)
             filtered.push(service);
     }
-
+    
     return filtered;
 }
 
-function rebuild() { 
+function rebuild() {
     $("#tree").dynatree("getRoot").removeChildren();
     treeNodes = initTreeNodes();
-    tree = initTree(treeNodes); 
+    tree = initTree(treeNodes);
     tree.dynatree("getTree").reload();
     var filtered = filteredServices();
     for (var i = 0 ; i < filtered.length ; i++)
@@ -340,10 +352,10 @@ function rebuild() {
             console.warn(error);
         }
     }
-
+    
     serviceNodeCounts();
-    $("#info").html("Showing: " + filtered.length + " of " + services.length + " services");
-
+    $("#status").html("Showing: " + filtered.length + " of " + services.length + " services");
+    
     updateTree();
     zoomToServiceMarkers();
 
@@ -354,18 +366,32 @@ function updateCommunities()
     communities = uniqueSort(communities);
     var options = $("#communities");
     for (var i = 0 ; i < communities.length ; i++)
-        options.append($("<option>", { "value": i }).text(communities[i]).attr("selected", "true"));
+        options.append($("<option>").attr("value", i).text(communities[i]).attr("selected", "true"));
 }
 
 function updateTree()
 {
     tree.dynatree("getTree").reload();
-    tree.dynatree("getRoot").sortChildren(null, true);
+    tree.dynatree("getRoot").sortChildren(function(a, b) {
+		if (a.data.isFolder && b.data.isFolder)
+			return 0;
+		title_a = a.data.title.toLowerCase();
+		title_b = b.data.title.toLowerCase();
+		if (isIPAddress(title_a))
+			if (isIPAddress(title_b))
+				return title_a > title_b ? 1 : title_a < title_b ? -1 : 0;
+			else
+				return 1;
+		else if (isIPAddress(title_b))
+			return -1;
+		else
+			return title_a > title_b ? 1 : title_a < title_b ? -1 : 0;
+	}, true);
 }
 
 function clearServiceMarkers()
 {
-    for (var latlong in markers) 
+    for (var latlong in markers)
     {
         var marker = markers[latlong];
         marker.setMap(null);
@@ -406,33 +432,33 @@ function addServiceMarker(service)
 function zoomToServiceMarkers()
 {
     map.setZoom(1);
-
+    
     var bounds = new google.maps.LatLngBounds();
-    for (var latlong in markers) 
+    for (var latlong in markers)
     {
         var marker = markers[latlong];
         var pos = marker.getPosition();
-
+        
         //don't zoom down to Antarctica
         if (pos.lat() < 70 &&  pos.lat() > -70)
             bounds.extend (marker.getPosition());
     }
-
+    
     var zoom = 2;
-
+    
     var zoomOut = false;
     if (!bounds.isEmpty())
         map.fitBounds (bounds);
     else
         zoomOut = true;
-
+    
     var currentZoom = map.getZoom();
-
+    
     if (zoomOut) {
         if (currentZoom < 4)
             zoom = 4;
     }
-    else 
+    else
     {
         zoom = currentZoom;
         if (currentZoom > 6) {
@@ -442,10 +468,10 @@ function zoomToServiceMarkers()
             zoom = 2;
         }
     }
-
+    
     map.setZoom(zoom);
-
-    for (latlong in markers) 
+    
+    for (latlong in markers)
     {
         marker = markers[latlong];
         marker.setMap(map);
@@ -504,7 +530,7 @@ function serviceNodeCounts()
         }
         //If there's any children then we display a child number
         if (treeNode.children.length)
-            treeNode.title = treeNode.title + "<span class='badge' pull-right>" + childCount + "</span>";
+            treeNode.title = treeNode.title + "&nbsp;<span class='badge'>" + childCount + "</span>";
     }
 }
 
@@ -515,19 +541,19 @@ function serviceNodeChildCount(node)
     }
     if (!node.children || node.children.length == 0) //leaf node
         return 1;
-
+    
     var childCount = 0;
-    if (node.children) 
+    if (node.children)
     {
         for (var childIndex = 0; childIndex < node.children.length; childIndex++)
         {
             childCount += serviceNodeChildCount(node.children[childIndex]);
-        } 
+        }
     }
     //If there's any children then we display a child number
     if (node.children.length)
         node.title = node.title + "<span class='badge' pull-right>" + childCount + "</span>";
-
+    
     return childCount;
 }
 
@@ -541,9 +567,7 @@ function onMarkerActivate(marker)
     {
         var type_a = a["service-type"][0];
         var type_b = b["service-type"][0];
-        if (type_a < type_b) return -1;
-        else if (type_a > type_b) return 1;
-        else return 0;
+        return type_a > type_b ? 1 : type_a < type_b ? -1 : 0;
     };
     for (var i = 0 ; i < marker["records"]["services"].length ; i++)
     {
@@ -575,7 +599,7 @@ function onMarkerActivate(marker)
         }
     }
     content += "</dl>";
-
+    
     if (infoWindow) {
         infoWindow.close();
     }
@@ -601,7 +625,7 @@ function onNodeActivate(node)
     var service = node.data["records"][0];
     var host = getHost(service, hosts);
     var latlng = getLatLng(service, host);
-
+    
     if ((latlng) && (markers[latlng]) && (markers[latlng])) {
         onMarkerActivate(markers[latlng]);
     }
@@ -610,7 +634,7 @@ function onNodeActivate(node)
         if (infoWindow)
             infoWindow.close();
     }
-
+    
     showServiceInfo(service);
     showHostInfo(host);
 }
@@ -644,18 +668,18 @@ function showServiceInfo(service)
         $("#service-name").html(service["service-name"].join("<br />"));
     else
         $("#service-name").html("");
-
+    
     $("#service-locator").html("");
     if (service["service-locator"]) {
         for (var s = 0; s < service["service-locator"].length; s++) {
             var address = service["service-locator"][s];
-            $("#service-locator").append("<a href='" + getAddressLink(address) + "' target='_blank'>" + 
+            $("#service-locator").append("<a href='" + getAddressLink(address) + "' target='_blank'>" +
                 getAddressString(address) + "</a><br />");
         }
     }
     else
         $("#service-locator").html("");
-
+    
     var locationString = getLocationString(service);
     var latlngString = getLatLngString(service);
     if ((locationString) && (latlngString))
@@ -673,7 +697,7 @@ function showServiceInfo(service)
     $("#service-command-line").html(getCommandLine(service).join("<br />"));
 }
 
-function clearServiceInfo() 
+function clearServiceInfo()
 {
     $("#service-name").empty();
     $("#service-location").empty();
@@ -685,9 +709,9 @@ function clearServiceInfo()
 function getAddressLink(address)
 {
     var url;
-
+    
     //Fix URLs that start with tcp://
-    if (address.indexOf("tcp://") != -1 || address.indexOf("http://") != -1) 
+    if (address.indexOf("tcp://") != -1 || address.indexOf("http://") != -1)
     {
         var parts = address.split(':');
         if (parts.length >= 2) {
@@ -700,13 +724,13 @@ function getAddressLink(address)
     } else {
         url = "http://" + address + "/";
     }
-
+    
     return url;
 }
 
 function getAddressString(address)
 {
-    if (address.indexOf("tcp://") != -1 || address.indexOf("http://") != -1) 
+    if (address.indexOf("tcp://") != -1 || address.indexOf("http://") != -1)
     {
         var parts = address.split(':');
         if (parts.length >= 2) {
@@ -720,29 +744,29 @@ function showHostInfo(host)
 {
     if (!host)
         host = { "type": "host" };
-
+    
     if (host["host-name"])
         $("#host-name").html(host["host-name"].join("<br />"));
     else
         $("#host-name").html("");
-
+    
     //
     // Hardware section
     //
-
+    
     var hardwareString = "";
     var cpuString = getCPUString(host);
     var memoryString = getMemoryString(host);
     var speedString = getTrafficRate(host);
-
+    
     if (cpuString)
         hardwareString += "CPU: " + cpuString;
-
+    
     if (memoryString) {
         hardwareString += hardwareString ? "<br>" : "";
         hardwareString += "Memory: " + memoryString;
     }
-
+    
     if (speedString) {
         hardwareString += hardwareString ? "<br>" : "";
         hardwareString += "NIC Speed: " + speedString;
@@ -752,7 +776,7 @@ function showHostInfo(host)
     //
     // System Info
     //
-
+    
     var osString = getOSString(host);
     var kernelString = getKernelString(host);
     if ((osString) && (kernelString))
@@ -763,31 +787,31 @@ function showHostInfo(host)
         $("#host-os").html("Kernel: " + kernelString);
     else
         $("#host-os").html("");
-
+    
     var contact = getContactInfo(host);
     if (contact)
         $("#host-os").append("<br>" + "Contact: " + contact);
-
+    
     //
     // Toolkit version
     //
-
+    
     if (host["pshost-toolkitversion"])
         $("#host-version").html(host["pshost-toolkitversion"].join("<br />"));
     else
         $("#host-version").html("");
-
+    
     //
     // Communities
     //
-
+    
     if (host["group-communities"])
         $("#host-communities").html(host["group-communities"].sort().join("<br />"));
     else
         $("#host-communities").html("");
 }
 
-function clearHostInfo() 
+function clearHostInfo()
 {
     $("#host-name").empty();
     $("#host-hardware").empty();
@@ -816,7 +840,7 @@ function getCommandLine(service)
     {
         var address = getAddressString(service["service-locator"][i]);
         var port = getURLParser(service["service-locator"][i]).port;
-
+        
         commands.push(format.replace("<address>", address).replace(":<port>", port === "" ? "" : ":" + port));
     }
     return commands;
@@ -859,20 +883,20 @@ function getInterface(host, interfaces)
         if ($.inArray(iface["uri"], host["host-net-interfaces"]) >= 0)
             return iface;
     }
-
+    
     return null;
 }
 
 function getAdministrators(host, people)
 {
     var result = [];
-    var administrators = host["host-administrators"]; 
+    var administrators = host["host-administrators"];
     if (administrators) {
         for (var j = 0 ; j < administrators.length; j++) {
             var administrator = administrators[j];
             for (var i = 0 ; i < people.length ; i++)
             {
-                var person = people[i]; 
+                var person = people[i];
                 if (person["uri"] == administrator)
                     result.push(person);
             }
@@ -951,7 +975,7 @@ function getContactInfo(host)
         if (adminList[0]) {
             name = adminList[0]["person-name"] ? adminList[0]["person-name"][0] : null;
             email = adminList[0]["person-emails"] ? adminList[0]["person-emails"][0] : null;
-
+            
             if (name && email)
                 return name + " (" + email + ")";
             else if (email)
@@ -1234,7 +1258,7 @@ function getLatLngString(record)
             latlngString += "(" + (parseFloat(record["location-latitude"][0])).toFixed(4) + ", " + (parseFloat(record["location-longitude"][0])).toFixed(4) + ")";
     return latlngString;
 }
- 
+
 function getLocationString(record)
 {
     var locationString = "";
@@ -1285,56 +1309,56 @@ function getOSString(record)
 
 function getStateString(code) {
     switch (code.toUpperCase()) {
-       case "AL": code = "Alabama"; break;        
-       case "AK": code = "Alaska"; break;         
-       case "AZ": code = "Arizona"; break;        
-       case "AR": code = "Arkansas"; break;       
-       case "CA": code = "California"; break;     
-       case "CO": code = "Colorado"; break;       
-       case "CT": code = "Connecticut"; break;    
-       case "DE": code = "Delaware"; break;       
-       case "FL": code = "Florida"; break;        
-       case "GA": code = "Georgia"; break;        
-       case "HI": code = "Hawaii"; break;         
-       case "ID": code = "Idaho"; break;          
-       case "IL": code = "Illinois"; break;       
-       case "IN": code = "Indiana"; break;        
-       case "IA": code = "Iowa"; break;           
-       case "KS": code = "Kansas"; break;         
-       case "KY": code = "Kentucky"; break;       
-       case "LA": code = "Louisiana"; break;      
-       case "ME": code = "Maine"; break;          
-       case "MD": code = "Maryland"; break;       
-       case "MA": code = "Massachusetts"; break;  
-       case "MI": code = "Michigan"; break;       
-       case "MN": code = "Minnesota"; break;      
-       case "MS": code = "Mississippi"; break;    
-       case "MO": code = "Missouri"; break;       
-       case "MT": code = "Montana"; break;        
-       case "NE": code = "Nebraska"; break;       
-       case "NV": code = "Nevada"; break;         
-       case "NH": code = "New Hampshire"; break;  
-       case "NJ": code = "New Jersey"; break;     
-       case "NM": code = "New Mexico"; break;     
-       case "NY": code = "New York"; break;       
-       case "NC": code = "North Carolina"; break; 
-       case "ND": code = "North Dakota"; break;   
-       case "OH": code = "Ohio"; break;           
-       case "OK": code = "Oklahoma"; break;       
-       case "OR": code = "Oregon"; break;         
-       case "PA": code = "Pennsylvania"; break;   
-       case "RI": code = "Rhode Island"; break;   
-       case "SC": code = "South Carolina"; break; 
-       case "SD": code = "South Dakota"; break;   
-       case "TN": code = "Tennessee"; break;      
-       case "TX": code = "Texas"; break;          
-       case "UT": code = "Utah"; break;           
-       case "VT": code = "Vermont"; break;        
-       case "VA": code = "Virginia"; break;       
-       case "WA": code = "Washington"; break;     
-       case "WV": code = "West Virginia"; break;  
-       case "WI": code = "Wisconsin"; break;      
-       case "WY": code = "Wyoming"; break;        
+       case "AL": code = "Alabama"; break;
+       case "AK": code = "Alaska"; break;
+       case "AZ": code = "Arizona"; break;
+       case "AR": code = "Arkansas"; break;
+       case "CA": code = "California"; break;
+       case "CO": code = "Colorado"; break;
+       case "CT": code = "Connecticut"; break;
+       case "DE": code = "Delaware"; break;
+       case "FL": code = "Florida"; break;
+       case "GA": code = "Georgia"; break;
+       case "HI": code = "Hawaii"; break;
+       case "ID": code = "Idaho"; break;
+       case "IL": code = "Illinois"; break;
+       case "IN": code = "Indiana"; break;
+       case "IA": code = "Iowa"; break;
+       case "KS": code = "Kansas"; break;
+       case "KY": code = "Kentucky"; break;
+       case "LA": code = "Louisiana"; break;
+       case "ME": code = "Maine"; break;
+       case "MD": code = "Maryland"; break;
+       case "MA": code = "Massachusetts"; break;
+       case "MI": code = "Michigan"; break;
+       case "MN": code = "Minnesota"; break;
+       case "MS": code = "Mississippi"; break;
+       case "MO": code = "Missouri"; break;
+       case "MT": code = "Montana"; break;
+       case "NE": code = "Nebraska"; break;
+       case "NV": code = "Nevada"; break;
+       case "NH": code = "New Hampshire"; break;
+       case "NJ": code = "New Jersey"; break;
+       case "NM": code = "New Mexico"; break;
+       case "NY": code = "New York"; break;
+       case "NC": code = "North Carolina"; break;
+       case "ND": code = "North Dakota"; break;
+       case "OH": code = "Ohio"; break;
+       case "OK": code = "Oklahoma"; break;
+       case "OR": code = "Oregon"; break;
+       case "PA": code = "Pennsylvania"; break;
+       case "RI": code = "Rhode Island"; break;
+       case "SC": code = "South Carolina"; break;
+       case "SD": code = "South Dakota"; break;
+       case "TN": code = "Tennessee"; break;
+       case "TX": code = "Texas"; break;
+       case "UT": code = "Utah"; break;
+       case "VT": code = "Vermont"; break;
+       case "VA": code = "Virginia"; break;
+       case "WA": code = "Washington"; break;
+       case "WV": code = "West Virginia"; break;
+       case "WI": code = "Wisconsin"; break;
+       case "WY": code = "Wyoming"; break;
        default:   break;
     }
     return code;
@@ -1390,14 +1414,14 @@ function getTitle(record)
         }
         else if (type == "service")
         {
-            if(record["service-display-title"]){
-                return record["service-display-title"];
+            if(record["service-hostname"])
+            {
+                return record["service-hostname"];
             }
             for (type in serviceTypes)
             {
                 var address = record["service-locator"][0];
                 return getAddressString(address).toLowerCase();
-
                 /*
                 if ($.inArray(record["service-name"][0].toLowerCase(), serviceTypes[type]["defaults"]) >= 0)
                 {
@@ -1418,7 +1442,6 @@ function getTitle(record)
                     }
                 }
                 */
-
             }
             if ((record["service-type"]) && record["service-type"][0])
                 return $.trim(record["service-name"][0].replace(record["service-type"][0] + ":", "").replace(getServiceTypeTitle(record), ""));
@@ -1426,6 +1449,14 @@ function getTitle(record)
         return record[type + "-name"][0];
     }
     return null;
+}
+
+function isIPAddress(string)
+{
+	var IPV4Format = "^\\[?([\\d]{1,3}\\.){3}[\\d]{1,3}\\]?(:\\d*){0,1}$";
+	var IPV6Format = "^\\[?([\\da-fA-F]{0,4}:){3,7}[\\da-fA-F]{0,4}\\]?(:\\d*){0,1}$";
+	var regex = new RegExp(IPV4Format + "|" + IPV6Format);
+	return regex.test(string);
 }
 
 function getURLParser(url)
@@ -1447,4 +1478,14 @@ function uniqueSort(array)
         }
     }
     return arr.sort();
+}
+
+filterMappings = {
+    
+}
+
+function getFilteredServices()
+{
+    filteredServices = []
+    filter["search"]
 }

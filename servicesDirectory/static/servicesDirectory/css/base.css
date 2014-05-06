@@ -53,7 +53,7 @@ h1, h2, h3, h4, h5, h6 {
 	padding: 5px 0px 5px;
 }
 .content {
-	
+
 }
 .content-group {
 	border: 0px !important;
@@ -62,17 +62,25 @@ h1, h2, h3, h4, h5, h6 {
 .content-toggle {
 	padding: 0px 0px 0px !important;
 }
+.info {
+	font-size: 75%;
+}
 .separator-left {
 	border-left: 4px solid #eee;
 	margin-left: 0;
 	padding-left: 20px;
 }
-.fill {
+.fill-horizontal {
+	width: 100%;
+}
+.fill-vertical {
 	height: 100%;
 }
 
-.fill-width {
-	width: 100%;
+
+dynatree-node {
+	font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+	font-size: 14px;
 }
 
 .simplebox
@@ -84,10 +92,6 @@ h1, h2, h3, h4, h5, h6 {
   box-shadow:none !important;
   background-image:none !important;
   background: #FFF !important;
-}
-
-.info {
-	font-size:75%;
 }
 
 #search {
@@ -105,9 +109,4 @@ h1, h2, h3, h4, h5, h6 {
 	vertical-align: baseline;
 	background-color: rgba(221, 221, 221, 255);
 	margin-left: 10px;
-}
-
-span.dynatree-node {
-	font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
-	font-size: 14px;
 }

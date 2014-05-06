@@ -8,7 +8,7 @@ _concurrency_enabled=False
 try:
     import concurrent.futures
     _MAX_CONCURRENT_REQUESTS = 4
-    _concurrency_enabled=True
+    _concurrency_enabled = True
 except ImportError:
     pass
 
@@ -40,9 +40,12 @@ def query(query = "", hosts = _ls_hosts):
                 if response is None:
                     continue
                 ls_host = response.url.split("lookup/records")[0]
-                for record in response.json():
-                    record["ls-host"] = ls_host
-                    json.append(record)
+                try:
+                    for record in response.json():
+                        record["ls-host"] = ls_host
+                        json.append(record)
+                except:
+                    pass
     else:
         for url in urls:
             response = get_url(url)

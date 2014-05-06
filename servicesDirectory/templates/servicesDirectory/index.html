@@ -9,87 +9,82 @@
 {% block assets_pre %}
 	<link rel="stylesheet" type="text/css" href="{% static "css/dynatree/skin-lion/ui.dynatree.css" %}">
 	<style type="text/css">
-		#browser { max-height: 100%; overflow: auto; }
-		#info { max-height: 100%; overflow: auto; }
-		.map-canvas label { width: auto; display: inline; }
-		.map-canvas img { max-width: none; }
+		#browser-accordion { max-height: 100%; overflow: auto; }
+		#info-accordion { max-height: 100%; overflow: auto; }
+		#left-pane { padding-bottom: 10px; }
+		#right-pane { padding-bottom: 10px; }
+		.badge { font-weight: normal; }
 		.map-canvas { height: 600px; }
-		.tree { height: 400px; }
+		.map-canvas img { max-width: none; }
+		.map-canvas label { width: auto; display: inline; }
 		.table { margin-bottom: 0px; }
+		.table-info { max-height: 60px; overflow: auto; }
+		.tree { height: 400px; }
 	</style>
 {% endblock %}
 
-{% block header %}<h3>perfSONAR Global Service and Data View</h3>{% endblock %}
+{% block header %}<h3>Lookup Service Directory</h3>{% endblock %}
 
 {% block content %}
-
-<!-- Modal -->
-<div class="modal fade" id="help" tabindex="-1" role="dialog" aria-labelledby="helpLabel" aria-hidden="true">
-  <div class="modal-dialog">
-	<div class="modal-content">
-	  <div class="modal-header">
-		<button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
-		<h4 class="modal-title" id="helpLabel">Filter help</h4>
-	  </div>
-	  <div class="modal-body">
-
-		<h5>Text Filter</h5>
-		The text filter further refines the result of the communities filter. It does a substring search across many data
-		fields. Note that currently spaces etc have no special meaning, so for best results use a single term. Search is case insensitive.
-
-		Searched fields: 
-		<ul>
-			<li>title ("Fermilab")</li>
-			<li>location (City ("Berkeley"), State ("Minnesota"), Country ("Canada").</li>
-			<li>host ("psonar3.fnal.gov")</li>
-			<li>tool kit version ("3.3.1")</li>
-			<li>NIC speed ("10G")</li>
-			<li>community ("internet2")</li>
-		</ui>
-
-	  </div>
-	  <div class="modal-footer">
-		<button type="button" class="btn btn-default" data-dismiss="modal">Done</button>
-	  </div>
-	</div><!-- /.modal-content -->
-  </div><!-- /.modal-dialog -->
-</div><!-- /.modal -->
-
-		<div class="row-fluid fill">
-			<div class="span3 fill">
-				<div id="browser">
-					<h4 class="content-header">Browser</h4>
-					<div class="content">
-						<strong>Communities Filter:</strong>&nbsp;<br>
-						<div class="info muted">Select one or more communities to refine results.</div>
-						<div class="filter"><select multiple="true" size="6" id="communities" class="fill-width"></select></div>
-						
-						<strong>Text Filter:</strong>&nbsp;<br>
-						<span class="info muted">Further refine results by text matching across multiple fields.</span>
-						<span><button class="btn btn-default btn-lg simplebox" data-toggle="modal" data-target="#help">
-						  <i class="icon-question-sign"></i>
-						</button>
-						</span><br>
-						
-						<span><input type="search" id="search"></span>
-						<span><button class="btn btn-primary" id="update">Filter</button></span>
-						
-						<hr>
-						<div id="info" class="muted">Loading...</div>
-						<hr>
-						<div class="tree" id="tree"></div>
+		<div class="row-fluid fill-vertical">
+			<div class="span3 fill-vertical" id="left-pane">
+				<div class="accordion" id="browser-accordion">
+					<div class="accordion-group content-group" id="browser-section">
+						<div class="accordion-heading">
+							<a class="accordion-toggle content-toggle" data-toggle="collapse" href="#collapse-browser">
+								<h4 class="content-header">Browser</h4>
+							</a>
+						</div>
+						<div class="accordion-body collapse in" id="collapse-browser">
+							<div class="content">
+								<div class="tree" id="tree"></div>
+								<div class="muted" id="status">Loading...</div>
+							</div>
+						</div>
+					</div>
+					<div class="accordion-group content-group" id="search-section">
+						<div class="accordion-heading">
+							<a class="accordion-toggle content-toggle" data-toggle="collapse" href="#collapse-search">
+								<h4 class="content-header">Search</h4>
+							</a>
+						</div>
+						<div class="accordion-body collapse in" id="collapse-search">
+							<div class="content">
+								<span class="info muted">Further refine results by text matching across multiple fields.</span>
+								<span><button class="btn btn-default btn-lg simplebox" data-toggle="modal" data-target="#text-filter-info">
+									<span class="icon-info-sign"></span>
+								</button>
+								</span><br>
+								<input type="search" id="search">
+								<button class="btn btn-primary" id="update">Search</button>
+								<button class="btn" id="clear">Show All</button>
+							</div>
+						</div>
+					</div>
+					<div class="accordion-group content-group" id="communities-section">
+						<div class="accordion-heading">
+							<a class="accordion-toggle content-toggle" data-toggle="collapse" href="#collapse-communities">
+								<h4 class="content-header">Communities</h4>
+							</a>
+						</div>
+						<div class="accordion-body collapse" id="collapse-communities">
+							<div class="content">
+								<div class="info muted">Select one or more communities to refine results.</div>
+								<div class="filter"><select multiple="true" size="6" id="communities" class="fill-horizontal"></select></div>
+							</div>
+						</div>
 					</div>
 				</div>
 			</div>
-			<div class="span9 separator-left fill">
-				<div class="accordion" id="info">
+			<div class="span9 separator-left fill-vertical" id="right-pane">
+				<div class="accordion" id="info-accordion">
 					<div class="accordion-group content-group" id="service-info">
 						<div class="accordion-heading">
-							<a class="accordion-toggle content-toggle" data-toggle="collapse" href="#collapseInfo1">
+							<a class="accordion-toggle content-toggle" data-toggle="collapse" href="#collapse-service-info">
 								<h4 class="content-header">Service Information</h4>
 							</a>
 						</div>
-						<div class="accordion-body collapse in" id="collapseInfo1">
+						<div class="accordion-body collapse in" id="collapse-service-info">
 							<div class="content">
 								<table class="table table-bordered">
 									<tr>
@@ -99,11 +94,11 @@
 										<th>Communities</th>
 										<th>Example Command-Line</th>
 									</tr><tr>
-										<td id="service-name"></td>
-										<td id="service-locator"></td>
-										<td id="service-location"></td>
-										<td id="service-communities"></td>
-										<td id="service-command-line"></td>
+										<td><div class="table-info" id="service-name"></div></td>
+										<td><div class="table-info" id="service-locator"></div></td>
+										<td><div class="table-info" id="service-location"></div></td>
+										<td><div class="table-info" id="service-communities"></div></td>
+										<td><div class="table-info" id="service-command-line"></div></td>
 									</tr>
 								</table>
 							</div>
@@ -111,11 +106,11 @@
 					</div>
 					<div class="accordion-group content-group" id="host-info">
 						<div class="accordion-heading">
-							<a class="accordion-toggle content-toggle" data-toggle="collapse" href="#collapseInfo2">
+							<a class="accordion-toggle content-toggle" data-toggle="collapse" href="#collapse-host-info">
 								<h4 class="content-header">Host Information</h4>
 							</a>
 						</div>
-						<div class="accordion-body collapse in" id="collapseInfo2">
+						<div class="accordion-body collapse in" id="collapse-host-info">
 							<div class="content">
 								<table class="table table-bordered">
 									<tr>
@@ -125,11 +120,11 @@
 										<th>Toolkit Version</th>
 										<th>Communities</th>
 									</tr><tr>
-										<td id="host-name"></td>
-										<td id="host-hardware"></td>
-										<td id="host-os"></td>
-										<td id="host-version"></td>
-										<td id="host-communities"></td>
+										<td><div class="table-info" id="host-name"></div></td>
+										<td><div class="table-info" id="host-hardware"></div></td>
+										<td><div class="table-info" id="host-os"></div></td>
+										<td><div class="table-info" id="host-version"></div></td>
+										<td><div class="table-info" id="host-communities"></div></td>
 									</tr>
 								</table>
 							</div>
@@ -137,17 +132,40 @@
 					</div>
 					<div class="accordion-group content-group" id="service-map">
 						<div class="accordion-heading">
-							<a class="accordion-toggle content-toggle" data-toggle="collapse" href="#collapseMap">
+							<a class="accordion-toggle content-toggle" data-toggle="collapse" href="#collapse-map">
 								<h4 class="content-header">Service Map</h4>
 							</a>
 						</div>
-						<div class="accordion-body collapse in" id="collapseMap">
+						<div class="accordion-body collapse in" id="collapse-map">
 							<div class="content">
 								<div class="map-canvas" sytle="height: 1000px" id="map-canvas"></div>
 							</div>
 						</div>
 					</div>
 				</div>
+			</div>
+		</div>
+		<div class="modal fade" id="text-filter-info" tabindex="-1" role="dialog">
+			<div class="modal-header">
+				<button type="button" class="close" data-dismiss="modal">&times;</button>
+				<h4>Text Filter</h4>
+			</div>
+			<div class="modal-body">
+				The text filter further refines the result of the communities filter. It does a substring search across many data
+				fields. Note that currently spaces etc have no special meaning, so for best results use a single term. Search is case insensitive.
+				<br>
+				Searched fields:
+				<ul>
+					<li>title ("Fermilab")</li>
+					<li>location (City ("Berkeley"), State ("Minnesota"), Country ("Canada").</li>
+					<li>host ("psonar3.fnal.gov")</li>
+					<li>tool kit version ("3.3.1")</li>
+					<li>NIC speed ("10G")</li>
+					<li>community ("internet2")</li>
+				</ui>
+			</div>
+			<div class="modal-footer">
+				<button type="button" class="btn btn-default" data-dismiss="modal">Done</button>
 			</div>
 		</div>
 {% endblock %}

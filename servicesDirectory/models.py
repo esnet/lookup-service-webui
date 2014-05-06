@@ -11,20 +11,20 @@ from IPy import IP
 from servicesDirectory import settings
 from servicesDirectory import simplels_client
 
-_concurrency_enabled=False
+_concurrency_enabled = False
 try:
     import concurrent.futures
-    _MAX_CONCURRENT_REQUESTS = 128
-    _concurrency_enabled=True
+    _MAX_CONCURRENT_REQUESTS = 16
+    _concurrency_enabled = True
 except ImportError:
     pass
 
-_geocoder_enabled=False
+_geocoder_enabled = False
 try:
     from pygeocoder import Geocoder
     from pygeolib import GeocoderResult
     _geocoder = None
-    _geocoder_enabled=True
+    _geocoder_enabled = True
 except ImportError:
     pass
 
@@ -70,7 +70,7 @@ def cache_set_records(cache_key, records, timeout = settings.LS_CACHE_TIMEOUT):
     if len(records) == 0:
         cache.set(cache_key + ".0", records)
     else:
-        chunks = int(math.ceil(len(records) / float(max_records)))
+        chunks = int(math.ceil(len(records) / float(max_records))) + 1
         for i in range(0, chunks):
             cache.set(cache_key + "." + str(i), records[i * max_records : (i + 1) * max_records], timeout)
 
@@ -98,28 +98,33 @@ def cache_get_records(cache_key):
 # Record Filtering
 ##############################
 def filter_default(records):
+    filtered = []
     for record in records:
         record_type = record["type"][0]
-        if record_type != "pstest":
-            if record_type == "service":
-                service_locators = record.get("service-locator", [])
-                for locator in service_locators:
-                    service_hostname = urlparse(locator).hostname
-                    if service_hostname is None:
-                        service_hostname = locator
-                    elif service_hostname.startswith('['):
-                        service_hostname = locator[(locator.find('[')+1):locator.find(']')]
-                    try:
-                        ip_form = IP(service_hostname)
-                        if(ip_form.iptype() == 'PRIVATE'):
-                            records.remove(record)
-                            break
-                    except:
-                        pass
-                record.pop("ma-tests", None)
-                record.pop("psservice-eventtypes", None)
-            record.pop("ttl", None)
-            record.pop("expires", None)
+        if record_type == "pstest":
+            filtered.append(record)
+            continue
+        elif record_type == "service":
+            service_locators = record.get("service-locator", [])
+            for locator in service_locators:
+                hostname = urlparse(locator).hostname
+                if hostname is None:
+                    hostname = locator
+                try:
+                    ip_form = IP(hostname)
+                    if ip_form.iptype() == 'PRIVATE':
+                        service_locators.remove(locator)
+                except:
+                    pass
+            if not service_locators:
+                filtered.append(record)
+                continue
+            record.pop("ma-tests", None)
+            record.pop("psservice-eventtypes", None)
+        record.pop("ttl", None)
+        record.pop("expires", None)
+    for record in filtered:
+        records.remove(record)
     return records
 
 ##############################
@@ -177,13 +182,12 @@ def geocode_record(record):
             record["location-longitude"] = [ str(result.coordinates[1]) ]
 
 def get_geocoder():
-    if _geocoder:
-        return _geocoder
-    else:
+    if not _geocoder:
         if settings.GEOCODE_API_PRIVATE_KEY and settings.GEOCODE_API_CLIENT_ID:
-            return Geocoder(settings.GEOCODE_API_CLIENT_ID, settings.GEOCODE_API_PRIVATE_KEY)
+            _geocoder = Geocoder(settings.GEOCODE_API_CLIENT_ID, settings.GEOCODE_API_PRIVATE_KEY)
         else:
-            return Geocoder
+            _geocoder = Geocoder
+    return _geocoder
 
 def geocode(query):
     result = {}
@@ -243,8 +247,7 @@ def remap_records(records):
     def remap_interface_helper(interface):
         remap_interface(interface, hosts, interfaces)
     def remap_service_helper(service):
-        pass
-        #remap_service(service, hosts, interfaces)
+        remap_service(service, hosts, interfaces)
     if _concurrency_enabled:
         with concurrent.futures.ThreadPoolExecutor(max_workers = _MAX_CONCURRENT_REQUESTS) as pool:
             list(pool.map(remap_interface_helper, interfaces))
@@ -270,19 +273,12 @@ def remap_interface(interface, hosts, interfaces = []):
 def remap_service(service, hosts, interfaces = []):
     service_locators = service.get("service-locator", [])
     for locator in service_locators:
-        service_hostname = urlparse(locator).hostname
-        if service_hostname is None:
-            service_hostname = locator
-        elif service_hostname.startswith('['):
-            service_hostname = locator[(locator.find('[')+1):locator.find(']')]
+        hostname = urlparse(locator).hostname
+        if hostname is None:
+            hostname = locator
         try:
-            from datetime import datetime
-            startTime = datetime.now()
-            ip_form = IP(service_hostname)
-            service["test"] = socket.gethostbyaddr(ip_form.strNormal())[0]
-            elapsed = (datetime.now() - startTime).microseconds
-            if elapsed > 1000:
-                print "Elapsed: " + str(elapsed) + "Locator: " + locator
+            ip_form = IP(hostname)
+            service["service-hostname"] = socket.gethostbyaddr(ip_form.strNormal())[0]
             break
         except:
             pass
@@ -304,15 +300,16 @@ def get_host(record, hosts, interfaces = []):
             if record["uri"] in host.get("host-net-interfaces", []):
                 return host
         interface_addresses = record.get("interface-addresses", [])
-        if interface_addresses:
-            for address in interface_addresses:
-                hostname = urlparse(address).hostname
-                for host in hosts:
-                    if hostname in host.get("host-name", []) or address in host.get("host-name", []):
-                        return host
+        for address in interface_addresses:
+            hostname = urlparse(address).hostname
+            if hostname is None:
+                hostname = address
+            for host in hosts:
+                if hostname in host.get("host-name", []):
+                    return host
     elif record_type == "service":
         service_hosts = record.get("service-host", [])
-        if service_hosts and service_hosts[0]:
+        if service_hosts:
             for host in hosts:
                 if host["uri"] in service_hosts:
                     return host
@@ -320,11 +317,13 @@ def get_host(record, hosts, interfaces = []):
         if service_locators:
             for locator in service_locators:
                 hostname = urlparse(locator).hostname
+                if hostname is None:
+                    hostname = locator
                 for host in hosts:
-                    if hostname in host.get("host-name", []) or locator in host.get("host-name", []):
+                    if hostname in host.get("host-name", []):
                         return host
                 for interface in interfaces:
-                    if hostname in interface.get("interface-addresses", []) or locator in interface.get("interface-addresses", []):
+                    if hostname in interface.get("interface-addresses", []):
                         host = get_host(interface, hosts)
                         if host is not None:
                             return host
