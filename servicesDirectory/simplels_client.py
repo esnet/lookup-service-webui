@@ -40,12 +40,9 @@ def query(query = "", hosts = _ls_hosts):
                 if response is None:
                     continue
                 ls_host = response.url.split("lookup/records")[0]
-                try:
-                    for record in response.json():
-                        record["ls-host"] = ls_host
-                        json.append(record)
-                except:
-                    pass
+                for record in response.json():
+                    record["ls-host"] = ls_host
+                    json.append(record)
     else:
         for url in urls:
             response = get_url(url)

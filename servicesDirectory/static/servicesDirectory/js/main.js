@@ -27,7 +27,7 @@ var serviceTypes = {
     "owamp": {  "title": "OWAMP Server",
                 "defaults": [ "owamp server" ],
                 "command": "owping  -c 10000 -i .01 <address>:<port>",
-                "action": "" },
+                "action": "Ping" },
     "ping": {   "title": "Ping Responder",
                 "defaults": [ "ping responder" ],
                 "command": "ping <address>",
@@ -39,14 +39,14 @@ var serviceTypes = {
                 "action": "Traceroute" },
     "ma": {     "title": "MA",
                 "types": {
-                    "bwctl": {  "title": "BWCTL MA",
-                                "defaults": [ "perfsonarbuoy ma", "perfsonar-buoy ma" ],
-                                "command": "",
-                                "action": "Query" },
-                    "owamp": {  "title": "OWAMP MA",
-                                "defaults": [ "perfsonarbuoy ma", "perfsonar-buoy ma" ],
-                                "command": "",
-                                "action": "Query" },
+                    "bwctl": {      "title": "BWCTL MA",
+                                    "defaults": [ "perfsonarbuoy ma", "perfsonar-buoy ma" ],
+                                    "command": "",
+                                    "action": "Query" },
+                    "owamp": {      "title": "OWAMP MA",
+                                    "defaults": [ "perfsonarbuoy ma", "perfsonar-buoy ma" ],
+                                    "command": "",
+                                    "action": "Query" },
                     "traceroute": { "title":
                                     "Traceroute MA",
                                     "defaults": [ "traceroute ma" ],
@@ -82,9 +82,9 @@ geocoder.geocode({ "address": "United States" }, function(results, status)
 var circleMarker = {
     "path": google.maps.SymbolPath.CIRCLE,
     "scale": 4.0,
-    "fillColor": '#EF706C',
+    "fillColor": "#EF706C",
     "fillOpacity": 1,
-    "strokeColor": '#E36C65',
+    "strokeColor": "#E36C65",
     "strokeWeight": 1
 };
 
@@ -97,7 +97,8 @@ var markers = {};
 //
 
 var expandedMap = {};
-function initTreeNodes() {
+function initTreeNodes()
+{
     var treeNodes = [];
     
     for (var type in serviceTypes)
@@ -156,7 +157,7 @@ $("#update").click(function(event) {
 
 $("#clear").click(function(event) {
     clearFilter();
-	updateFilter();
+    updateFilter();
 });
 
 $("#search").keypress(function(event)
@@ -214,10 +215,10 @@ function initialize(records)
 
 function clearFilter()
 {
-	$("#search").val("");
-	$("#communities option:not(:selected)").each(function(i, unselected) {
-		$(unselected).attr("selected", "true");
-	});
+    $("#search").val("");
+    $("#communities option:not(:selected)").each(function(i, unselected) {
+        $(unselected).attr("selected", "true");
+    });
 }
 
 function updateFilter() {
@@ -373,20 +374,20 @@ function updateTree()
 {
     tree.dynatree("getTree").reload();
     tree.dynatree("getRoot").sortChildren(function(a, b) {
-		if (a.data.isFolder && b.data.isFolder)
-			return 0;
-		title_a = a.data.title.toLowerCase();
-		title_b = b.data.title.toLowerCase();
-		if (isIPAddress(title_a))
-			if (isIPAddress(title_b))
-				return title_a > title_b ? 1 : title_a < title_b ? -1 : 0;
-			else
-				return 1;
-		else if (isIPAddress(title_b))
-			return -1;
-		else
-			return title_a > title_b ? 1 : title_a < title_b ? -1 : 0;
-	}, true);
+        if (a.data.isFolder && b.data.isFolder)
+            return 0;
+        title_a = a.data.title.toLowerCase();
+        title_b = b.data.title.toLowerCase();
+        if (isIPAddress(title_a))
+            if (isIPAddress(title_b))
+                return title_a > title_b ? 1 : title_a < title_b ? -1 : 0;
+            else
+                return 1;
+        else if (isIPAddress(title_b))
+            return -1;
+        else
+            return title_a > title_b ? 1 : title_a < title_b ? -1 : 0;
+    }, true);
 }
 
 function clearServiceMarkers()
@@ -530,7 +531,7 @@ function serviceNodeCounts()
         }
         //If there's any children then we display a child number
         if (treeNode.children.length)
-            treeNode.title = treeNode.title + "&nbsp;<span class='badge'>" + childCount + "</span>";
+            treeNode.title = treeNode.title + "<span class='badge tree-badge'>" + childCount + "</span>";
     }
 }
 
@@ -552,7 +553,7 @@ function serviceNodeChildCount(node)
     }
     //If there's any children then we display a child number
     if (node.children.length)
-        node.title = node.title + "<span class='badge' pull-right>" + childCount + "</span>";
+        node.title = node.title + "<span class='badge tree-badge' pull-right>" + childCount + "</span>";
     
     return childCount;
 }
@@ -563,12 +564,6 @@ function onMarkerActivate(marker)
         return;
     var content = "";
     var contentMap = {};
-    var sorter = function (a,b)
-    {
-        var type_a = a["service-type"][0];
-        var type_b = b["service-type"][0];
-        return type_a > type_b ? 1 : type_a < type_b ? -1 : 0;
-    };
     for (var i = 0 ; i < marker["records"]["services"].length ; i++)
     {
         var service = marker["records"]["services"][i];
@@ -586,7 +581,12 @@ function onMarkerActivate(marker)
     content += "<dl>";
     for (var key in contentMap)
     {
-        contentMap[key].sort(sorter);
+        contentMap[key].sort(function (a,b)
+        {
+            var type_a = a["service-type"][0];
+            var type_b = b["service-type"][0];
+            return type_a > type_b ? 1 : type_a < type_b ? -1 : 0;
+        });
         content += "<dt>" + key + "</dt>";
         for (var i = 0 ; i < contentMap[key].length ; i++)
         {
@@ -595,7 +595,7 @@ function onMarkerActivate(marker)
             if ((contentMap[key][i]["service-locator"]) && (contentMap[key][i]["service-locator"][0]))
                 locator = contentMap[key][i]["service-locator"][0];
             var title = getServiceTypeTitle(contentMap[key][i]);
-            content += "<dd><a href=\"#\" class=\"info-window-service\" name=\"" + uri + "\" title=\"" + locator + "\">" + title + "</a></dd>";
+            content += "<dd><a class=\"info-window-service\" name=\"" + uri + "\" title=\"" + locator + "\" href=\"#\">" + title + "</a></dd>";
         }
     }
     content += "</dl>";
@@ -665,16 +665,17 @@ function onInfoWindowActivate(element)
 function showServiceInfo(service)
 {
     if (service["service-name"])
-        $("#service-name").html(service["service-name"].join("<br />"));
+        $("#service-name").html(service["service-name"].join("<br>"));
     else
         $("#service-name").html("");
     
     $("#service-locator").html("");
-    if (service["service-locator"]) {
-        for (var s = 0; s < service["service-locator"].length; s++) {
-            var address = service["service-locator"][s];
-            $("#service-locator").append("<a href='" + getAddressLink(address) + "' target='_blank'>" +
-                getAddressString(address) + "</a><br />");
+    if (service["service-locator"])
+    {
+        for (var i = 0 ; i < service["service-locator"].length ; i++) {
+            var address = service["service-locator"][i];
+            $("#service-locator").append("<a href='" + address + "' target='_blank'>" +
+                getHostname(address) + "</a><br>");
         }
     }
     else
@@ -683,7 +684,7 @@ function showServiceInfo(service)
     var locationString = getLocationString(service);
     var latlngString = getLatLngString(service);
     if ((locationString) && (latlngString))
-        $("#service-location").html(locationString + "<br /><div class='muted'>" + latlngString + "</div");
+        $("#service-location").html(locationString + "<br><div class='muted'>" + latlngString + "</div");
     else if (locationString)
         $("#service-location").html(locationString);
     else if (latlngString)
@@ -691,10 +692,10 @@ function showServiceInfo(service)
     else
         $("#service-location").html("");
     if (service["group-communities"])
-        $("#service-communities").html(service["group-communities"].sort().join("<br />"));
+        $("#service-communities").html(service["group-communities"].sort().join("<br>"));
     else
         $("#service-communities").html("");
-    $("#service-command-line").html(getCommandLine(service).join("<br />"));
+    $("#service-command-line").html(getCommandLine(service).join("<br>"));
 }
 
 function clearServiceInfo()
@@ -746,7 +747,7 @@ function showHostInfo(host)
         host = { "type": "host" };
     
     if (host["host-name"])
-        $("#host-name").html(host["host-name"].join("<br />"));
+        $("#host-name").html(host["host-name"].join("<br>"));
     else
         $("#host-name").html("");
     
@@ -780,7 +781,7 @@ function showHostInfo(host)
     var osString = getOSString(host);
     var kernelString = getKernelString(host);
     if ((osString) && (kernelString))
-        $("#host-os").html("Operating System: " + osString + "<br />" + "Kernel: " + kernelString);
+        $("#host-os").html("Operating System: " + osString + "<br>" + "Kernel: " + kernelString);
     else if (osString)
         $("#host-os").html("Operating System: " + osString);
     else if (kernelString)
@@ -797,7 +798,7 @@ function showHostInfo(host)
     //
     
     if (host["pshost-toolkitversion"])
-        $("#host-version").html(host["pshost-toolkitversion"].join("<br />"));
+        $("#host-version").html(host["pshost-toolkitversion"].join("<br>"));
     else
         $("#host-version").html("");
     
@@ -806,7 +807,7 @@ function showHostInfo(host)
     //
     
     if (host["group-communities"])
-        $("#host-communities").html(host["group-communities"].sort().join("<br />"));
+        $("#host-communities").html(host["group-communities"].sort().join("<br>"));
     else
         $("#host-communities").html("");
 }
@@ -1453,10 +1454,10 @@ function getTitle(record)
 
 function isIPAddress(string)
 {
-	var IPV4Format = "^\\[?([\\d]{1,3}\\.){3}[\\d]{1,3}\\]?(:\\d*){0,1}$";
-	var IPV6Format = "^\\[?([\\da-fA-F]{0,4}:){3,7}[\\da-fA-F]{0,4}\\]?(:\\d*){0,1}$";
-	var regex = new RegExp(IPV4Format + "|" + IPV6Format);
-	return regex.test(string);
+    var IPV4Format = "^\\[?([\\d]{1,3}\\.){3}[\\d]{1,3}\\]?(:\\d*){0,1}$";
+    var IPV6Format = "^\\[?([\\da-fA-F]{0,4}:){3,7}[\\da-fA-F]{0,4}\\]?(:\\d*){0,1}$";
+    var regex = new RegExp(IPV4Format + "|" + IPV6Format);
+    return regex.test(string);
 }
 
 function getURLParser(url)

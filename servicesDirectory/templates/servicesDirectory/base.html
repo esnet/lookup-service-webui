@@ -17,12 +17,12 @@
 	<div class="page-header" id="page-header">
 	<div class="container-fluid"><div class="row">
 		<div class="span3">
-			<a href="http://www.perfsonar.net/">
-				<img src="{% static "servicesDirectory/img/header.gif" %}" alt="perfSONAR Logo" class="img-polaroid header-image" id="header-image">
+			<a href="http://www.perfsonar.net/" target="_blank">
+				<img alt="perfSONAR Logo" class="img-polaroid header-image" id="header-image" src="{% static "servicesDirectory/img/header.gif" %}">
 			</a>
 		</div>
 		<div class="span9">
-			<div class="header-content">{% block header %}{% endblock %}</div>
+			<div class="header-content" id="header-content">{% block header %}{% endblock %}</div>
 		</div>
 	</div></div>
 	</div>
