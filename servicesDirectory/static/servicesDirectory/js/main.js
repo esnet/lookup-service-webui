@@ -16,6 +16,10 @@ var serviceTypes = {
                 "defaults": [ "bwctl server" ],
                 "command": "bwctl -T iperf -t 20 -i 1 -f m -c <address>:<port>",
                 "action": "" },
+    "owamp": {  "title": "OWAMP Server",
+                "defaults": [ "owamp server" ],
+                "command": "owping  -c 10000 -i .01 <address>:<port>",
+                "action": "Ping" },
     "ndt": {    "title": "NDT Server",
                 "defaults": [ "ndt server" ],
                 "command": "web100clt -n <address> -ll",
@@ -24,10 +28,6 @@ var serviceTypes = {
                 "defaults": [ "npad server" ],
                 "command": "",
                 "action": "Test" },
-    "owamp": {  "title": "OWAMP Server",
-                "defaults": [ "owamp server" ],
-                "command": "owping  -c 10000 -i .01 <address>:<port>",
-                "action": "Ping" },
     "ping": {   "title": "Ping Responder",
                 "defaults": [ "ping responder" ],
                 "command": "ping <address>",
@@ -673,9 +673,9 @@ function showServiceInfo(service)
     if (service["service-locator"])
     {
         for (var i = 0 ; i < service["service-locator"].length ; i++) {
-            var address = service["service-locator"][i];
-            $("#service-locator").append("<a href='" + address + "' target='_blank'>" +
-                getHostname(address) + "</a><br>");
+            var hostname = getHostname(service["service-locator"][i]);
+            $("#service-locator").append("<a href='http://" + hostname + "/' target='_blank'>" +
+                hostname + "</a><br>");
         }
     }
     else
