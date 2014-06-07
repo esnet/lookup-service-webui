@@ -98,33 +98,22 @@ def cache_get_records(cache_key):
 # Record Filtering
 ##############################
 def filter_default(records):
-    filtered = []
-    for record in records:
+    for record in records[:]:
         record_type = record["type"][0]
+        if record_type == "interface":
+            interface_name = record.get("interface-name", [ u"" ])[0]
+            if interface_name.startswith("MA:"):
+                records.remove(record)
+                continue
         if record_type == "pstest":
-            filtered.append(record)
+            records.remove(record)
             continue
         elif record_type == "service":
-            service_locators = record.get("service-locator", [])
-            for locator in service_locators:
-                hostname = urlparse(locator).hostname
-                if hostname is None:
-                    hostname = locator
-                try:
-                    ip_form = IP(hostname)
-                    if ip_form.iptype() == 'PRIVATE':
-                        service_locators.remove(locator)
-                except:
-                    pass
-            if not service_locators:
-                filtered.append(record)
-                continue
             record.pop("ma-tests", None)
             record.pop("psservice-eventtypes", None)
-        record.pop("ttl", None)
         record.pop("expires", None)
-    for record in filtered:
-        records.remove(record)
+        record.pop("state", None)
+        record.pop("ttl", None)
     return records
 
 ##############################
@@ -233,103 +222,210 @@ def reverse_geocode(latitude, longitude):
 # Record Remapping
 ##############################
 def remap_records(records):
-    hosts = []
-    interfaces = []
-    services = []
+    global remap_num_interfaces
+    remap_num_interfaces = 0
+    global remap_num_services
+    remap_num_services = 0
+    global remap_failed_interfaces
+    remap_failed_interfaces = 0
+    global remap_failed_services
+    remap_failed_services = 0
+    from datetime import datetime
+    start = datetime.now()
+    record_map = {}
     for record in records:
         record_type = record["type"][0]
-        if record_type == "host":
-            hosts.append(record)
-        elif record_type == "interface":
-            interfaces.append(record)
-        elif record_type == "service":
-            services.append(record)
-    def remap_interface_helper(interface):
-        remap_interface(interface, hosts, interfaces)
-    def remap_service_helper(service):
-        remap_service(service, hosts, interfaces)
-    if _concurrency_enabled:
-        with concurrent.futures.ThreadPoolExecutor(max_workers = _MAX_CONCURRENT_REQUESTS) as pool:
-            list(pool.map(remap_interface_helper, interfaces))
-        with concurrent.futures.ThreadPoolExecutor(max_workers = _MAX_CONCURRENT_REQUESTS) as pool:
-            list(pool.map(remap_service_helper, services))
-    else:
-        for interface in interfaces:
-            remap_interface_helper(interface)
-        for service in services:
-            remap_service_helper(service)
+        if record_map.get(record["ls-host"], []):
+            if record_map[record["ls-host"]].get(record_type, []):
+                record_map[record["ls-host"]][record_type].append(record)
+            else:
+                record_map[record["ls-host"]][record_type] = [ record ]
+        else:
+            record_map[record["ls-host"]] = { record_type: [ record ] }
+    num_interfaces = 0
+    num_services = 0
+    for ls_host in record_map:
+        hosts = record_map[ls_host].get("host", [])
+        interfaces = record_map[ls_host].get("interface", [])
+        services = record_map[ls_host].get("service", [])
+        num_interfaces += len(interfaces)
+        num_services += len(services)
+        def remap_interface_helper(interface):
+            remap_interface(interface, hosts, interfaces, services)
+        def remap_service_helper(service):
+            remap_service(service, hosts, interfaces, services)
+        if False:#_concurrency_enabled:
+            with concurrent.futures.ThreadPoolExecutor(max_workers = _MAX_CONCURRENT_REQUESTS) as pool:
+                list(pool.map(remap_interface_helper, interfaces))
+            with concurrent.futures.ThreadPoolExecutor(max_workers = _MAX_CONCURRENT_REQUESTS) as pool:
+                list(pool.map(remap_service_helper, services))
+        else:
+            for interface in interfaces:
+                remap_interface_helper(interface)
+            for service in services:
+                remap_service_helper(service)
+    elasped = datetime.now() - start
+    with open("remap-stats.txt", "a") as myfile:
+        myfile.write("Elapsed: " + str(elasped) + "\n")
+        myfile.write("Remapped: " + str(remap_num_interfaces) + "/" + str(num_interfaces) + " interfaces\n")
+        myfile.write("Remapped: " + str(remap_num_services) + "/" + str(num_services) + " services\n")
+        myfile.write("Failed: " + str(remap_failed_interfaces) + "/" + str(num_interfaces) + " interfaces\n")
+        myfile.write("Failed: " + str(remap_failed_services) + "/" + str(num_services ) + " services\n\n")
     return records
 
-def remap_interface(interface, hosts, interfaces = []):
-    host = get_host(interface, hosts)
+def remap_interface(interface, hosts, interfaces = [], services = []):
+    host = get_host(interface, hosts, interfaces, services)
     if host:
         host_interfaces = host.get("host-net-interfaces", [])
         if host_interfaces:
             if interface["uri"] not in host_interfaces:
+                global remap_num_interfaces
+                remap_num_interfaces += 1
                 host["host-net-interfaces"].insert(0, interface["uri"])
         else:
             host["host-net-interfaces"] = [ interface["uri"] ]
+    else:
+        global remap_failed_interfaces
+        remap_failed_interfaces += 1
 
-def remap_service(service, hosts, interfaces = []):
-    service_locators = service.get("service-locator", [])
-    for locator in service_locators:
-        hostname = urlparse(locator).hostname
-        if hostname is None:
-            hostname = locator
-        try:
-            ip_form = IP(hostname)
-            service["service-hostname"] = socket.gethostbyaddr(ip_form.strNormal())[0]
-            break
-        except:
-            pass
-    host = get_host(service, hosts, interfaces)
+def remap_service(service, hosts, interfaces = [], services = []):
+    host = get_host(service, hosts, interfaces, services)
     if host:
         service_hosts = service.get("service-host", [])
         if service_hosts:
             if host["uri"] not in service_hosts:
+                global remap_num_services
+                remap_num_services += 1
                 service["service-host"].insert(0, host["uri"])
         else:
             service["service-host"] = [ host["uri"] ]
+    else:
+        hostnames = get_hostnames(service)
+        for hostname in hostnames:
+            hostname = get_hostname_from_ip(hostname)
+            if hostname is not None:
+                service["service-hostname"] = hostname
+                host = get_host(service, hosts, interfaces, services)
+                if host:
+                    global remap_num_services
+                    remap_num_services += 1
+                    return
+        if not service.get("service-host", [ True ])[0]:
+        #if "monipe" not in service["ls-host"]:
+            global remap_failed_services
+            remap_failed_services += 1
 
-def get_host(record, hosts, interfaces = []):
+def get_host(record, hosts, interfaces = [], services = [], depth = 1):
     record_type = record["type"][0]
     if record_type == "host":
         return record
     elif record_type == "interface":
+        interface_name = record.get("interface-name", [ u"" ])[0]
+        if interface_name.startswith("MA:"):
+            return None
         for host in hosts:
-            if record["uri"] in host.get("host-net-interfaces", []):
-                return host
-        interface_addresses = record.get("interface-addresses", [])
-        for address in interface_addresses:
-            hostname = urlparse(address).hostname
-            if hostname is None:
-                hostname = address
-            for host in hosts:
-                if hostname in host.get("host-name", []):
+            if record["ls-host"] == host["ls-host"]:
+                if record["uri"] in host.get("host-net-interfaces", []):
                     return host
+        if depth != 0:
+            hostnames = get_hostnames(record)
+            for host in hosts:
+                if record["ls-host"] == host["ls-host"]:
+                    if any(i in get_hostnames(host) for i in hostnames):
+                        return host
+            interfaces = interfaces[:]
+            interfaces.remove(record)
+            for service in services:
+                if record["ls-host"] == service["ls-host"]:
+                    if any(i in get_hostnames(service) for i in hostnames):
+                        host = get_host(service, hosts, interfaces, services, depth - 1)
+                        if host is not None:
+                            return host
     elif record_type == "service":
         service_hosts = record.get("service-host", [])
         if service_hosts:
             for host in hosts:
-                if host["uri"] in service_hosts:
-                    return host
-        service_locators = record.get("service-locator", [])
-        if service_locators:
-            for locator in service_locators:
-                hostname = urlparse(locator).hostname
-                if hostname is None:
-                    hostname = locator
-                for host in hosts:
-                    if hostname in host.get("host-name", []):
+                if record["ls-host"] == host["ls-host"]:
+                    if host["uri"] in service_hosts:
                         return host
-                for interface in interfaces:
-                    if hostname in interface.get("interface-addresses", []):
-                        host = get_host(interface, hosts)
+        if depth != 0:
+            hostnames = get_hostnames(record)
+            for host in hosts:
+                if record["ls-host"] == host["ls-host"]:
+                    if any(i in get_hostnames(host) for i in hostnames):
+                        return host
+            services = services[:]
+            services.remove(record)
+            for interface in interfaces:
+                if record["ls-host"] == interface["ls-host"]:
+                    if any(i in get_hostnames(interface) for i in hostnames):
+                        host = get_host(interface, hosts, interfaces, services, depth - 1)
                         if host is not None:
                             return host
-        service_sitename = record.get("location-sitename", [])
-        if service_sitename:
-            for host in hosts:
-                if service_sitename == host.get("location-sitename", []):
-                    return host
+            # for service in services:
+            #     if record["ls-host"] == service["ls-host"]:
+            #         if any(i in get_hostnames(service) for i in hostnames):
+            #             host = get_host(service, hosts, interfaces, services, depth - 1)
+            #             if host is not None:
+            #                 return host
+            service_sitename = record.get("location-sitename", [])
+            if service_sitename:
+                for host in hosts:
+                    if record["ls-host"] == host["ls-host"]:
+                        if service_sitename == host.get("location-sitename", []):
+                            return host
     return None
+
+def get_hostname(record):
+    hostnames = sorted(get_hostnames(record))
+    for hostname in hostnames:
+        if not is_ip_address(hostname):
+            return hostname
+    for hostname in hostnames:
+        hostname = get_hostname_from_ip(hostname)
+        if hostname is not None:
+            return hostname
+    return None
+
+def get_hostnames(record):
+    hostnames = []
+    record_type = record["type"][0]
+    if record_type == "host":
+        host_names = record.get("host-name", [])
+        for host_name in host_names:
+            hostnames.append(get_hostname_from_url(host_name))
+    elif record_type == "interface":
+        interface_addresses = record.get("interface-addresses", [])
+        for address in interface_addresses:
+            hostnames.append(get_hostname_from_url(address))
+    elif record_type == "service":
+        service_locators = record.get("service-locator", [])
+        for locator in service_locators:
+            hostnames.append(get_hostname_from_url(locator))
+    hostname = record.get(record_type + "-hostname", u"")
+    if hostname:
+        hostnames.append(hostname)
+    return hostnames
+
+def get_hostname_from_url(url):
+    hostname = urlparse(url).hostname
+    if hostname is None:
+        hostname = url.lower()
+    return hostname
+
+def get_hostname_from_ip(ip):
+    try:
+        print "start"
+        temp = socket.gethostbyaddr(ip)[0]
+        print temp
+        print "end \n"
+        return temp
+    except:
+        return None
+    
+def is_ip_address(address):
+    try:
+        ip_form = IP(address)
+        return True
+    except:
+        return False
