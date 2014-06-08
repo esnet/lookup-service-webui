@@ -191,7 +191,7 @@ LS_CACHE_TIMEOUT = 3600
 
 # Cache requests from the web interface
 UI_CACHE_REQUESTS = True
-#Cached web interface query timeout in seconds
+# Cached web interface request timeout in seconds
 UI_CACHE_TIMEOUT = 3600
 
 # Allow Google geocoding of records
@@ -204,3 +204,10 @@ GEOCODE_API_CLIENT_ID = ""
 GEOCODE_CACHE_QUERIES = True
 # Cached geocode query timeout in seconds
 GEOCODE_CACHE_TIMEOUT = 86400
+
+# Allow reverse DNS lookup of records
+RDNS = True
+# Cache reverse DNS queries
+RDNS_CACHE_QUERIES = True
+# Cached reverse DNS query timeout in seconds
+RDNS_CACHE_TIMEOUT = 3600

@@ -6,7 +6,6 @@ from urlparse import urlparse
 from django.db import models
 from django.core.cache import cache
 
-from dns import resolver, reversename
 from IPy import IP
 
 from servicesDirectory import settings
@@ -26,6 +25,15 @@ try:
     from pygeolib import GeocoderResult
     _geocoder = None
     _geocoder_enabled = True
+except ImportError:
+    pass
+
+_dns_enabled = False
+try:
+    from dns import reversename
+    from dns import resolver
+    _dns_resolver = None
+    _dns_enabled = True
 except ImportError:
     pass
 
@@ -172,6 +180,7 @@ def geocode_record(record):
             record["location-longitude"] = [ str(result.coordinates[1]) ]
 
 def get_geocoder():
+    global _geocoder
     if not _geocoder:
         if settings.GEOCODE_API_PRIVATE_KEY and settings.GEOCODE_API_CLIENT_ID:
             _geocoder = Geocoder(settings.GEOCODE_API_CLIENT_ID, settings.GEOCODE_API_PRIVATE_KEY)
@@ -223,18 +232,6 @@ def reverse_geocode(latitude, longitude):
 # Record Remapping
 ##############################
 def remap_records(records):
-    global remap_num_interfaces
-    remap_num_interfaces = 0
-    global remap_num_services
-    remap_num_services = 0
-    global remap_failed_interfaces
-    remap_failed_interfaces = 0
-    global remap_failed_services
-    remap_failed_services = 0
-    global num_dns_queries
-    num_dns_queries = 0
-    from datetime import datetime
-    start = datetime.now()
     record_map = {}
     for record in records:
         record_type = record["type"][0]
@@ -245,57 +242,40 @@ def remap_records(records):
                 record_map[record["ls-host"]][record_type] = [ record ]
         else:
             record_map[record["ls-host"]] = { record_type: [ record ] }
-    num_interfaces = 0
-    num_services = 0
     for ls_host in record_map:
         hosts = record_map[ls_host].get("host", [])
         interfaces = record_map[ls_host].get("interface", [])
         services = record_map[ls_host].get("service", [])
-        num_interfaces += len(interfaces)
-        num_services += len(services)
         def remap_interface_helper(interface):
             remap_interface(interface, hosts, interfaces, services)
         def remap_service_helper(service):
             remap_service(service, hosts, interfaces, services)
         if _concurrency_enabled:
-            with concurrent.futures.ThreadPoolExecutor(max_workers = _MAX_CONCURRENT_REQUESTS) as pool:
-                list(pool.map(remap_interface_helper, interfaces))
+            # with concurrent.futures.ThreadPoolExecutor(max_workers = _MAX_CONCURRENT_REQUESTS) as pool:
+            #    list(pool.map(remap_interface_helper, interfaces))
             with concurrent.futures.ThreadPoolExecutor(max_workers = _MAX_CONCURRENT_REQUESTS) as pool:
                 list(pool.map(remap_service_helper, services))
         else:
-            for interface in interfaces:
-                remap_interface_helper(interface)
+            # for interface in interfaces:
+            #     remap_interface_helper(interface)
             for service in services:
                 remap_service_helper(service)
-    elasped = datetime.now() - start
-    with open("remap-stats.txt", "a") as myfile:
-        myfile.write("Elapsed: " + str(elasped) + "\n")
-        myfile.write("Remapped: " + str(remap_num_interfaces) + "/" + str(num_interfaces) + " interfaces\n")
-        myfile.write("Remapped: " + str(remap_num_services) + "/" + str(num_services) + " services\n")
-        myfile.write("Failed: " + str(remap_failed_interfaces) + "/" + str(num_interfaces) + " interfaces\n")
-        myfile.write("Failed: " + str(remap_failed_services) + "/" + str(num_services ) + " services\n")
-        myfile.write("DNS Queries: " + str(num_dns_queries) + "\n\n")
     return records
 
 def remap_interface(interface, hosts, interfaces = [], services = []):
     host = get_host(interface, hosts, interfaces, services)
-    #hostname = get_hostname(interface, host)
-    #if hostname:
-    #    service["interface-hostname"] = hostname
-    #if not host:
-    #    host = get_host(interface, hosts, interfaces, services)
+    # hostname = get_hostname(interface, host)
+    # if hostname:
+    #     service["interface-hostname"] = hostname
+    # if not host:
+    #     host = get_host(interface, hosts, interfaces, services)
     if host:
         host_interfaces = host.get("host-net-interfaces", [])
         if host_interfaces:
             if interface["uri"] not in host_interfaces:
-                global remap_num_interfaces
-                remap_num_interfaces += 1
                 host["host-net-interfaces"].insert(0, interface["uri"])
         else:
             host["host-net-interfaces"] = [ interface["uri"] ]
-    else:
-        global remap_failed_interfaces
-        remap_failed_interfaces += 1
 
 def remap_service(service, hosts, interfaces = [], services = []):
     host = get_host(service, hosts, interfaces, services)
@@ -308,14 +288,9 @@ def remap_service(service, hosts, interfaces = [], services = []):
         service_hosts = service.get("service-host", [])
         if service_hosts:
             if host["uri"] not in service_hosts:
-                global remap_num_services
-                remap_num_services += 1
                 service["service-host"].insert(0, host["uri"])
         else:
             service["service-host"] = [ host["uri"] ]
-    else:
-        global remap_failed_services
-        remap_failed_services += 1
 
 def get_host(record, hosts, interfaces = [], services = [], depth = 1):
     record_type = record["type"][0]
@@ -378,22 +353,6 @@ def get_host(record, hosts, interfaces = [], services = [], depth = 1):
                             return host
     return None
 
-def get_hostname(record, host, depth = 1):
-    record_hostnames = sorted(get_hostnames(record), key = lambda v: v.replace("-v6", "~"))
-    for hostname in record_hostnames:
-        if not is_ip_address(hostname):
-            return hostname
-    if depth != 0:
-        if host is not None:
-            hostname = get_hostname(host, None, depth - 1)
-            if hostname is not None:
-                return hostname
-        for hostname in record_hostnames:
-            hostname = get_hostname_from_ip(hostname)
-            if hostname:
-                return hostname
-    return None
-
 def get_hostnames(record):
     hostnames = []
     record_type = record["type"][0]
@@ -414,33 +373,52 @@ def get_hostnames(record):
         hostnames.append(hostname)
     return hostnames
 
-def is_ip_address(address):
-    try:
-        ip_form = IP(address)
-        return True
-    except:
-        return False
+def get_hostname(record, host, depth = 1):
+    record_hostnames = sorted(get_hostnames(record), key = lambda v: v.replace("-v6", "~"))
+    for hostname in record_hostnames:
+        if not is_ip_address(hostname):
+            return hostname
+    if depth != 0:
+        if host is not None:
+            hostname = get_hostname(host, None, depth - 1)
+            if hostname is not None:
+                return hostname
+        if settings.RDNS:
+            for hostname in record_hostnames:
+                hostname = get_hostname_from_ip(hostname)
+                if hostname:
+                    return hostname
+    return None
 
+def get_dns_resolver():
+    global _dns_resolver
+    if not _dns_resolver:
+        _dns_resolver = resolver.Resolver()
+        _dns_resolver.timeout = 0.5
+        _dns_resolver.lifetime = 0.5
+    return _dns_resolver
+
+def gethostbyaddr(ip):
+    if _dns_enabled:
+        reverse_name = reversename.from_address(ip)
+        return get_dns_resolver().query(reverse_name, "PTR")[0].to_text()[:-1]
+    else:
+        return socket.gethostbyaddr(ip)[0]
+        
 def get_hostname_from_ip(ip):
     result = ""
     if settings.RDNS_CACHE_QUERIES:
         cache_key = "RDNS_QUERY(%s)" % ip
         result = cache.get(cache_key)
         if result is None:
-            global num_dns_queries
-            num_dns_queries += 1
             try:
-                dns_resolver = resolver.Resolver()
-                dns_resolver.timeout = 0.5
-                dns_resolver.lifetime = 0.5
-                reverse_name = reversename.from_address(ip)
-                result = dns_resolver.query(reverse_name, "PTR")[0].to_text()[:-1]
+                result = gethostbyaddr(ip)
                 cache.set(cache_key, result, settings.RDNS_CACHE_TIMEOUT)
             except:
                 cache.set(cache_key, "", settings.RDNS_CACHE_TIMEOUT)
     else:
         try:
-            result = socket.gethostbyaddr(ip)[0]
+            result = gethostbyaddr(ip)
         except:
             pass
     return result
@@ -450,3 +428,10 @@ def get_hostname_from_url(url):
     if hostname is None:
         hostname = url.lower()
     return hostname
+
+def is_ip_address(address):
+    try:
+        ip_form = IP(address)
+        return True
+    except:
+        return False
