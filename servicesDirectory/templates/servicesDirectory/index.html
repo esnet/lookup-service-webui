@@ -7,7 +7,7 @@
 {% block title %}Lookup Service Directory{% endblock %}
 
 {% block assets_pre %}
-	<link rel="stylesheet" type="text/css" href="{% static "css/dynatree/skin-lion/ui.dynatree.css" %}">
+	<link rel="stylesheet" type="text/css" href="{% static "css/fancytree/skin-custom/ui.fancytree.css" %}">
 	<style type="text/css">
 		#browser-accordion { max-height: 100%; overflow: auto; }
 		#info-accordion { max-height: 100%; overflow: auto; }
@@ -21,7 +21,6 @@
 		.table-info { max-height: 60px; overflow: auto; }
 		.tree { height: 400px; }
 		.tree-badge { background-color: #cccccc; margin-left: 10px; font-weight: normal; text-shadow: none; }
-		ul.dynatree-container { font-family: inherit; font-size: inherit; }
 	</style>
 {% endblock %}
 
@@ -172,7 +171,7 @@
 {% endblock %}
 {% block assets_post %}
 	<script type="text/javascript" src="{% static "js/jquery.ui.js" %}"></script>
-	<script type="text/javascript" src="{% static "js/jquery.dynatree.js" %}"></script>
+	<script type="text/javascript" src="{% static "js/jquery.fancytree.js" %}"></script>
 	<script type="text/javascript" src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDM9EqM1k7MiJnslQpropqmvUbwXPhEI1U&sensor=false"></script>
 	<script type="text/javascript" src="{% static "js/jquery.ui.map.js" %}"></script>
 	<script type="text/javascript" src="{% static "servicesDirectory/js/main.js" %}"></script>

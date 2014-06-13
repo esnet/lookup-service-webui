@@ -210,4 +210,4 @@ RDNS = True
 # Cache reverse DNS queries
 RDNS_CACHE_QUERIES = True
 # Cached reverse DNS query timeout in seconds
-RDNS_CACHE_TIMEOUT = 3600
+RDNS_CACHE_TIMEOUT = 86400

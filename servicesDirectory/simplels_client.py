@@ -16,9 +16,9 @@ _LS_HINTS = 'http://ps1.es.net:8096/lookup/activehosts.json'
 
 def get_hosts():
     hosts = requests.get(_LS_HINTS).json().get("hosts", [])
-    hosts = sorted(hosts, key = lambda v: v.get("priority", u""), reverse=True)
+    hosts = sorted(hosts, key = lambda v: v.get("priority", ""), reverse=True)
     for host in hosts:
-        if host.get("status", u"") != "alive" or not host.get("locator", u""):
+        if host.get("status", "") != "alive" or not host.get("locator", ""):
             hosts.remove(host)
     return hosts
 
@@ -50,7 +50,7 @@ def query(query = "", hosts = _ls_hosts):
                 continue
             ls_host = response.url.split("lookup/records")[0]
             for record in response.json():
-                if record.get("uri", u"") and record.get("type", [ False ])[0]:
+                if record.get("uri", "") and record.get("type", [ False ])[0]:
                     record["ls-host"] = ls_host
                     json.append(record)
     return json

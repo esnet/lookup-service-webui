@@ -109,17 +109,21 @@ def cache_get_records(cache_key):
 def filter_default(records):
     for record in records[:]:
         record_type = record["type"][0]
-        if record_type == "interface":
-            interface_name = record.get("interface-name", [ u"" ])[0]
+        if record_type == "host":
+            pass
+        elif record_type == "interface":
+            interface_name = record.get("interface-name", [ "" ])[0]
             if interface_name.startswith("MA:"):
                 records.remove(record)
                 continue
-        if record_type == "pstest":
-            records.remove(record)
-            continue
+        elif record_type == "person":
+            pass
         elif record_type == "service":
             record.pop("ma-tests", None)
             record.pop("psservice-eventtypes", None)
+        else:
+            records.remove(record)
+            continue
         record.pop("expires", None)
         record.pop("state", None)
         record.pop("ttl", None)
@@ -171,10 +175,10 @@ def geocode_record(record):
             result = geocode(query)
     if result:
         result = GeocoderResult(result)
-        record["location-city"] = [ city or result.city or u"" ]
-        record["location-state"] = [ state or result.state or u"" ]
-        record["location-code"] = [ code or result.postal_code or u"" ]
-        record["location-country"] = [ country or result.country__short_name or u"" ]
+        record["location-city"] = [ city or result.city or "" ]
+        record["location-state"] = [ state or result.state or "" ]
+        record["location-code"] = [ code or result.postal_code or "" ]
+        record["location-country"] = [ country or result.country__short_name or "" ]
         if not reverse:
             record["location-latitude"] = [ str(result.coordinates[0]) ]
             record["location-longitude"] = [ str(result.coordinates[1]) ]
@@ -266,7 +270,7 @@ def remap_interface(interface, hosts, interfaces = [], services = []):
     host = get_host(interface, hosts, interfaces, services)
     # hostname = get_hostname(interface, host)
     # if hostname:
-    #     service["interface-hostname"] = hostname
+    #     interface["interface-hostname"] = hostname
     # if not host:
     #     host = get_host(interface, hosts, interfaces, services)
     if host:
@@ -297,7 +301,7 @@ def get_host(record, hosts, interfaces = [], services = [], depth = 1):
     if record_type == "host":
         return record
     elif record_type == "interface":
-        interface_name = record.get("interface-name", [ u"" ])[0]
+        interface_name = record.get("interface-name", [ "" ])[0]
         if interface_name.startswith("MA:"):
             return None
         for host in hosts:
@@ -353,29 +357,13 @@ def get_host(record, hosts, interfaces = [], services = [], depth = 1):
                             return host
     return None
 
-def get_hostnames(record):
-    hostnames = []
-    record_type = record["type"][0]
-    if record_type == "host":
-        host_names = record.get("host-name", [])
-        for host_name in host_names:
-            hostnames.append(get_hostname_from_url(host_name))
-    elif record_type == "interface":
-        interface_addresses = record.get("interface-addresses", [])
-        for address in interface_addresses:
-            hostnames.append(get_hostname_from_url(address))
-    elif record_type == "service":
-        service_locators = record.get("service-locator", [])
-        for locator in service_locators:
-            hostnames.append(get_hostname_from_url(locator))
-    hostname = record.get(record_type + "-hostname", u"")
-    if hostname:
-        hostnames.append(hostname)
-    return hostnames
-
 def get_hostname(record, host, depth = 1):
-    record_hostnames = sorted(get_hostnames(record), key = lambda v: v.replace("-v6", "~"))
-    for hostname in record_hostnames:
+    record_type = record["type"][0]
+    hostname = record.get(record_type + "-hostname", "")
+    if hostname:
+        return hostname
+    hostnames = sorted(get_hostnames(record), key = lambda v: v.replace("-v6", "~"))
+    for hostname in hostnames:
         if not is_ip_address(hostname):
             return hostname
     if depth != 0:
@@ -384,11 +372,28 @@ def get_hostname(record, host, depth = 1):
             if hostname is not None:
                 return hostname
         if settings.RDNS:
-            for hostname in record_hostnames:
+            for hostname in hostnames:
                 hostname = get_hostname_from_ip(hostname)
                 if hostname:
                     return hostname
     return None
+
+def get_hostnames(record):
+    addresses = []
+    hostnames = []
+    record_type = record["type"][0]
+    if record_type == "host":
+        addresses = record.get("host-name", [])
+    elif record_type == "interface":
+        addresses = record.get("interface-addresses", [])
+    elif record_type == "service":
+        addresses = record.get("service-locator", [])
+    hostname = record.get(record_type + "-hostname", "")
+    if hostname:
+        hostnames.append(hostname)
+    for address in addresses:
+        hostnames.append(get_hostname_from_url(address))
+    return hostnames
 
 def get_dns_resolver():
     global _dns_resolver

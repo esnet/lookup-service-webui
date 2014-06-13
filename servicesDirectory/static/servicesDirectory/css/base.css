@@ -44,7 +44,6 @@ h1, h2, h3, h4, h5, h6 {
 	-moz-box-shadow: 0 1px 2px #cccccc;
 	box-shadow: 0 1px 2px #cccccc;
 	height: 100%;
-	padding: 0px 20px 0px;
 }
 .content-header {
 	border-bottom: 2px solid #eeeeee;
