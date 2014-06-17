@@ -119,6 +119,10 @@ def filter_default(records):
         elif record_type == "person":
             pass
         elif record_type == "service":
+            service_type = record.get("service-type", [ "" ])[0]
+            if service_type == "phoebus":
+                records.remove(record)
+                continue
             record.pop("ma-tests", None)
             record.pop("psservice-eventtypes", None)
         else:
