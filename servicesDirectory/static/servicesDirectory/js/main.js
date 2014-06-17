@@ -99,7 +99,6 @@ var defaultMarkerIcon = {
 };
 
 var activeMarker = null;
-var infoWindow = null;
 var markers = {};
 
 ////////////////////////////////////////
@@ -156,7 +155,10 @@ $.getJSON("query?filter=default&geocode=true&remap=true", function(records) { in
 
 function initMap(mapOptions)
 {
-	var map = new google.maps.Map($("#map-canvas").get(0), mapOptions);
+	var map = $("#map-canvas").gmap(mapOptions);
+	var content = "<div id=\"info-window-content\"><dl></dl></div>";
+	map.gmap("openInfoWindow", { "content": content }, null);
+	map.gmap("closeInfoWindow");
 	return map;
 }
 
@@ -218,13 +220,18 @@ function initialize(records)
 		if (hasField(record, "group-communities"))
 			$.merge(communities, record["group-communities"]);
 	}
+	var interfaces = getInterfaces();
+	for (var i = 0 ; i < interfaces.length ; i++)
+	{
+		mapInterface(interfaces[i]);
+	}
 	var services = getServices();
 	for (var i = 0 ; i < services.length ; i++)
 	{
+		mapService(services[i]);
 		addServiceNode(services[i]);
 		addServiceMarker(services[i]);
 	}
-	updateFilter();
 	updateCommunities();
 	updateMap();
 	updateTree();
@@ -234,10 +241,7 @@ function initialize(records)
 
 function addServiceMarker(service)
 {
-	var host = getHost(service, getHosts(service));
 	var latlng = getLatLng(service);
-	if ((!latlng) && (host))
-		latlng = getLatLng(host);
 	if (latlng)
 	{
 		var marker = null;
@@ -247,21 +251,18 @@ function addServiceMarker(service)
 		}
 		else
 		{
-			marker = new google.maps.Marker({
+			marker = map.gmap("addMarker", {
 				"position": latlng,
 				"title": "?",
 				"icon": defaultMarkerIcon,
 				"optimized": false
-			});
-			google.maps.event.addListener(marker, 'click', function() { onMarkerActivate(this); });
-			marker["records"] = { "host": [], "service": [], "filtered": [] };
+			}).click(function() { onMarkerActivate(this); }).get(0);
+			marker.filtered = [];
+			marker.services = [];
 			markers[latlng] = marker;
 		}
-		if ((host) && !(host in marker["records"]["host"]))
-			marker["records"]["host"].push(host);
-		marker["records"]["service"].push(service);
-		marker["records"]["filtered"].push(service);
-		marker.setMap(map);
+		marker.filtered.push(service);
+		marker.services.push(service);
 	}
 }
 
@@ -275,8 +276,12 @@ function addServiceNode(service)
 		subtype = service[type + "-type"][0];
 	var title = getTitle(service);
 	var hostname = getHostname(service);
-	if (!title)
+	if ((!title) || (!hostname))
 		return;
+	if (title != hostname)
+		title = "<b>" + hostname + "</b> (" + title + ")";
+	else
+		title = "<b>" + title + "</b>";
 	var node = null;
 	var subnode = null;
 	for (var i = 0 ; i < treeNodes.length ; i++)
@@ -316,33 +321,18 @@ function addServiceNode(service)
 			"children": []
 		}) - 1];
 	}
+	var serviceNode = {
+		"title": title,
+		"type": "service",
+		"tooltip": hostname,
+	};
+	serviceNode.service = service;
 	if (subtype)
-	{
-		subnode["children"].push({
-			"title": title,
-			"type": "service",
-			"tooltip": hostname,
-			"records": [ service ]
-		});
-	}
+		subnode["children"].push(serviceNode);
 	else if (type)
-	{
-		node["children"].push({
-			"title": title,
-			"type": "service",
-			"tooltip": hostname,
-			"records": [ service ]
-		});
-	}
+		node["children"].push(serviceNode);
 	else
-	{
-		treeNodes.push({
-			"title": title,
-			"type": "service",
-			"tooltip": hostname,
-			"records": [ service ]
-		});
-	}
+		treeNodes.push(serviceNode);
 }
 
 ////////////////////////////////////////
@@ -351,95 +341,141 @@ function addServiceNode(service)
 
 function onMarkerActivate(marker)
 {
-	if ((!marker["records"]) || ((!marker["records"]["host"]) && (!marker["records"]["service"])))
+	if (!marker.services)
 		return;
-	if (infoWindow)
-		infoWindow.close();
-	infoWindow = new google.maps.InfoWindow();
-	google.maps.event.addListener(infoWindow, 'domready', function() {
-		//updateInfoWindowContent();
-		/*$(".info-window-service").click(function(event) {
-			onInfoWindowActivate($(this));
-			event.preventDefault(event);
-		});*/
-	});
-	infoWindow.open(map, marker);
 	activeMarker = marker;
+	map.gmap("openInfoWindow", {}, marker);
+	updateInfoWindow();
 }
 
 function onInfoWindowActivate(service)
 {
 	if (!activeMarker)
 		return;
-	var host = getHost(service, activeMarker["records"]["host"]);
 	showServiceInfo(service);
-	showHostInfo(host);
+	showHostInfo(service.host);
 }
 
 function onNodeActivate(node)
 {
-	if (!node.data["records"])
+	if (!node.data["service"])
 		return;
-	var service = node.data["records"][0];
-	var host = getHost(service, getHosts(service));
+	var service = node.data["service"];
 	var latlng = getLatLng(service);
-	if ((!latlng) && (host))
-		latlng = getLatLng(host);
 	if ((latlng) && (markers[latlng]))
 		onMarkerActivate(markers[latlng]);
-	else if (infoWindow)
-			infoWindow.close();
+	else
+		map.gmap("closeInfoWindow");
 	showServiceInfo(service);
-	showHostInfo(host);
+	showHostInfo(service.host);
 }
 
 ////////////////////////////////////////
 // GUI Functions
 ////////////////////////////////////////
 
+function showServiceInfo(service)
+{
+	clearServiceInfo();
+	if (!service)
+		return;
+	if (hasField(service, "service-name"))
+		$("#service-name").html(service["service-name"].join("<br>"));
+	if (hasField(service, "service-locator"))
+	{
+		var hostnames = getHostnames(service).unique().sort(function(a, b) { compareHostnames(a, b); });
+		var locators = [];
+		for (var i = 0 ; i < hostnames.length ; i++)
+			locators.push("<a href=\"http://" + hostnames[i] + "/\" target=\"_blank\">" + hostnames[i] + "</a>");
+		$("#service-locator").html(locators.join("<br>"));
+	}
+	var locationString = getLocationString(service);
+	var latlngString = getLatLngString(service);
+	$("#service-location").html(locationString + "<br><div class=\"muted\">" + latlngString + "</div");
+	if (hasField(service, "group-communities"))
+		$("#service-communities").html(service["group-communities"].sort().join("<br>"));
+}
+
+function clearServiceInfo()
+{
+	$("#service-name").empty();
+	$("#service-location").empty();
+	$("#service-locator").empty();
+	$("#service-communities").empty();
+	$("#service-custom").empty();
+}
+
+function showHostInfo(host)
+{
+	clearHostInfo();
+	if (!host)
+		return;
+	if (hasField(host, "host-name"))
+        $("#host-name").html(host["host-name"].join("<br>"));
+	
+}
+
+function clearHostInfo()
+{
+	$("#host-name").empty();
+	$("#host-hardware").empty();
+	$("#host-os").empty();
+	$("#host-version").empty();
+	$("#host-communities").empty();
+}
+
 function updateCommunities()
 {
 	communities = communities.unique().sort();
 	var options = $("#communities");
 	for (var i = 0 ; i < communities.length ; i++)
-		options.append($("<option>").attr("value", i).text(communities[i]).attr("selected", "true"));
+	{
+		options.append($("<option>").attr({
+			"selected": "true",
+			"value": i
+		 }).text(communities[i]));
+	}
 }
 
-function updateInfoWindowContent()
+function updateFilter()
+{
+	
+}
+
+function updateInfoWindow()
 {
 	if (!activeMarker)
 		return;
-	var content = "";
 	var contentMap = {};
-	for (var i = 0 ; i < marker["records"]["service"].length ; i++)
+	var services = activeMarker.services;
+	for (var i = 0 ; i < services.length ; i++)
 	{
-		var service = marker["records"]["service"][i];
-		var host = getHost(service, marker["records"]["host"]);
+		var service = services[i];
 		var section = "";
-		if (host)
-			section = getTitle(host);
+		if (services[i].host)
+			section = getTitle(service.host);
 		else
 			section = getTitle(service);
-		if (!section)
-			section = "";
+		var hostname = getHostname(service);
+		if ((!section) || (!hostname))
+			continue;
+		if (section != hostname)
+			section += " (" + hostname + ")"
 		if (contentMap[section])
 			contentMap[section].push(service);
 		else
 			contentMap[section] = [ service ];
 	}
-	
-	
-	
-	content += "<dl>";
 	var sections = [];
 	for (var section in contentMap)
 		sections.push(section);
 	sections.sort();
+	var content = $("dl");
 	for (var i = 0 ; i < sections.length ; i++)
 	{
 		var section = sections[i];
-		contentMap[section].sort(function (a,b)
-		{
+		content.append($("<dt>").text(section));
+		contentMap[section].sort(function(a, b) {
 			var type_a = "";
 			var type_b = "";
 			if (hasField(a, "service-type"))
@@ -448,23 +484,17 @@ function updateInfoWindowContent()
 				type_b = b["service-type"][0].toLowerCase();
 			return type_a > type_b ? 1 : type_a < type_b ? -1 : 0;
 		});
-		content += "<dt>" + section + "</dt>";
 		for (var j = 0 ; j < contentMap[section].length ; j++)
 		{
-			var uri = contentMap[section][j]["ls-host"] + contentMap[section][j]["uri"];
-			var locator = "";
-			if (hasField(contentMap[section][j], "service-locator"))
-				locator = contentMap[section][j]["service-locator"][0];
-			var title = getServiceTypeTitle(contentMap[section][j]);
-			content += "<dd><a class=\"info-window-service\" name=\"" + uri + "\" title=\"" + locator + "\" href=\"#\">" + title + "</a></dd>";
+			var service = contentMap[section][j];
+			var title = getServiceTypeTitle(service);
+			var hostname = getHostname(service);
+			content.append($("<dd>").append($("<a>").attr({
+				"title": hostname, 
+				"href": "#"
+			}).text(title).data("service", service).click(function(event) { onInfoWindowActivate($(this).data("service")); })));
 		}
 	}
-	content += "</dl>";
-}
-
-function updateFilter()
-{
-	
 }
 
 function updateMap()
@@ -479,39 +509,30 @@ function updateStatus()
 
 function updateTree()
 {
-	
-	//updateTreeNodeCounts();
+	updateTreeNodeCounts();
 	tree.fancytree("getTree").reload();
 	tree.fancytree("getRootNode").sortChildren(function(a, b) {
 		isFolder_a = a.isFolder();
 		isFolder_b = b.isFolder();
 		if ((isFolder_a) || (isFolder_b))
 			return !isFolder_a && isFolder_b ? 1 : isFolder_a && !isFolder_b ? -1 : 0; 
-		order = {
-			"Hostname": 0,
-			"IPv4": 1,
-			"IPv6": 2
-		};
-		title_a = a.title;
-		title_b = b.title;
-		order_a = order[getAddressType(title_a)];
-		order_b = order[getAddressType(title_b)];
-		return order_a > order_b ? 1 : order_a < order_b ? -1 : title_a > title_b ? 1 : title_a < title_b ? -1 : 0;
+		return compareHostnames(a.tooltip, b.tooltip);
 	}, true);
 }
 
 function updateTreeNodeCounts(nodes)
 {
 	if (!nodes)
-		nodes = tree.fancytree("getRootNode").getChildren();
+		nodes = treeNodes;
 	var count = 0;
 	for (var i = 0 ; i < nodes.length ; i++)
 	{
 		var node = nodes[i];
-		if ((node.isFolder()) && (node.li))
+		if (node["folder"])
 		{
-			var childCount = updateTreeNodeCounts(node.getChildren());
-			$(node.li).find("span.fancytree-node").append("<span class=\"badge tree-badge\">" + childCount + "</span>");
+			var childCount = updateTreeNodeCounts(node["children"]);
+			var title = node["title"].split("<span")[0];
+			node["title"] = title + "<span class=\"badge tree-badge\">" + childCount + "</span>";
 			count += childCount;
 		}
 		else
@@ -528,10 +549,10 @@ function zoomToFitMarkers()
 	for (var latlng in markers)
 		bounds.extend(markers[latlng].getPosition());
 	if (!bounds.isEmpty())
-		map.fitBounds(bounds);
-	var zoom = map.getZoom();
+		map.gmap("get", "map").fitBounds(bounds);
+	var zoom = map.gmap("option", "zoom");
 	zoom = zoom < 2 ? 2 : zoom > 6 ? 6 : zoom;
-	map.setZoom(zoom);
+	map.gmap("option", "zoom", zoom);
 }
 
 ////////////////////////////////////////
@@ -602,9 +623,21 @@ function getServices(record)
 	return getRecords("service", record);
 }
 
-////////////////////////////////////////
-// Record Data Functions
-////////////////////////////////////////
+function getAdministrators(record, persons)
+{
+	var type = record["type"][0];
+	if (hasField(record, type + "-administrators"))
+	{
+		var administrators = [];
+		for (var i = 0 ; i < persons.length ; i++)
+		{
+			if ($.inArray(persons[i]["uri"], record[type + "-administrators"]))
+				administrators.push(persons[i]);
+		}
+		return administrators;
+	}
+	return null;
+}
 
 function getHost(record, hosts)
 {
@@ -617,7 +650,7 @@ function getHost(record, hosts)
 	{
 		for (var i = 0 ; i < hosts.length ; i++)
 		{
-			if (record["ls-host"] == host[i]["ls-host"])
+			if (record["ls-host"] == hosts[i]["ls-host"])
 			{
 				if (hasField(hosts[i], "host-net-interfaces"))
 				{
@@ -643,6 +676,36 @@ function getHost(record, hosts)
 	}
 	return null;
 }
+
+function mapInterface(record)
+{
+	var host = getHost(record, getHosts(record));
+	if (host)
+	{
+		if (host.interfaces)
+			host.interfaces.push(record);
+		else
+			host.interfaces = [ record ];
+		record.host = host;
+	}
+}
+
+function mapService(record)
+{
+	var host = getHost(record, getHosts(record));
+	if (host)
+	{
+		if (host.services)
+			host.services.push(record);
+		else
+			host.services = [ record ];
+		record.host = host;
+	}
+}
+
+////////////////////////////////////////
+// Record Data Functions
+////////////////////////////////////////
 
 function getHostname(record)
 {
@@ -697,11 +760,51 @@ function getLatLng(record)
 	var latlng = null;
 	if ((hasField(record, "location-latitude")) && (hasField(record, "location-longitude")))
 	{
-		latlng = new google.maps.LatLng(parseFloat(record["location-latitude"][0]), parseFloat(record["location-longitude"][0]));
+		var lat = parseFloat(record["location-latitude"][0]);
+		var lng = parseFloat(record["location-longitude"][0]);
+		latlng = new google.maps.LatLng(lat, lng);
 		if (!latlng.lat() || !latlng.lng())
 			latlng = null;
+		if (record.host)
+			latlng = getLatLng(record.host);
 	}
 	return latlng;
+}
+
+function getLatLngString(record)
+{
+	var latlngString = "";
+	if ((hasField(record, "location-latitude")) && (hasField(record, "location-longitude")))
+	{
+		var lat = (parseFloat(record["location-latitude"][0])).toFixed(4);
+		var lng = (parseFloat(record["location-longitude"][0])).toFixed(4);
+		latlngString += "(" + lat + ", " + lng + ")";
+	}
+	return latlngString;
+}
+
+function getLocationString(record)
+{
+	var locationString = "";
+	if (hasField(record, "location-sitename"))
+		locationString += record["location-sitename"][0] + ", ";
+	if (hasField(record, "location-city"))
+		locationString += record["location-city"][0] + ", ";
+	if (hasField(record, "location-state"))
+	{
+		locationString += record["location-state"][0];
+		if (hasField(record, "location-code"))
+			locationString += " " + record["location-code"][0] + ", ";
+		else
+			locationString += ", ";
+	}
+	else if (hasField(record, "location-code"))
+	{
+		locationString += record["location-code"][0] + ", ";
+	}
+	if (hasField(record, "location-country"))
+		locationString += getCountryString(record["location-country"][0]);
+	return $.trim(locationString);
 }
 
 function getServiceMapping(service)
@@ -806,7 +909,7 @@ function getTitle(record)
 
 function hasField(record, field)
 {
-	return record[field] && record[field][0];
+	return ((record[field]) && (record[field][0]));
 }
 
 ////////////////////////////////////////
@@ -831,6 +934,18 @@ Array.prototype.unique = function() {
 	}
 	return arr; 
 };
+
+function compareHostnames(hostname_a, hostname_b)
+{
+	order = {
+		"Hostname": 0,
+		"IPv4": 1,
+		"IPv6": 2
+	};
+	order_a = order[getAddressType(hostname_a)];
+	order_b = order[getAddressType(hostname_b)];
+	return order_a > order_b ? 1 : order_a < order_b ? -1 : hostname_a > hostname_b ? 1 : hostname_a < hostname_b ? -1 : 0;
+}
 
 function getAddressType(address)
 {
@@ -858,4 +973,318 @@ function getURLParser(url)
 	var parser = document.createElement("a");
 	parser.href = url;
 	return parser;
+}
+
+function getCountryString(country)
+{
+	var countryCodes = {
+		"AC": "Ascension Island",
+		"AD": "Andorra",
+		"AE": "United Arab Emirates",
+		"AF": "Afghanistan",
+		"AG": "Antigua and Barbuda",
+		"AI": "Anguilla",
+		"AL": "Albania",
+		"AM": "Armenia",
+		"AN": "Netherlands Antilles",
+		"AO": "Angola",
+		"AQ": "Antarctica",
+		"AR": "Argentina",
+		"AS": "American Samoa",
+		"AT": "Austria",
+		"AU": "Australia",
+		"AW": "Aruba",
+		"AZ": "Azerbaijan",
+		"BA": "Bosnia and Herzegovina",
+		"BB": "Barbados",
+		"BD": "Bangladesh",
+		"BE": "Belgium",
+		"BF": "Burkina Faso",
+		"BG": "Bulgaria",
+		"BH": "Bahrain",
+		"BI": "Burundi",
+		"BJ": "Benin",
+		"BM": "Bermuda",
+		"BN": "Brunei",
+		"BO": "Bolivia",
+		"BR": "Brazil",
+		"BS": "Bahamas",
+		"BT": "Bhutan",
+		"BV": "Bouvet Island",
+		"BW": "Botswana",
+		"BY": "Belarus",
+		"BZ": "Belize",
+		"CA": "Canada",
+		"CC": "Cocos (Keeling) Islands",
+		"CD": "Congo, Democratic People's Republic",
+		"CF": "Central African Republic",
+		"CG": "Congo, Republic of",
+		"CH": "Switzerland",
+		"CI": "C&ocirc;te d'Ivoire",
+		"CK": "Cook Islands",
+		"CL": "Chile",
+		"CM": "Cameroon",
+		"CN": "China",
+		"CO": "Colombia",
+		"CR": "Costa Rica",
+		"CU": "Cuba",
+		"CV": "Cape Verde",
+		"CX": "Christmas Island",
+		"CY": "Cyprus",
+		"CZ": "Czech Republic",
+		"DE": "Germany",
+		"DJ": "Djibouti",
+		"DK": "Denmark",
+		"DM": "Dominica",
+		"DO": "Dominican Republic",
+		"DZ": "Algeria",
+		"EC": "Ecuador",
+		"EE": "Estonia",
+		"EG": "Egypt",
+		"EH": "Western Sahara",
+		"ER": "Eritrea",
+		"ES": "Spain",
+		"ET": "Ethiopia",
+		"FI": "Finland",
+		"FJ": "Fiji",
+		"FK": "Falkland Islands (Malvina)",
+		"FM": "Micronesia, Federal State of",
+		"FO": "Faroe Islands",
+		"FR": "France",
+		"GA": "Gabon",
+		"GD": "Grenada",
+		"GE": "Georgia",
+		"GF": "French Guiana",
+		"GG": "Guernsey",
+		"GH": "Ghana",
+		"GI": "Gibraltar",
+		"GL": "Greenland",
+		"GM": "Gambia",
+		"GN": "Guinea",
+		"GP": "Guadeloupe",
+		"GQ": "Equatorial Guinea",
+		"GR": "Greece",
+		"GS": "South Georgia and the South Sandwich Islands",
+		"GT": "Guatemala",
+		"GU": "Guam",
+		"GW": "Guinea-Bissau",
+		"GY": "Guyana",
+		"HK": "Hong Kong",
+		"HM": "Heard and McDonald Islands",
+		"HN": "Honduras",
+		"HR": "Croatia/Hrvatska",
+		"HT": "Haiti",
+		"HU": "Hungary",
+		"ID": "Indonesia",
+		"IE": "Ireland",
+		"IL": "Israel",
+		"IM": "Isle of Man",
+		"IN": "India",
+		"IO": "British Indian Ocean Territory",
+		"IQ": "Iraq",
+		"IR": "Iran",
+		"IS": "Iceland",
+		"IT": "Italy",
+		"JE": "Jersey",
+		"JM": "Jamaica",
+		"JO": "Jordan",
+		"JP": "Japan",
+		"KE": "Kenya",
+		"KG": "Kyrgyzstan",
+		"KH": "Cambodia",
+		"KI": "Kiribati",
+		"KM": "Comoros",
+		"KN": "Saint Kitts and Nevis",
+		"KP": "North Korea",
+		"KR": "South Korea",
+		"KW": "Kuwait",
+		"KY": "Cayman Islands",
+		"KZ": "Kazakstan",
+		"LA": "Laos",
+		"LB": "Lebanon",
+		"LC": "Saint Lucia",
+		"LI": "Liechtenstein",
+		"LK": "Sri Lanka",
+		"LR": "Liberia",
+		"LS": "Lesotho",
+		"LT": "Lithuania",
+		"LU": "Luxembourg",
+		"LV": "Latvia",
+		"LY": "Lybia",
+		"MA": "Morocco",
+		"MC": "Monaco",
+		"MD": "Modolva",
+		"MG": "Madagascar",
+		"MH": "Marshall Islands",
+		"MK": "Macedonia, Former Yugoslav Republic",
+		"ML": "Mali",
+		"MM": "Myanmar",
+		"MN": "Mongolia",
+		"MO": "Macau",
+		"MP": "Northern Mariana Islands",
+		"MQ": "Martinique",
+		"MR": "Mauritania",
+		"MS": "Montserrat",
+		"MT": "Malta",
+		"MU": "Mauritius",
+		"MV": "Maldives",
+		"MW": "Malawi",
+		"MX": "Mexico",
+		"MY": "Maylaysia",
+		"MZ": "Mozambique",
+		"NA": "Namibia",
+		"NC": "New Caledonia",
+		"NE": "Niger",
+		"NF": "Norfolk Island",
+		"NG": "Nigeria",
+		"NI": "Nicaragua",
+		"NL": "Netherlands",
+		"NO": "Norway",
+		"NP": "Nepal",
+		"NR": "Nauru",
+		"NU": "Niue",
+		"NZ": "New Zealand",
+		"OM": "Oman",
+		"PA": "Panama",
+		"PE": "Peru",
+		"PF": "French Polynesia",
+		"PG": "Papua New Guinea",
+		"PH": "Philippines",
+		"PK": "Pakistan",
+		"PL": "Poland",
+		"PM": "St. Pierre and Miquelon",
+		"PN": "Pitcairn Island",
+		"PR": "Puerto Rico",
+		"PS": "Palestinian Territories",
+		"PT": "Portugal",
+		"PW": "Palau",
+		"PY": "Paraguay",
+		"QA": "Qatar",
+		"RE": "Reunion",
+		"RO": "Romania",
+		"RU": "Russian Federation",
+		"RW": "Twanda",
+		"SA": "Saudi Arabia",
+		"SB": "Solomon Islands",
+		"SC": "Seychelles",
+		"SU": "Sudan",
+		"SE": "Sweden",
+		"SG": "Singapore",
+		"SH": "St. Helena",
+		"SI": "Slovenia",
+		"SJ": "Svalbard and Jan Mayan Islands",
+		"SK": "Slovakia",
+		"SL": "Sierra Leone",
+		"SM": "San Marino",
+		"SN": "Senegal",
+		"SO": "Somalia",
+		"SR": "Suriname",
+		"ST": "S&atilde;o Tome and Principe",
+		"SV": "El Salvador",
+		"SY": "Syria",
+		"SZ": "Swaziland",
+		"TC": "Turks and Ciacos Islands",
+		"TD": "Chad",
+		"TF": "French Southern Territories",
+		"TG": "Togo",
+		"TH": "Thailand",
+		"TJ": "Tajikistan",
+		"TK": "Tokelau",
+		"TM": "Turkmenistan",
+		"TN": "Tunisia",
+		"TO": "Tonga",
+		"TP": "East Timor",
+		"TR": "Turkey",
+		"TT": "Trinidad and Tobago",
+		"TV": "Tuvalu",
+		"TW": "Taiwan",
+		"TZ": "Tanzania",
+		"UA": "Ukraine",
+		"UG": "Uganda",
+		"UK": "UK",
+		"UM": "US Minor Outlying Islands",
+		"US": "USA",
+		"UY": "Uruguay",
+		"UZ": "Uzbekistan",
+		"VA": "Vatican City",
+		"VC": "Saint Vincent and the Grenadines",
+		"VE": "Venezuela",
+		"VG": "British Virgin Islands",
+		"VI": "US Virgin Islands",
+		"VN": "Vietnam",
+		"VU": "Vanuatu",
+		"WF": "Wallis and Futuna Islands",
+		"WS": "Western Samoa",
+		"YE": "Yemen",
+		"YT": "Mayotte",
+		"YU": "Yugoslavia",
+		"ZA": "South Africa",
+		"ZM": "Zambia",
+		"ZR": "Zaire",
+		"ZW": "Zimbabwe"
+	}
+	if (countryCodes[country])
+		return countryCodes[country];
+	else
+		return country;
+}
+
+function getStateString(state)
+{
+	var stateCodes = {
+		"AL": "Alabama",
+		"AK": "Alaska",
+		"AZ": "Arizona",
+		"AR": "Arkansas",
+		"CA": "California",
+		"CO": "Colorado",
+		"CT": "Connecticut",
+		"DE": "Delaware",
+		"FL": "Florida",
+		"GA": "Georgia",
+		"HI": "Hawaii",
+		"ID": "Idaho",
+		"IL": "Illinois",
+		"IN": "Indiana",
+		"IA": "Iowa",
+		"KS": "Kansas",
+		"KY": "Kentucky",
+		"LA": "Louisiana",
+		"ME": "Maine",
+		"MD": "Maryland",
+		"MA": "Massachusetts",
+		"MI": "Michigan",
+		"MN": "Minnesota",
+		"MS": "Mississippi",
+		"MO": "Missouri",
+		"MT": "Montana",
+		"NE": "Nebraska",
+		"NV": "Nevada",
+		"NH": "New Hampshire",
+		"NJ": "New Jersey",
+		"NM": "New Mexico",
+		"NY": "New York",
+		"NC": "North Carolina",
+		"ND": "North Dakota",
+		"OH": "Ohio",
+		"OK": "Oklahoma",
+		"OR": "Oregon",
+		"PA": "Pennsylvania",
+		"RI": "Rhode Island",
+		"SC": "South Carolina",
+		"SD": "South Dakota",
+		"TN": "Tennessee",
+		"TX": "Texas",
+		"UT": "Utah",
+		"VT": "Vermont",
+		"VA": "Virginia",
+		"WA": "Washington",
+		"WV": "West Virginia",
+		"WI": "Wisconsin",
+		"WY": "Wyoming"
+	};
+	if (stateCodes[state])
+		return stateCodes[state];
+	else
+		return state;
 }
