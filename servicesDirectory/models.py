@@ -123,6 +123,20 @@ def filter_default(records):
             if service_type == "phoebus":
                 records.remove(record)
                 continue
+            service_locators = record.get("service-locators", [ "" ])[0]
+            if service_locators:
+                private_addresses = False
+                for locator in service_locators:
+                    hostname = get_hostname_from_url(locator)
+                    try:
+                        ip_form = IP(address)
+                        if ip_form.iptype() == "PRIVATE":
+                            record["service-locators"].remove(locator)
+                            private_addresses = True
+                    except:
+                        pass
+                if private_addresses and not record["service-locators"]:
+                    records.remove(record)
             record.pop("ma-tests", None)
             record.pop("psservice-eventtypes", None)
         else:
