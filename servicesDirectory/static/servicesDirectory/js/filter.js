@@ -47,7 +47,7 @@ var filterMap = {
 			var fields = [];
 			if (hasField(record, "location-country"))
 			{
-				for (var i ; i < record["location-country"].length ; i++)
+				for (var i = 0 ; i < record["location-country"].length ; i++)
 				{
 					var code = record["location-country"][i];
 					var country = getCountryString(code);
@@ -60,21 +60,31 @@ var filterMap = {
 			return fields;
 		}
 	},
-	"domain":
-	{
-		"getFields": function(record) {
-			var fields = getHostnames(record);
-			if (hasField(record, "group-domains"))
-				$.merge(fields, record["group-domains"]);
-			return fields;
-		}
-	},
 	"email":
 	{
 		"getFields": function(record) {
 			if (hasField(record, "person-email"))
 				return record["person-email"];
 			return [];
+		}
+	},
+	"hardware":
+	{
+		"getFields": function(record) {
+			var fields = [];
+			$.merge(fields, filterMap["memory"].getFields(record));
+			$.merge(fields, filterMap["processor"].getFields(record));
+			$.merge(fields, filterMap["nicspeed"].getFields(record));
+			return fields;
+		}
+	},
+	"hostname":
+	{
+		"getFields": function(record) {
+			var fields = getHostnames(record);
+			if (hasField(record, "group-domains"))
+				$.merge(fields, record["group-domains"]);
+			return fields;
 		}
 	},
 	"kernel":
@@ -97,30 +107,48 @@ var filterMap = {
 			return fields;
 		}
 	},
-	"name": {
-		"getFields": function(record) {
-			var type = record["type"][0];
-			if (hasField(record, type + "-name"))
-				return record[type + "-name"];
-			return [];
-		}
-	},
 	"memory":
 	{
 		"getFields": function(record) {
-			
+			var fields = [];
+			if (hasField(record, "host-hardware-memory"))
+			{
+				for (var i = 0 ; i < record["host-hardware-memory"].length ; i++)
+					fields.push(parseSize(record["host-hardware-memory"][i], true));
+			}
+			return fields;
 		}
 	},
 	"mtu":
 	{
 		"getFields": function(record) {
-			
+			if (hasField(record, "interface-mtu"))
+				return record["interface-mtu"];
+			return [];
+		}
+	},
+	"name": {
+		"getFields": function(record) {
+			var fields = [];
+			var type = record["type"][0];
+			if (hasField(record, type + "-name"))
+				$.merge(fields, record[type + "-name"]);
+			var title = getTitle(record);
+			if (title)
+				fields.push(title);
+			return fields;
 		}
 	},
 	"nicspeed":
 	{
 		"getFields": function(record) {
-			
+			var fields = [];
+			if (hasField(record, "interface-capacity"))
+			{
+				for (var i = 0 ; i < record["interface-capacity"].length ; i++)
+					fields.push(parseRate(record["interface-capacity"][i], true));
+			}
+			return fields;
 		}
 	},
 	"organization":
@@ -131,14 +159,21 @@ var filterMap = {
 			return [];
 		}
 	},
-	"osname":
+	"os":
 	{
 		"getFields": function(record) {
 			var fields = [];
-			if (hasField(record, "host-os-name"))
-				$.merge(fields, record["host-os-name"]);
+			$.merge(fields, filterMap["osname"].getFields(record));
 			$.merge(fields, filterMap["osversion"].getFields(record));
 			return fields;
+		}
+	},
+	"osname":
+	{
+		"getFields": function(record) {
+			if (hasField(record, "host-os-name"))
+				return record["host-os-name"];
+			return [];
 		}
 	},
 	"osversion":
@@ -162,19 +197,29 @@ var filterMap = {
 	"processorcores":
 	{
 		"getFields": function(record) {
-			
+			if (hasField(record, "host-hardware-processorcore"))
+				return record["host-hardware-processorcore"];
+			return [];
 		}
 	},
 	"processorcount":
 	{
 		"getFields": function(record) {
-			
+			if (hasField(record, "host-hardware-processorcount"))
+				return record["host-hardware-processorcount"];
+			return [];
 		}
 	},
 	"processorspeed":
 	{
 		"getFields": function(record) {
-			
+			var fields = [];
+			if (hasField(record, "host-hardware-processorspeed"))
+			{
+				for (var i = 0 ; i < record["host-hardware-processorspeed"].length ; i++)
+					fields.push(parseSpeed(record["host-hardware-processorspeed"][i], true));
+			}
+			return fields;
 		}
 	},
 	"site":
@@ -191,7 +236,7 @@ var filterMap = {
 			var fields = [];
 			if (hasField(record, "location-state"))
 			{
-				for (var i ; i < record["location-state"].length ; i++)
+				for (var i = 0 ; i < record["location-state"].length ; i++)
 				{
 					var code = record["location-state"][i];
 					var state = getStateString(code);
@@ -204,14 +249,6 @@ var filterMap = {
 			return fields;
 		}
 	},
-	"toolkitversion":
-	{
-		"getFields": function(record) {
-			if (hasField(record, "pshost-toolkitversion"))
-				return record["pshost-toolkitversion"];
-			return [];
-		}
-	},
 	"type": {
 		"getFields": function(record) {
 			return record["type"];
@@ -220,7 +257,9 @@ var filterMap = {
 	"version":
 	{
 		"getFields": function(record) {
-			
+			if (hasField(record, "pshost-toolkitversion"))
+				return record["pshost-toolkitversion"];
+			return [];
 		}
 	},
 	"zipcode":
@@ -251,14 +290,17 @@ var filterAliases = {
 	"cpus": filterMap["processorcount"],
 	"cpuspeed": filterMap["processorspeed"],
 	"cpuspeeds": filterMap["processorspeed"],
-	"domain": filterMap["domain"],
-	"domains": filterMap["domain"],
+	"domain": filterMap["hostname"],
+	"domains": filterMap["hostname"],
 	"email": filterMap["email"],
 	"emails": filterMap["emails"],
 	"group": filterMap["community"],
 	"groups": filterMap["community"],
-	"hostname": filterMap["domain"],
-	"hostnames": filterMap["domain"],
+	"hardware": filterMap["hardware"],
+	"host": filterMap["hostname"],
+	"hosts": filterMap["hostname"],
+	"hostname": filterMap["hostname"],
+	"hostnames": filterMap["hostname"],
 	"kernel": filterMap["kernel"],
 	"kernels": filterMap["kernel"],
 	"kind": filterMap["type"],
@@ -276,7 +318,7 @@ var filterAliases = {
 	"nicspeeds": filterMap["nicspeed"],
 	"organization": filterMap["organization"],
 	"organizations": filterMap["organization"],
-	"os": filterMap["osname"],
+	"os": filterMap["os"],
 	"osname": filterMap["osname"],
 	"osnames": filterMap["osnames"],
 	"osversion": filterMap["osversion"],
@@ -291,14 +333,15 @@ var filterAliases = {
 	"sites": filterMap["site"],
 	"sitename": filterMap["site"],
 	"sitenames": filterMap["site"],
+	"software": filterMap["version"],
 	"speed": filterMap["nicspeed"],
 	"speeds": filterMap["nicspeed"],
 	"state": filterMap["state"],
 	"states": filterMap["state"],
-	"title": filterMap["title"],
-	"titles": filterMap["title"],
-	"toolkitversion": filterMap["toolkitversion"],
-	"toolkitversions": filterMap["toolkitversion"],
+	"title": filterMap["name"],
+	"titles": filterMap["name"],
+	"toolkitversion": filterMap["version"],
+	"toolkitversions": filterMap["version"],
 	"type": filterMap["type"],
 	"types": filterMap["type"],
 	"version": filterMap["version"],
@@ -306,3 +349,40 @@ var filterAliases = {
 	"zipcode": filterMap["zipcode"],
 	"zipcodes": filterMap["zipcode"]
 };
+
+////////////////////////////////////////
+// Filter Functions
+////////////////////////////////////////
+
+function getFilteredRecords(records, filter)
+{
+	
+}
+
+function matchFields(fields, operand)
+{
+	var regex = new RegExp(operand);
+	for (var i = 0 ; i < fields.length ; i++)
+	{
+		if (fields[i].search(regex, "i") >= 0)
+			return true;
+	}
+	return false;
+}
+
+function matchRecord(operator, operand, record)
+{
+	if (filterAliases[operator])
+	{
+		var fields = filterAliases[operator].getFields(records);
+		return matchFields(fields, operand);
+	}
+	else
+	{
+		if (record[operator] instanceof Array)
+			return matchFields(record[operator], operand);
+		else if (record[operator] instanceof String)
+			return matchFields([ record[operator] ], operand);
+		return false;
+	}
+}

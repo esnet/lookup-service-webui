@@ -1,83 +1,14 @@
 ////////////////////////////////////////
-// Service Mappings
+// Declare Variables
 ////////////////////////////////////////
 
 var initialized = false;
 
-var communities = [];
-var recordMap = {};
+var recordMap = null;
 
-var serviceMap = {
-	"bwctl": {
-		"title": "BWCTL Server",
-		"defaults": [ "bwctl server" ],
-		"custom": "bwctl -T iperf -t 20 -i 1 -f m -c <address>:<port>",
-		"action": "Test"
-	},
-	"owamp": {
-		"title": "OWAMP Server",
-		"defaults": [ "owamp server" ],
-		"custom": "owping -c 10000 -i 0.01 <address>:<port>",
-		"action": "Ping"
-	},
-	"ndt": {
-		"title": "NDT Server",
-		"defaults": [ "ndt server" ],
-		"custom": "web100clt -n <address> -ll",
-		"action": "Test"
-	},
-	"npad": {
-		"title": "NPAD Server",
-		"defaults": [ "npad server" ],
-		"custom": "",
-		"action": "Test"
-	},
-	"ping": {
-		"title": "Ping Responder",
-		"defaults": [ "ping responder" ],
-		"custom": "ping <address>",
-		"action": "Ping"
-	},
-	"traceroute": {
-		"title": "Traceroute Responder",
-		"defaults": [ "traceroute responder" ],
-		"custom": "traceroute <address>",
-		"action": "Traceroute"
-	},
-	"ma": {
-		"title": "MA",
-		"types": {
-			"bwctl": {
-				"title": "BWCTL MA",
-				"defaults": [ "perfsonarbuoy ma", "perfsonar-buoy ma" ],
-				"custom": "",
-				"action": "Query"
-			},
-			"owamp": {
-				"title": "OWAMP MA",
-				"defaults": [ "perfsonarbuoy ma", "perfsonar-buoy ma" ],
-				"custom": "",
-				"action": "Query"
-			},
-			"traceroute": {
-				"title": "Traceroute MA",
-				"defaults": [ "traceroute ma" ],
-				"custom": "",
-				"action": "Query"
-			}
-		},
-		"defaults": [ "measurement archive", "perfsonar-buoy ma", "perfsonarbuoy ma", "traceroute ma" ],
-		"custom": "",
-		"action": "Query"
-	}
-};
+var filteredMap = null;
 
 var filter = "";
-
-var filtered = {
-	"communities": [],
-	"records": []
-};
 
 ////////////////////////////////////////
 // Initialize Map
@@ -119,7 +50,6 @@ $("#communities").change(function(event) {
 		updateFilter();
 	}
 });
-
 
 $("#update").click(function(event) {
 	if (initialized)
@@ -202,42 +132,14 @@ function initTreeNodes()
 
 function initialize(records)
 {
-	for (var i = 0 ; i < records.length ; i++)
-	{
-		var record = records[i];
-		var type = record["type"][0];
-		if (recordMap[record["ls-host"]])
-		{
-			if (recordMap[record["ls-host"]][type])
-				recordMap[record["ls-host"]][type].push(record);
-			else
-				recordMap[record["ls-host"]][type] = [ record ];
-		}
-		else
-		{
-			recordMap[record["ls-host"]] = {};
-			recordMap[record["ls-host"]][type] = [ record ];
-		}
-		if (hasField(record, "group-communities"))
-			$.merge(communities, record["group-communities"]);
-	}
-	var hosts = getHosts();
-	for (var i = 0 ; i < hosts.length ; i++)
-	{
-		mapHost(hosts[i]);
-	}
-	var interfaces = getInterfaces();
-	for (var i = 0 ; i < interfaces.length ; i++)
-	{
-		mapInterface(interfaces[i]);
-	}
-	var services = getServices();
+	recordMap = new RecordMap(records, true);
+	var services = recordMap.getServices();
 	for (var i = 0 ; i < services.length ; i++)
 	{
-		mapService(services[i]);
 		addServiceNode(services[i]);
 		addServiceMarker(services[i]);
 	}
+	updateFilter();
 	updateCommunities();
 	updateMap();
 	updateTree();
@@ -432,20 +334,37 @@ function clearHostInfo()
 
 function updateCommunities()
 {
-	communities = communities.unique().sort();
+	var communities = [];
+	var records = recordMap.getRecords();
+	for (var i = 0 ; i < records.length ; i++)
+	{
+		if (hasField(records[i], "group-communities"))
+			$.merge(communities, records[i]["group-communities"]);
+	}
+	communities = communities.sort().unique();
 	var options = $("#communities");
 	for (var i = 0 ; i < communities.length ; i++)
 	{
 		options.append($("<option>").attr({
 			"selected": "true",
 			"value": i
-		 }).text(communities[i]));
+		}).text(communities[i]));
 	}
 }
 
 function updateFilter()
 {
-	
+	var search = $("#search").val();
+	if (search != filter)
+	{
+		filter = search;
+		var filtered = getFilteredRecords(recordMap.getRecords(), filter);
+		filteredMap = new RecordMap(filtered, false);
+	}
+	else if (!filteredMap)
+	{
+		filteredMap = new RecordMap(recordMap.getRecords(), false);
+	}
 }
 
 function updateInfoWindow()
@@ -466,7 +385,7 @@ function updateInfoWindow()
 		if ((!section) || (!hostname))
 			continue;
 		if (section != hostname)
-			section += " (" + hostname + ")"
+			section += " (" + hostname + ")";
 		if (contentMap[section])
 			contentMap[section].push(service);
 		else
@@ -476,6 +395,7 @@ function updateInfoWindow()
 	for (var section in contentMap)
 		sections.push(section);
 	sections.sort();
+	var clickEvent = function(event) { onInfoWindowActivate($(this).data("service")); };
 	var content = $("dl");
 	for (var i = 0 ; i < sections.length ; i++)
 	{
@@ -498,7 +418,7 @@ function updateInfoWindow()
 			content.append($("<dd>").append($("<a>").attr({
 				"title": hostname, 
 				"href": "#"
-			}).text(title).data("service", service).click(function(event) { onInfoWindowActivate($(this).data("service")); })));
+			}).text(title).data("service", service).click(clickEvent)));
 		}
 	}
 }
@@ -510,7 +430,9 @@ function updateMap()
 
 function updateStatus()
 {
-	$("#status").html("Showing: " + getServices().length + " of " + getServices().length + " services.");
+	var visible = filteredMap.getServices().length;
+	var total = recordMap.getServices().length;
+	$("#status").html("Showing: " + visible + " of " + total + " services.");
 }
 
 function updateTree()
@@ -518,8 +440,8 @@ function updateTree()
 	updateTreeNodeCounts();
 	tree.fancytree("getTree").reload();
 	tree.fancytree("getRootNode").sortChildren(function(a, b) {
-		isFolder_a = a.isFolder();
-		isFolder_b = b.isFolder();
+		var isFolder_a = a.isFolder();
+		var isFolder_b = b.isFolder();
 		if ((isFolder_a) || (isFolder_b))
 			return !isFolder_a && isFolder_b ? 1 : isFolder_a && !isFolder_b ? -1 : 0; 
 		return compareHostnames(a.tooltip, b.tooltip);
@@ -559,181 +481,4 @@ function zoomToFitMarkers()
 	var zoom = map.gmap("option", "zoom");
 	zoom = zoom < 2 ? 2 : zoom > 6 ? 6 : zoom;
 	map.gmap("option", "zoom", zoom);
-}
-
-////////////////////////////////////////
-// Record Map Functions
-////////////////////////////////////////
-
-function getRecords(type, record)
-{
-	var records = [];
-	if (type)
-	{
-		if (record)
-		{
-			if (recordMap[record["ls-host"]])
-			{
-				if (recordMap[record["ls-host"]][type])
-					$.merge(records, recordMap[record["ls-host"]][type]);
-			}
-		}
-		else
-		{
-			for (var lsHost in recordMap)
-			{
-				if (recordMap[lsHost][type])
-					$.merge(records, recordMap[lsHost][type]);
-			}
-		}
-	}
-	else
-	{
-		if (record)
-		{
-			if (recordMap[record["ls-host"]])
-			{
-				for (var type in recordMap[record["ls-host"]])
-					$.merge(records, recordMap[record["ls-host"]]);
-			}
-		}
-		else
-		{
-			for (var lsHost in recordMap)
-			{
-				for (var type in recordMap[lsHost])
-					$.merge(records, recordMap[lsHost][type]);
-			}
-		}
-	}
-	return records;
-}
-
-function getHosts(record)
-{
-	return getRecords("host", record);
-}
-
-function getInterfaces(record)
-{
-	return getRecords("interface", record);
-}
-
-function getPersons(record)
-{
-	return getRecords("person", record);
-}
-
-function getServices(record)
-{
-	return getRecords("service", record);
-}
-
-function getAdministrators(record, persons)
-{
-	var type = record["type"][0];
-	if (hasField(record, type + "-administrators"))
-	{
-		var administrators = [];
-		for (var i = 0 ; i < persons.length ; i++)
-		{
-			if ($.inArray(persons[i]["uri"], record[type + "-administrators"]) >= 0)
-				administrators.push(persons[i]);
-		}
-		if (administrators[0])
-			return administrators;
-	}
-	return null;
-}
-
-function getHost(record, hosts)
-{
-	var type = record["type"][0];
-	if (type == "host")
-	{
-		return record;
-	}
-	else if (type == "interface")
-	{
-		for (var i = 0 ; i < hosts.length ; i++)
-		{
-			if (record["ls-host"] == hosts[i]["ls-host"])
-			{
-				if (hasField(hosts[i], "host-net-interfaces"))
-				{
-					if ($.inArray(record["uri"], hosts[i]["host-net-interfaces"]) >= 0)
-						return hosts[i];
-				}
-			}
-		}
-	}
-	else if (type == "service")
-	{
-		if (hasField(record, "service-host"))
-		{
-			for (var i = 0 ; i < hosts.length ; i++)
-			{
-				if (record["ls-host"] == hosts[i]["ls-host"])
-				{
-					if ($.inArray(hosts[i]["uri"], record["service-host"]) >= 0)
-						return hosts[i];
-				}
-			}
-		}
-	}
-	return null;
-}
-
-function mapHost(host)
-{
-	var administrators = getAdministrators(host, getPersons(host));
-	if (administrators)
-	{
-		for (var i = 0 ; i < administrators.length ; i++)
-		{
-			if (administrators[i].hosts)
-				administrators[i].hosts.push(host);
-			else
-				administrators[i].hosts = [ host ];
-		}
-		host.administrators = administrators;
-	}
-}
-
-function mapInterface(interface)
-{
-	var host = getHost(interface, getHosts(interface));
-	if (host)
-	{
-		if (host.interfaces)
-			host.interfaces.push(interface);
-		else
-			host.interfaces = [ interface ];
-		interface.host = host;
-	}
-}
-
-function mapService(service)
-{
-	var host = getHost(service, getHosts(service));
-	if (host)
-	{
-		if (host.services)
-			host.services.push(service);
-		else
-			host.services = [ service ];
-		service.host = host;
-	}
-	var administrators = getAdministrators(service, getPersons(service));
-	if (administrators)
-	{
-		for (var i = 0 ; i < administrators.length ; i++)
-		{
-			if (administrators[i].services)
-				administrators[i].services.push(service);
-			else
-				administrators[i].services = [ service ];
-		}
-		service.administrators = administrators;
-	}
 }

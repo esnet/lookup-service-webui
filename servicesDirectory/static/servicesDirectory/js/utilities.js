@@ -12,13 +12,13 @@ Array.prototype.contains = function(key) {
 };
 
 Array.prototype.unique = function() {
-	var arr = [];
+	var unique = [];
 	for (var i = 0 ; i < this.length ; i++)
 	{
-		if(!arr.contains(this[i]))
-			arr.push(this[i]);
+		if(!unique.contains(this[i]))
+			unique.push(this[i]);
 	}
-	return arr; 
+	return unique; 
 };
 
 function compareHostnames(hostname_a, hostname_b)
@@ -65,50 +65,63 @@ function getURLParser(url)
 
 function parseMetricPrefix(prefix)
 {
-	var prefixes = {
-		"K": Math.pow(10, 3),
-		"M": Math.pow(10, 6),
-		"G": Math.pow(10, 9),
-		"T": Math.pow(10, 12),
-		"P": Math.pow(10, 15),
-		"E": Math.pow(10, 18),
-		"Z": Math.pow(10, 21),
-		"Y": Math.pow(10, 24)
-	};
-	if (prefixes[prefix])
-		return prefixes[prefix];
-	else
-		return Math.pow(10, 0);
+	var shortPrefixes = [ "K", "M", "G", "T", "P", "E", "Z", "Y" ];
+	var longPrefixes = [ "kilo", "mega", "giga", "tera", "peta", "exa", "zetta", "yotta" ];
+	var power = 0;
+	if (prefix.length > 0)
+	{
+		if (prefix.length > 1)
+		{
+			prefix = prefix.toLowerCase();
+			power = ($.inArray(prefix, longPrefixes) + 1) * 3;
+		}
+		else
+		{
+			prefix = prefix.toUpperCase();
+			power = ($.inArray(prefix, shortPrefixes) + 1) * 3;
+		}
+		if (power == 0)
+			power = NaN;
+	}
+	return Math.pow(10, power);
 }
 
-function parseRate(rateString)
+function parseRate(rateString, nounit)
 {
 	var units = [ "b/s", "bit/s", "bps" ];
-	var rate = parseFloat(rateString);
-	var unit = $.trim(rateString.split(rate)[1]);
-	var prefix = unit.charAt(0).toUpperCase();
-	rate *= parseMetricPrefix(prefix);
-	return Math.round(rate);
+	var rate = parseUnitString(rateString, units, nounit);
+	return rate ? rate + units[1] : null;
 }
 
-function parseSize(sizeString)
+function parseSize(sizeString, nounit)
 {
-	var units = [ "B" ];
-	var size = parseFloat(sizeString);
-	var unit = $.trim(sizeString.split(size)[1]);
-	var prefix = unit.charAt(0).toUpperCase();
-	size *= parseMetricPrefix(prefix);
-	return Math.round(size);
+	var units = [ "byte", "B" ];
+	var size = parseUnitString(sizeString, units, nounit) ;
+	return size ? size + units[1] : null;
 }
 
-function parseSpeed(speedString)
+function parseSpeed(speedString, nounit)
 {
-	var units = [ "Hz" ];
-	var speed = parseFloat(speedString);
-	var unit = $.trim(speedString.split(speed)[1]);
-	var prefix = unit.charAt(0).toUpperCase();
-	speed *= parseMetricPrefix(prefix);
-	return Math.round(speed);
+	var units = [ "hertz", "Hz" ];
+	var speed = parseUnitString(speedString, units, nounit);
+	return speed ? speed + units[1] : null;
+}
+
+function parseUnitString(unitString, units, nounit)
+{
+	var parser = new RegExp("^(\\d+\\.?\\d*)\\s*(.+)?(" + units.join("|") + ")$", "i");
+	var parts = unitString.match(parser);
+	if ((!parts) && (nounit))
+	{
+		parser = new RegExp("^(\\d+\\.?\\d*)\\s*(.+)?$", "i")
+		parts = unitString.match(parser);
+	}
+	if ((!parts) || (parts.length < 3))
+		return NaN;
+	var number = parseFloat(parts[1]);
+	var prefix = parts[2];
+	number *= parseMetricPrefix(prefix);
+	return Math.round(number);
 }
 
 function getCountryString(country)

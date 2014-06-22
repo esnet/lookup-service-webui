@@ -1,4 +1,267 @@
 ////////////////////////////////////////
+// Service Mappings
+////////////////////////////////////////
+
+var serviceMap = {
+	"bwctl": {
+		"title": "BWCTL Server",
+		"defaults": [ "bwctl server" ],
+		"custom": "bwctl -T iperf -t 20 -i 1 -f m -c <address>:<port>",
+		"action": "Test"
+	},
+	"owamp": {
+		"title": "OWAMP Server",
+		"defaults": [ "owamp server" ],
+		"custom": "owping -c 10000 -i 0.01 <address>:<port>",
+		"action": "Ping"
+	},
+	"ndt": {
+		"title": "NDT Server",
+		"defaults": [ "ndt server" ],
+		"custom": "web100clt -n <address> -ll",
+		"action": "Test"
+	},
+	"npad": {
+		"title": "NPAD Server",
+		"defaults": [ "npad server" ],
+		"custom": "",
+		"action": "Test"
+	},
+	"ping": {
+		"title": "Ping Responder",
+		"defaults": [ "ping responder" ],
+		"custom": "ping <address>",
+		"action": "Ping"
+	},
+	"traceroute": {
+		"title": "Traceroute Responder",
+		"defaults": [ "traceroute responder" ],
+		"custom": "traceroute <address>",
+		"action": "Traceroute"
+	},
+	"ma": {
+		"title": "MA",
+		"types": {
+			"bwctl": {
+				"title": "BWCTL MA",
+				"defaults": [ "perfsonarbuoy ma", "perfsonar-buoy ma" ],
+				"custom": "",
+				"action": "Query"
+			},
+			"owamp": {
+				"title": "OWAMP MA",
+				"defaults": [ "perfsonarbuoy ma", "perfsonar-buoy ma" ],
+				"custom": "",
+				"action": "Query"
+			},
+			"traceroute": {
+				"title": "Traceroute MA",
+				"defaults": [ "traceroute ma" ],
+				"custom": "",
+				"action": "Query"
+			}
+		},
+		"defaults": [ "measurement archive", "perfsonar-buoy ma", "perfsonarbuoy ma", "traceroute ma" ],
+		"custom": "",
+		"action": "Query"
+	}
+};
+
+////////////////////////////////////////
+// Record Map
+////////////////////////////////////////
+
+function RecordMap(records, map)
+{
+	this.records = {};
+	for (var i = 0 ; i < records.length ; i++)
+	{
+		var record = records[i];
+		var type = record["type"][0];
+		if (this.records[record["ls-host"]])
+		{
+			if (this.records[record["ls-host"]][type])
+				this.records[record["ls-host"]][type].push(record);
+			else
+				this.records[record["ls-host"]][type] = [ record ];
+		}
+		else
+		{
+			this.records[record["ls-host"]] = {};
+			this.records[record["ls-host"]][type] = [ record ];
+		}
+	}
+	if (map)
+	{
+		var hosts = this.getHosts();
+		for (var i = 0 ; i < hosts.length ; i++)
+			this.mapHost(hosts[i]);
+		var interfaces = this.getInterfaces();
+		for (var i = 0 ; i < interfaces.length ; i++)
+			this.mapInterface(interfaces[i]);
+		var services = this.getServices();
+		for (var i = 0 ; i < services.length ; i++)
+			this.mapService(services[i]);
+	}
+}
+
+RecordMap.prototype = {
+	"getRecords": function(type, record) {
+		var records = [];
+		if (type)
+		{
+			if (record)
+			{
+				if (this.records[record["ls-host"]])
+				{
+					if (this.records[record["ls-host"]][type])
+						$.merge(records, this.records[record["ls-host"]][type]);
+				}
+			}
+			else
+			{
+				for (var lsHost in this.records)
+				{
+					if (this.records[lsHost][type])
+						$.merge(records, this.records[lsHost][type]);
+				}
+			}
+		}
+		else
+		{
+			if (record)
+			{
+				if (this.records[record["ls-host"]])
+				{
+					for (var type in this.records[record["ls-host"]])
+						$.merge(records, this.records[record["ls-host"]]);
+				}
+			}
+			else
+			{
+				for (var lsHost in this.records)
+				{
+					for (var type in this.records[lsHost])
+						$.merge(records, this.records[lsHost][type]);
+				}
+			}
+		}
+		return records;
+	},
+	"getHosts": function(record) {
+		return this.getRecords("host", record);
+	},
+	"getInterfaces": function(record) {
+		return this.getRecords("interface", record);
+	},
+	"getPersons": function(record) {
+		return this.getRecords("person", record);
+	},
+	"getServices": function(record) {
+		return this.getRecords("service", record);
+	},
+	"getAdministrators": function(record, persons) {
+		var type = record["type"][0];
+		if (hasField(record, type + "-administrators"))
+		{
+			var administrators = [];
+			for (var i = 0 ; i < persons.length ; i++)
+			{
+				if ($.inArray(persons[i]["uri"], record[type + "-administrators"]) >= 0)
+					administrators.push(persons[i]);
+			}
+			if (administrators[0])
+				return administrators;
+		}
+		return null;
+	},
+	"getHost": function(record, hosts) {
+		var type = record["type"][0];
+		if (type == "host")
+		{
+			return record;
+		}
+		else if (type == "interface")
+		{
+			for (var i = 0 ; i < hosts.length ; i++)
+			{
+				if (record["ls-host"] == hosts[i]["ls-host"])
+				{
+					if (hasField(hosts[i], "host-net-interfaces"))
+					{
+						if ($.inArray(record["uri"], hosts[i]["host-net-interfaces"]) >= 0)
+							return hosts[i];
+					}
+				}
+			}
+		}
+		else if (type == "service")
+		{
+			if (hasField(record, "service-host"))
+			{
+				for (var i = 0 ; i < hosts.length ; i++)
+				{
+					if (record["ls-host"] == hosts[i]["ls-host"])
+					{
+						if ($.inArray(hosts[i]["uri"], record["service-host"]) >= 0)
+							return hosts[i];
+					}
+				}
+			}
+		}
+		return null;
+	},
+	"mapHost": function(host) {
+		var administrators = this.getAdministrators(host, this.getPersons(host));
+		if (administrators)
+		{
+			for (var i = 0 ; i < administrators.length ; i++)
+			{
+				if (administrators[i].hosts)
+					administrators[i].hosts.push(host);
+				else
+					administrators[i].hosts = [ host ];
+			}
+			host.administrators = administrators;
+		}
+	},
+	"mapInterface": function(interface) {
+		var host = this.getHost(interface, this.getHosts(interface));
+		if (host)
+		{
+			if (host.interfaces)
+				host.interfaces.push(interface);
+			else
+				host.interfaces = [ interface ];
+			interface.host = host;
+		}
+	},
+	"mapService": function(service) {
+		var host = this.getHost(service, this.getHosts(service));
+		if (host)
+		{
+			if (host.services)
+				host.services.push(service);
+			else
+				host.services = [ service ];
+			service.host = host;
+		}
+		var administrators = this.getAdministrators(service, this.getPersons(service));
+		if (administrators)
+		{
+			for (var i = 0 ; i < administrators.length ; i++)
+			{
+				if (administrators[i].services)
+					administrators[i].services.push(service);
+				else
+					administrators[i].services = [ service ];
+			}
+			service.administrators = administrators;
+		}
+	}
+};
+
+////////////////////////////////////////
 // Record Data Functions
 ////////////////////////////////////////
 
