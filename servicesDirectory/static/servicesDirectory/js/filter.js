@@ -63,8 +63,8 @@ var filterMap = {
 	"email":
 	{
 		"getFields": function(record) {
-			if (hasField(record, "person-email"))
-				return record["person-email"];
+			if (hasField(record, "person-emails"))
+				return record["person-emails"];
 			return [];
 		}
 	},
@@ -251,7 +251,17 @@ var filterMap = {
 	},
 	"type": {
 		"getFields": function(record) {
-			return record["type"];
+			var fields = [];
+			$.merge(fields, record["type"]);
+			var type = record["type"][0];
+			if (hasField(record, type + "-type"))
+			{
+				var subtype = record[type + "-type"][0]
+				$.merge(fields, record[type + "-type"]);
+				if (hasField(record, subtype + "-type"))
+					$.merge(fields, record[subtype + "-type"]);
+			}
+			return fields;
 		}
 	},
 	"version":
@@ -293,7 +303,7 @@ var filterAliases = {
 	"domain": filterMap["hostname"],
 	"domains": filterMap["hostname"],
 	"email": filterMap["email"],
-	"emails": filterMap["emails"],
+	"emails": filterMap["email"],
 	"group": filterMap["community"],
 	"groups": filterMap["community"],
 	"hardware": filterMap["hardware"],
@@ -356,33 +366,53 @@ var filterAliases = {
 
 function getFilteredRecords(records, filter)
 {
-	
+	var filtered = [];
+	var matcher = parser.parse(filter);
+	for (var i = 0 ; i < records.length ; i++)
+	{
+		if (matcher(records[i]))
+			filtered.push(records[i]);
+	}
+	return filtered;
 }
 
 function matchFields(fields, operand)
 {
-	var regex = new RegExp(operand);
+	var regex = new RegExp(operand, "i");
 	for (var i = 0 ; i < fields.length ; i++)
 	{
-		if (fields[i].search(regex, "i") >= 0)
+		if (fields[i].search(regex) >= 0)
 			return true;
 	}
 	return false;
 }
 
-function matchRecord(operator, operand, record)
+function matchRecord(record, operator, operand)
 {
-	if (filterAliases[operator])
+	if (operator)
 	{
-		var fields = filterAliases[operator].getFields(records);
-		return matchFields(fields, operand);
+		if (filterAliases[operator])
+		{
+			var fields = filterAliases[operator].getFields(record);
+			return matchFields(fields, operand);
+		}
+		else
+		{
+			if (record[operator] instanceof Array)
+				return matchFields(record[operator], operand);
+			return false;
+		}
 	}
 	else
 	{
-		if (record[operator] instanceof Array)
-			return matchFields(record[operator], operand);
-		else if (record[operator] instanceof String)
-			return matchFields([ record[operator] ], operand);
+		/* for (var key in record)
+		{
+			if (record[key] instanceof Array)
+		 	{
+				if (matchFields(record[key], operand))
+					return true;
+			}
+		} */
 		return false;
 	}
 }

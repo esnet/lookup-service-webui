@@ -97,6 +97,8 @@ function initTree(treeNodes)
 {
 	var tree = $("#tree").fancytree({
 		"activate": function(event, data) { onNodeActivate(data.node); },
+		"extensions": ["filter"],
+		"filter": { "mode": "hide" },
 		"source": treeNodes
 	});
 	return tree;
@@ -133,6 +135,7 @@ function initTreeNodes()
 function initialize(records)
 {
 	recordMap = new RecordMap(records, true);
+	filteredMap = new RecordMap(recordMap.getRecords(), false);
 	var services = recordMap.getServices();
 	for (var i = 0 ; i < services.length ; i++)
 	{
@@ -140,10 +143,6 @@ function initialize(records)
 		addServiceMarker(services[i]);
 	}
 	updateFilter();
-	updateCommunities();
-	updateMap();
-	updateTree();
-	updateStatus();
 	initialized = true;
 }
 
@@ -232,7 +231,7 @@ function addServiceNode(service)
 	var serviceNode = {
 		"title": title,
 		"type": "service",
-		"tooltip": hostname,
+		"tooltip": hostname
 	};
 	serviceNode.service = service;
 	if (subtype)
@@ -335,7 +334,7 @@ function clearHostInfo()
 function updateCommunities()
 {
 	var communities = [];
-	var records = recordMap.getRecords();
+	var records = filteredMap.getRecords();
 	for (var i = 0 ; i < records.length ; i++)
 	{
 		if (hasField(records[i], "group-communities"))
@@ -361,10 +360,10 @@ function updateFilter()
 		var filtered = getFilteredRecords(recordMap.getRecords(), filter);
 		filteredMap = new RecordMap(filtered, false);
 	}
-	else if (!filteredMap)
-	{
-		filteredMap = new RecordMap(recordMap.getRecords(), false);
-	}
+	updateCommunities();
+	updateMap();
+	updateTree();
+	updateStatus();
 }
 
 function updateInfoWindow()
@@ -372,7 +371,7 @@ function updateInfoWindow()
 	if (!activeMarker)
 		return;
 	var contentMap = {};
-	var services = activeMarker.services;
+	var services = activeMarker.filtered;
 	for (var i = 0 ; i < services.length ; i++)
 	{
 		var service = services[i];
@@ -425,20 +424,44 @@ function updateInfoWindow()
 
 function updateMap()
 {
+	map.gmap("closeInfoWindow");
+	for (var latlng in markers)
+	{
+		var marker = markers[latlng];
+		marker.filtered = [];
+		for (var i = 0 ; i < marker["services"].length ; i++)
+		{
+			var service = marker["services"][i];
+			if ($.inArray(service, filteredMap.getServices(service)) >= 0)
+				marker.filtered.push(service);
+		}
+		if (marker.filtered.length > 0)
+			marker.setVisible(true);
+		else
+			marker.setVisible(false);
+	}
 	zoomToFitMarkers();
 }
 
 function updateStatus()
 {
-	var visible = filteredMap.getServices().length;
+	var filtered = filteredMap.getServices().length;
 	var total = recordMap.getServices().length;
-	$("#status").html("Showing: " + visible + " of " + total + " services.");
+	$("#status").html("Showing: " + filtered + " of " + total + " services.");
 }
 
 function updateTree()
 {
-	updateTreeNodeCounts();
+	//updateTreeNodeCounts();
 	tree.fancytree("getTree").reload();
+	tree.fancytree("getTree").filterNodes(function(node) {
+		var service = node.data.service;
+		if (node.isFolder())
+			return true;
+		else if ($.inArray(service, filteredMap.getServices(service)) >= 0)
+			return true;
+		return false;
+	});
 	tree.fancytree("getRootNode").sortChildren(function(a, b) {
 		var isFolder_a = a.isFolder();
 		var isFolder_b = b.isFolder();
@@ -463,7 +486,7 @@ function updateTreeNodeCounts(nodes)
 			node["title"] = title + "<span class=\"badge tree-badge\">" + childCount + "</span>";
 			count += childCount;
 		}
-		else
+		else if (node.isVisible())
 		{
 			count++;
 		}
@@ -475,10 +498,13 @@ function zoomToFitMarkers()
 {
 	var bounds = new google.maps.LatLngBounds();
 	for (var latlng in markers)
-		bounds.extend(markers[latlng].getPosition());
+	{
+		if (markers[latlng].visible)
+			bounds.extend(markers[latlng].getPosition());
+	}
 	if (!bounds.isEmpty())
 		map.gmap("get", "map").fitBounds(bounds);
-	var zoom = map.gmap("option", "zoom");
+	var zoom = map.gmap("get", "map").getZoom();
 	zoom = zoom < 2 ? 2 : zoom > 6 ? 6 : zoom;
 	map.gmap("option", "zoom", zoom);
 }

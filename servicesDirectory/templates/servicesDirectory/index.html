@@ -7,7 +7,7 @@
 {% block title %}Lookup Service Directory{% endblock %}
 
 {% block assets_pre %}
-	<link rel="stylesheet" type="text/css" href="{% static "css/fancytree/skin-custom/ui.fancytree.css" %}">
+	<link rel="stylesheet" type="text/css" href="{% static "css/fancytree/skin-custom/ui.fancytree.min.css" %}">
 	<style type="text/css">
 		#browser-accordion { max-height: 100%; overflow: auto; }
 		#info-accordion { max-height: 100%; overflow: auto; }
@@ -170,12 +170,13 @@
 		</div>
 {% endblock %}
 {% block assets_post %}
-	<script type="text/javascript" src="{% static "js/jquery.ui.js" %}"></script>
-	<script type="text/javascript" src="{% static "js/jquery.fancytree.js" %}"></script>
+	<script type="text/javascript" src="{% static "js/jquery.ui.min.js" %}"></script>
+	<script type="text/javascript" src="{% static "js/jquery.fancytree.min.js" %}"></script>
 	<script type="text/javascript" src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDM9EqM1k7MiJnslQpropqmvUbwXPhEI1U&sensor=false"></script>
-	<script type="text/javascript" src="{% static "js/jquery.ui.map.js" %}"></script>
+	<script type="text/javascript" src="{% static "js/jquery.ui.map.min.js" %}"></script>
 	<script type="text/javascript" src="{% static "servicesDirectory/js/utilities.js" %}"></script>
 	<script type="text/javascript" src="{% static "servicesDirectory/js/records.js" %}"></script>
+	<script type="text/javascript" src="{% static "servicesDirectory/js/parser.js" %}"></script>
 	<script type="text/javascript" src="{% static "servicesDirectory/js/filter.js" %}"></script>
 	<script type="text/javascript" src="{% static "servicesDirectory/js/main.js" %}"></script>
 {% endblock %}
