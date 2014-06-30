@@ -13,7 +13,7 @@
 		#info-accordion { max-height: 100%; overflow: auto; }
 		#left-pane { padding-bottom: 10px; }
 		#right-pane { padding-bottom: 10px; }
-		#search { margin-right: 10px; margin-top: 10px; }
+		#search { margin-top: 5px; width: 400px }
 		.map-canvas { height: 600px; }
 		.map-canvas img { max-width: none; }
 		.map-canvas label { width: auto; display: inline; }
@@ -38,13 +38,17 @@
 						</div>
 						<div class="accordion-body collapse in" id="collapse-search">
 							<div class="content">
-								<span class="info muted">Further refine results by text matching across multiple fields.</span>
-								<span><a class="btn-link" data-toggle="modal" role="button" href="#text-filter-info">
-									<span class="icon-info-sign"></span>
-								</a></span><br>
-								<input type="search" id="search">
-								<button type="button" class="btn btn-primary" id="update">Search</button>
-								<button type="button" class="btn" id="clear">Show All</button>
+								<div>
+									<span>Filter results by searching for specific terms:</span>
+									<span><a class="btn-link" data-toggle="modal" role="button" href="#search-help">
+										<span class="icon-question-sign"></span>
+									</a></span>
+								</div>
+								<div class="control-group" id="search-control">
+									<input type="search" id="search"><br>
+									<button type="button" class="btn btn-primary" id="update">Search</button>
+									<button type="button" class="btn" id="clear">Show All</button>
+								</div>
 							</div>
 						</div>
 					</div>
@@ -145,24 +149,96 @@
 				</div>
 			</div>
 		</div>
-		<div class="modal fade" id="text-filter-info" tabindex="-1" role="dialog">
+		<div class="modal fade" id="search-help" tabindex="-1" role="dialog">
 			<div class="modal-header">
 				<button type="button" class="close" data-dismiss="modal">&times;</button>
-				<h4>Text Filter</h4>
+				<h4>Search Help</h4>
 			</div>
 			<div class="modal-body">
-				The text filter further refines the result of the communities filter. It does a substring search across many data
-				fields. Note that currently spaces etc have no special meaning, so for best results use a single term. Search is case insensitive.
-				<br>
-				Searched fields:
-				<ul>
-					<li>title ("Fermilab")</li>
-					<li>location (City ("Berkeley"), State ("Minnesota"), Country ("Canada").</li>
-					<li>host ("psonar3.fnal.gov")</li>
-					<li>tool kit version ("3.3.1")</li>
-					<li>NIC speed ("10G")</li>
-					<li>community ("internet2")</li>
-				</ui>
+				The search box provides similar capabilities to a Google search when looking for particular services.
+				<hr>
+				<h5>Search Terms</h5>
+				<div>
+					<p>Search terms separated by spaces are assumed to be separate and search terms
+					enclosed in quotes (literals) are assumed to be related. A dash preceding a search
+					term will omit that term from the results (negation). All searches are case insensitive.</p>
+					Examples:
+					<ul>
+						<li>es.net - search for es.net</li>
+						<li>university school - search for university or school</li>
+						<li>-2.6.32 - omit 2.6.32 from results </li>
+					</ul>
+				</div>
+				<hr>
+				<h5>Boolean Expressions</h5>
+				<div>
+					<p>Boolean expressions including <b>AND</b>, <b>OR</b>, and <b>NOT</b> are supported.
+					In addition nested expressions with parentheses can be used.</p>
+					Examples:
+					<ul>
+						<li>es.net AND nersc - search for es.net and nersc</li>
+						<li>NOT (10G OR 40G) - exclude 10G and 40G</li>
+					</ul>
+				</div>
+				<hr>
+				<h5>Search Operators</h5>
+				<div>
+					<p>In addition, a wide range of search operators are provided to target specific data.
+					Operators must be directly followed by a colon and then a search term or a literal.
+					When separated by spaces, operators are assumed to be related. Note that operators
+					are also case insensitive and due to aliases not all are listed.</p>
+					Examples:
+					<ul>
+						<li>domain:es.net - search for services that have es.net as a domain</li>
+						<li>nicspeed:10G - search for services on 10G hosts</li>
+						<li>-type:bwctl - search for non-bwctl services</li>
+					</ul>
+				</div>
+				<h5>Supported Operators:</h5>
+				<div class="container-fluid">
+					<div class="row-fluid">
+						<div class="span4">
+							<ul>
+								<li>Address</li>
+								<li>Administrator</li>
+								<li>City</li>
+								<li>Cores</li>
+								<li>Community</li>
+								<li>Country</li>
+								<li>CPU</li>
+								<li>Domain</li>
+								<li>Email</li>
+								<li>Group</li>
+							</ul>
+						</div><div class="span4">
+							<ul>
+								<li>Hardware</li>
+								<li>Hostname</li>
+								<li>Kernel</li>
+								<li>Location</li>
+								<li>Locator</li>
+								<li>Memory</li>
+								<li>MTU</li>
+								<li>Name</li>
+								<li>NICSpeed</li>
+								<li>Organization</li>
+							</ul>
+						</div><div class="span4">
+							<ul>
+								<li>OS</li>
+								<li>Processor</li>
+								<li>Site</li>
+								<li>Software</li>
+								<li>State</li>
+								<li>System</li>
+								<li>Title</li>
+								<li>Version</li>
+								<li>Type</li>
+								<li>Zipcode</li>
+							</ul>
+						</div>
+					</div>
+				</div>
 			</div>
 			<div class="modal-footer">
 				<button type="button" class="btn" data-dismiss="modal">Done</button>

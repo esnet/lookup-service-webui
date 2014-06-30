@@ -286,10 +286,10 @@ parse: function parse(input) {
 parser.processArgs = function(record, args) {
 	if (args.length > 1)
 	{
-		if (args[0].operator)
-			return function(record) { return (parser.matchArg(record, args[0]) && parser.processArgs(args[1])(record)); };
+		if (args[1][0].operator)
+			return function(record) { return (parser.matchArg(record, args[0]) && parser.processArgs(record, args[1])(record)); };
 		else
-			return function(record) { return (parser.matchArg(record, args[0]) || parser.processArgs(args[1])(record)); };
+			return function(record) { return (parser.matchArg(record, args[0]) || parser.processArgs(record, args[1])(record)); };
 	}
 	else
 	{
@@ -298,6 +298,7 @@ parser.processArgs = function(record, args) {
 }
 
 parser.matchArg = function(record, arg) {
+	/* Implement Later */
 	var match = matchRecord(record, arg.operator, arg.operand);
 	if (arg.negate)
 		return !match;

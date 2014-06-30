@@ -12,6 +12,7 @@ var filterMap = {
 				return record["interface-addresses"];
 			if (hasField(record, "service-locators"))
 				return record["service-locators"];
+			return [];
 		}
 	},
 	"administrator":
@@ -114,7 +115,11 @@ var filterMap = {
 			if (hasField(record, "host-hardware-memory"))
 			{
 				for (var i = 0 ; i < record["host-hardware-memory"].length ; i++)
-					fields.push(parseSize(record["host-hardware-memory"][i], true));
+				{
+					var size = parseSize(record["host-hardware-memory"][i], true);
+					if (size)
+						fields.push(size);
+				}
 			}
 			return fields;
 		}
@@ -146,7 +151,11 @@ var filterMap = {
 			if (hasField(record, "interface-capacity"))
 			{
 				for (var i = 0 ; i < record["interface-capacity"].length ; i++)
-					fields.push(parseRate(record["interface-capacity"][i], true));
+				{
+					var rate = parseRate(record["interface-capacity"][i], true);
+					if (rate)
+						fields.push(rate);
+				}
 			}
 			return fields;
 		}
@@ -217,7 +226,11 @@ var filterMap = {
 			if (hasField(record, "host-hardware-processorspeed"))
 			{
 				for (var i = 0 ; i < record["host-hardware-processorspeed"].length ; i++)
-					fields.push(parseSpeed(record["host-hardware-processorspeed"][i], true));
+				{
+					var speed = parseSpeed(record["host-hardware-processorspeed"][i], true);
+					if (speed)
+						fields.push(speed);
+				}
 			}
 			return fields;
 		}
@@ -246,6 +259,18 @@ var filterMap = {
 						fields.push(state);
 				}	
 			}
+			return fields;
+		}
+	},
+	"system":
+	{
+		"getFields": function(record) {
+			var fields = [];
+			$.merge(fields, filterMap["hardware"].getFields(record));
+			$.merge(fields, filterMap["kernel"].getFields(record));
+			$.merge(fields, filterMap["mtu"].getFields(record));
+			$.merge(fields, filterMap["os"].getFields(record));
+			$.merge(fields, filterMap["version"].getFields(record));
 			return fields;
 		}
 	},
@@ -280,6 +305,20 @@ var filterMap = {
 			return [];
 		}
 	},
+	"default":
+	{
+		"getFields": function(record) {
+			var fields = [];
+			$.merge(fields, filterMap["address"].getFields(record));
+			$.merge(fields, filterMap["administrator"].getFields(record));
+			$.merge(fields, filterMap["community"].getFields(record));
+			$.merge(fields, filterMap["hostname"].getFields(record));
+			$.merge(fields, filterMap["location"].getFields(record));
+			$.merge(fields, filterMap["system"].getFields(record));
+			$.merge(fields, filterMap["type"].getFields(record));
+			return fields;
+		}
+	}
 };
 
 var filterAliases = {
@@ -298,6 +337,9 @@ var filterAliases = {
 	"countries": filterMap["country"],
 	"cpu": filterMap["processor"],
 	"cpus": filterMap["processorcount"],
+	"cpucores": filterMap["processorcores"],
+	"cpucount": filterMap["processorcount"],
+	"cpucounts": filterMap["processorcount"],
 	"cpuspeed": filterMap["processorspeed"],
 	"cpuspeeds": filterMap["processorspeed"],
 	"domain": filterMap["hostname"],
@@ -348,6 +390,7 @@ var filterAliases = {
 	"speeds": filterMap["nicspeed"],
 	"state": filterMap["state"],
 	"states": filterMap["state"],
+	"system": filterMap["system"],
 	"title": filterMap["name"],
 	"titles": filterMap["name"],
 	"toolkitversion": filterMap["version"],
@@ -391,6 +434,7 @@ function matchRecord(record, operator, operand)
 {
 	if (operator)
 	{
+		operator = operator.toLowerCase().replace("_", "-");
 		if (filterAliases[operator])
 		{
 			var fields = filterAliases[operator].getFields(record);
@@ -405,14 +449,7 @@ function matchRecord(record, operator, operand)
 	}
 	else
 	{
-		/* for (var key in record)
-		{
-			if (record[key] instanceof Array)
-		 	{
-				if (matchFields(record[key], operand))
-					return true;
-			}
-		} */
-		return false;
+		var fields = filterMap["default"].getFields(record);
+		return matchFields(fields, operand);
 	}
 }

@@ -62,7 +62,13 @@ $("#clear").click(function(event) {
 	if (initialized)
 	{
 		clearFilter();
-		updateFilter();
+	}
+});
+
+$("#search").click(function(event) {
+	if (initialized)
+	{
+		$("#search-control").removeClass("error");
 	}
 });
 
@@ -135,7 +141,7 @@ function initTreeNodes()
 function initialize(records)
 {
 	recordMap = new RecordMap(records, true);
-	filteredMap = new RecordMap(recordMap.getRecords(), false);
+	filteredMap = new RecordMap(recordMap.getServices(), false);
 	var services = recordMap.getServices();
 	for (var i = 0 ; i < services.length ; i++)
 	{
@@ -356,10 +362,26 @@ function updateFilter()
 	var search = $("#search").val();
 	if (search != filter)
 	{
-		filter = search;
-		var filtered = getFilteredRecords(recordMap.getRecords(), filter);
-		filteredMap = new RecordMap(filtered, false);
+		try
+		{
+			filter = search;
+			var filtered = getFilteredRecords(recordMap.getRecords(), filter);
+			filteredMap = new RecordMap(filtered, false);
+		}
+		catch (err)
+		{
+			$("#search-control").addClass("error");
+		}
 	}
+	updateCommunities();
+	updateMap();
+	updateTree();
+	updateStatus();
+}
+
+function clearFilter()
+{
+	filteredMap = new RecordMap(recordMap.getRecords(), false);
 	updateCommunities();
 	updateMap();
 	updateTree();
@@ -452,7 +474,6 @@ function updateStatus()
 
 function updateTree()
 {
-	//updateTreeNodeCounts();
 	tree.fancytree("getTree").reload();
 	tree.fancytree("getTree").filterNodes(function(node) {
 		var service = node.data.service;

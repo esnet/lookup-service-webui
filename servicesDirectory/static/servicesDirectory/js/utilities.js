@@ -90,21 +90,21 @@ function parseRate(rateString, nounit)
 {
 	var units = [ "b/s", "bit/s", "bps" ];
 	var rate = parseUnitString(rateString, units, nounit);
-	return rate ? rate + units[1] : null;
+	return rate != NaN ? rate + units[1] : null;
 }
 
 function parseSize(sizeString, nounit)
 {
-	var units = [ "byte", "B" ];
+	var units = [ "byte", "bytes", "B" ];
 	var size = parseUnitString(sizeString, units, nounit) ;
-	return size ? size + units[1] : null;
+	return size != NaN ? size + units[1] : null;
 }
 
 function parseSpeed(speedString, nounit)
 {
 	var units = [ "hertz", "Hz" ];
 	var speed = parseUnitString(speedString, units, nounit);
-	return speed ? speed + units[1] : null;
+	return speed != NaN ? speed + units[1] : null;
 }
 
 function parseUnitString(unitString, units, nounit)
@@ -120,7 +120,8 @@ function parseUnitString(unitString, units, nounit)
 		return NaN;
 	var number = parseFloat(parts[1]);
 	var prefix = parts[2];
-	number *= parseMetricPrefix(prefix);
+	if (prefix)
+		number *= parseMetricPrefix(prefix);
 	return Math.round(number);
 }
 
