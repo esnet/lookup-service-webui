@@ -13,12 +13,12 @@ import os
 BASE_DIR = os.path.dirname(os.path.dirname(__file__))
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = False
 
 TEMPLATE_DEBUG = DEBUG
 
 # Make this unique, and don't share it with anybody.
-SECRET_KEY = 'ez(3ts5_e&b!@+pr$+zv6^un1j8gpw-9juu$-+a#nu7sbg_9xt'
+SECRET_KEY = 'qav4me)d)n1h2nig-!eb16m6&zzjepvzsm@zch7$eu@8ky#77#'
 
 ADMINS = (
     # ('Your Name', 'your_email@example.com'),
@@ -129,15 +129,14 @@ USE_TZ = True
 # Don't put anything in this directory yourself; store your static files
 # in apps' "static/" subdirectories and in STATICFILES_DIRS.
 # Example: "/var/www/example.com/static/"
-STATIC_ROOT = '/var/www/html/servicesDirectoryStatic'
+STATIC_ROOT = '/var/www/html/static/ServicesDirectory/'
 
 # URL prefix for static files.
 # Example: "http://example.com/static/", "http://static.example.com/"
-STATIC_URL = '/servicesDirectoryStatic/'
+STATIC_URL = '/static/ServicesDirectory/'
 
 # Additional locations of static files
 STATICFILES_DIRS = (
-    
     # Put strings here, like "/home/html/static" or "C:/www/django/static".
     # Always use forward slashes, even on Windows.
     # Don't forget to use absolute paths, not relative paths.

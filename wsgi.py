@@ -35,11 +35,15 @@ application = get_wsgi_application()
 """
 Add the following to your apache config:
 
-WSGIScriptAlias /ServicesDirectory /opt/perfsonar_ps/django-serviceDir/wsgi.py
-WSGIPythonPath /opt/perfsonar_ps/django-serviceDir/:/opt/perfsonar_ps/django-serviceDir/servicesDirectory
+WSGIScriptAlias /ServicesDirectory/ /opt/perfsonar_ps/django/ServicesDirectory/wsgi.py
+WSGIPythonPath /opt/perfsonar_ps/django/ServicesDirectory
 WSGIPassAuthorization Off
 
-<Directory /opt/perfsonar_ps/django-serviceDir/>
+WSGISocketPrefix /var/lib/perfsonar_ps/django/ServicesDirectory
+WSGIDaemonProcess lswebui python-path=/opt/perfsonar_ps/django/ServicesDirectory processes=2 threads=8
+WSGIProcessGroup lswebui
+
+<Directory /opt/perfsonar_ps/django/ServicesDirectory/>
 <Files wsgi.py>
 AuthType None
 Order deny,allow
