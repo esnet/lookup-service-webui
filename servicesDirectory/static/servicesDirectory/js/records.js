@@ -337,24 +337,83 @@ function getLocationString(record)
 {
 	var locationString = "";
 	if (hasField(record, "location-sitename"))
-		locationString += record["location-sitename"].join() + ", ";
+		locationString += record["location-sitename"][0] + ", ";
 	if (hasField(record, "location-city"))
-		locationString += record["location-city"].join() + ", ";
+		locationString += record["location-city"][0] + ", ";
 	if (hasField(record, "location-state"))
 	{
-		locationString += record["location-state"].join();
+		locationString += record["location-state"][0];
 		if (hasField(record, "location-code"))
-			locationString += " " + record["location-code"].join() + ", ";
+			locationString += " " + record["location-code"][0] + ", ";
 		else
 			locationString += ", ";
 	}
 	else if (hasField(record, "location-code"))
 	{
-		locationString += record["location-code"].join() + ", ";
+		locationString += record["location-code"][0] + ", ";
 	}
 	if (hasField(record, "location-country"))
-		locationString += getCountryString(record["location-country"].join());
+		locationString += getCountryString(record["location-country"][0]);
 	return $.trim(locationString);
+}
+
+function getMemoryString(host)
+{
+	var memoryString = "";
+	if (hasField(host, "host-hardware-memory"))
+	{
+		var size = parseSize(host["host-hardware-memory"][0]);
+		memoryString += formatSize(size, 2, "GB");
+	}
+	return memoryString;
+}
+
+function getNICSpeedString(interface)
+{
+	var NICSpeedString = "";
+	if (hasField(interface, "interface-capacity"))
+	{
+		var rate = parseRate(interface["interface-capacity"][0], true);
+		if (rate >= Math.pow(10, 9))
+			NICSpeedString += formatRate(rate, 0, "Gbit/s");
+		else
+			NICSpeedString += formatRate(rate, 0, "Mbit/s");
+	}
+	return NICSpeedString;
+}
+
+function getOSString(host)
+{
+	var OSString = "";
+	if (hasField(host, "host-os-name"))
+		OSString += host["host-os-name"][0] + " ";
+	if (hasField(host, "host-os-version"))
+		OSString += host["host-os-version"][0];
+	return $.trim(OSString);
+}
+
+function getProcessorString(host)
+{
+	var processorString = "";
+	if (hasField(host, "host-hardware-processorcount"))
+	{
+		var processors = parseInt(host["host-hardware-processorcount"][0]);
+		processorString += processors + "x ";
+	}
+	if (hasField(host, "host-hardware-processorspeed"))
+	{
+		var speed = parseSpeed(host["host-hardware-processorspeed"][0]);
+		processorString += formatSpeed(speed, 2, "GHz") + " ";
+	}
+	if (hasField(host, "host-hardware-processorcore"))
+	{
+		var cores = parseInt(host["host-hardware-processorcore"][0]);
+		if (cores > 1)
+			processorString += "(" + cores + " cores" + ")";
+		else
+			processorString += "(" + cores + " core" + ")";
+	}
+	return $.trim(processorString);
 }
 
 function getServiceMapping(service)
@@ -412,7 +471,7 @@ function getTitle(record)
 	if (type == "host")
 	{
 		if (hasField(record, "location-sitename"))
-			return record["location-sitename"].join();
+			return record["location-sitename"][0];
 		hostname = getHostname(record);
 		if (hostname)
 			return hostname;
@@ -420,7 +479,7 @@ function getTitle(record)
 	else if (type == "interface")
 	{
 		if (hasField(record, "location-sitename"))
-			return record["location-sitename"].join();
+			return record["location-sitename"][0];
 		var hostname = getHostname(record);
 		if (hostname)
 			return hostname;
@@ -428,10 +487,10 @@ function getTitle(record)
 	else if (type == "service")
 	{
 		if (hasField(record, "location-sitename"))
-			return record["location-sitename"].join();
+			return record["location-sitename"][0];
 		if (hasField(record, "service-name"))
 		{
-			var serviceName = record["service-name"].join();
+			var serviceName = record["service-name"][0];
 			var defaultName = false;
 			for (var type in serviceMap)
 			{
@@ -454,7 +513,7 @@ function getTitle(record)
 			return hostname;
 	}
 	if (hasField(record, type + "-name"))
-		return record[type + "-name"].join();
+		return record[type + "-name"][0];
 	return null;
 }
 

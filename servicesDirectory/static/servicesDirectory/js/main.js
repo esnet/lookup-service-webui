@@ -103,7 +103,7 @@ function initTree(treeNodes)
 {
 	var tree = $("#tree").fancytree({
 		"activate": function(event, data) { onNodeActivate(data.node); },
-		"extensions": ["filter"],
+		"extensions": [ "filter" ],
 		"filter": { "mode": "hide" },
 		"source": treeNodes
 	});
@@ -174,7 +174,6 @@ function addServiceMarker(service)
 			marker.services = [];
 			markers[latlng] = marker;
 		}
-		marker.filtered.push(service);
 		marker.services.push(service);
 	}
 }
@@ -293,7 +292,7 @@ function showServiceInfo(service)
 	if (!service)
 		return;
 	if (hasField(service, "service-name"))
-		$("#service-name").html(service["service-name"].join("<br>"));
+		$("#service-name").html(service["service-name"][0]);
 	if (hasField(service, "service-locator"))
 	{
 		var hostnames = getHostnames(service);
@@ -325,7 +324,51 @@ function showHostInfo(host)
 		return;
 	if (hasField(host, "host-name"))
 		$("#host-name").html(host["host-name"].join("<br>"));
-	
+	var processorString = getProcessorString(host);
+	if (processorString)
+		$("#host-hardware").append("Processor: " + processorString + "<br>");
+	var memoryString = getMemoryString(host);
+	if (memoryString)
+		$("#host-hardware").append("Memory: " + memoryString + "<br>");
+	if (host.interfaces)
+	{
+		var NICSpeeds = [];
+		for (var i = 0 ; i < host.interfaces.length ; i++)
+		{
+			var interface = host.interfaces[i];
+			NICSpeeds.push("NIC #" + (i + 1) + " Speed: " + getNICSpeedString(interface));
+		}
+		$("#host-hardware").append(NICSpeeds.join("<br>"));
+	}
+	var OSString = getOSString(host);
+	if (OSString)
+		$("#host-os").append("Operating System: " + OSString + "<br>");
+	if (hasField(host, "host-os-kernel"))
+		$("#host-os").append("Kernel: " + host["host-os-kernel"][0] + "<br>");
+	if (host.administrators)
+	{
+		var contacts = [];
+		for (var i = 0 ; i < host.administrators.length ; i++)
+		{
+			var person = host.administrators[i];
+			var contact = "Contact #" + (i + 1) + ": ";
+			if (hasField(person, "person-name"))
+				contact += person["person-name"] + " ";
+			if (hasField(person, "person-emails"))
+			{
+				var emails = [];
+				for (var j = 0 ; j < person["person-emails"].length ; j++)
+					emails.push("<a href=\"mailto:" + person["person-emails"][j] + "\">" + person["person-emails"][j] + "</a>");
+				contact += "(" + emails.join() + ")";
+			}
+			contacts.push($.trim(contact));
+		}
+		$("#host-os").append(contacts.join("<br>"));
+	}
+	if (hasField(host, "pshost-toolkitversion"))
+		$("#host-version").html(host["pshost-toolkitversion"][0]);
+	if (hasField(host, "group-communities"))
+		$("#host-communities").html(host["group-communities"].sort().join("<br>"));
 }
 
 function clearHostInfo()
@@ -347,7 +390,7 @@ function updateCommunities()
 			$.merge(communities, records[i]["group-communities"]);
 	}
 	communities = communities.sort().unique();
-	var options = $("#communities");
+	var options = $("#communities").empty();
 	for (var i = 0 ; i < communities.length ; i++)
 	{
 		options.append($("<option>").attr({

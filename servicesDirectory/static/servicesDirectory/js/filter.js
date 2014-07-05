@@ -20,7 +20,7 @@ var filterMap = {
 		"getFields": function(record) {
 			var fields = [];
 			if (hasField(record, "person-name"))
-				$.merge(fields, record["person-name"]);
+				fields.push(record["person-name"][0]);
 			$.merge(fields, filterMap["email"].getFields(record));
 			$.merge(fields, filterMap["organization"].getFields(record));
 			return fields;
@@ -30,7 +30,7 @@ var filterMap = {
 	{
 		"getFields": function(record) {
 			if (hasField(record, "location-city"))
-				return record["location-city"];
+				return [ record["location-city"][0] ];
 			return [];
 		}
 	},
@@ -45,20 +45,16 @@ var filterMap = {
 	"country":
 	{
 		"getFields": function(record) {
-			var fields = [];
 			if (hasField(record, "location-country"))
 			{
-				for (var i = 0 ; i < record["location-country"].length ; i++)
-				{
-					var code = record["location-country"][i];
-					var country = getCountryString(code);
-					if (code != country)
-						$.merge(fields, [ code, country ]);
-					else
-						fields.push(country);
-				}	
+				var code = record["location-country"][0];
+				var country = getCountryString(code);
+				if (code != country)
+					return [ code, country ];
+				else
+					return [ country ];	
 			}
-			return fields;
+			return [];
 		}
 	},
 	"email":
@@ -92,7 +88,7 @@ var filterMap = {
 	{
 		"getFields": function(record) {
 			if (hasField(record, "host-os-kernel"))
-				return record["host-os-kernel"];
+				return [ record["host-os-kernel"][0] ];
 			return [];
 		}
 	},
@@ -111,24 +107,20 @@ var filterMap = {
 	"memory":
 	{
 		"getFields": function(record) {
-			var fields = [];
 			if (hasField(record, "host-hardware-memory"))
 			{
-				for (var i = 0 ; i < record["host-hardware-memory"].length ; i++)
-				{
-					var size = parseSize(record["host-hardware-memory"][i], true);
-					if (size)
-						fields.push(size);
-				}
+				var size = parseSize(record["host-hardware-memory"][0], true);
+				if (size)
+					return [ formatSize(size) ];
 			}
-			return fields;
+			return [];
 		}
 	},
 	"mtu":
 	{
 		"getFields": function(record) {
 			if (hasField(record, "interface-mtu"))
-				return record["interface-mtu"];
+				return [ record["interface-mtu"][0] ];
 			return [];
 		}
 	},
@@ -147,24 +139,20 @@ var filterMap = {
 	"nicspeed":
 	{
 		"getFields": function(record) {
-			var fields = [];
 			if (hasField(record, "interface-capacity"))
 			{
-				for (var i = 0 ; i < record["interface-capacity"].length ; i++)
-				{
-					var rate = parseRate(record["interface-capacity"][i], true);
-					if (rate)
-						fields.push(rate);
-				}
+				var rate = parseRate(record["interface-capacity"][0], true);
+				if (rate)
+					return [ formatRate(rate) ];
 			}
-			return fields;
+			return [];
 		}
 	},
 	"organization":
 	{
 		"getFields": function(record) {
 			if (hasField(record, "person-organization"))
-				return record["person-organization"];
+				return [ record["person-organization"][0] ];
 			return [];
 		}
 	},
@@ -181,7 +169,7 @@ var filterMap = {
 	{
 		"getFields": function(record) {
 			if (hasField(record, "host-os-name"))
-				return record["host-os-name"];
+				return [ record["host-os-name"][0] ];
 			return [];
 		}
 	},
@@ -189,7 +177,7 @@ var filterMap = {
 	{
 		"getFields": function(record) {
 			if (hasField(record, "host-os-version"))
-				return record["host-os-version"];
+				return [ record["host-os-version"][0] ];
 			return [];
 		}
 	},
@@ -207,7 +195,7 @@ var filterMap = {
 	{
 		"getFields": function(record) {
 			if (hasField(record, "host-hardware-processorcore"))
-				return record["host-hardware-processorcore"];
+				return [ record["host-hardware-processorcore"][0] ];
 			return [];
 		}
 	},
@@ -215,51 +203,43 @@ var filterMap = {
 	{
 		"getFields": function(record) {
 			if (hasField(record, "host-hardware-processorcount"))
-				return record["host-hardware-processorcount"];
+				return [ record["host-hardware-processorcount"][0] ];
 			return [];
 		}
 	},
 	"processorspeed":
 	{
 		"getFields": function(record) {
-			var fields = [];
 			if (hasField(record, "host-hardware-processorspeed"))
 			{
-				for (var i = 0 ; i < record["host-hardware-processorspeed"].length ; i++)
-				{
-					var speed = parseSpeed(record["host-hardware-processorspeed"][i], true);
-					if (speed)
-						fields.push(speed);
-				}
+				var speed = parseSpeed(record["host-hardware-processorspeed"][0], true);
+				if (speed)
+					return [ formatSpeed(speed) ];
 			}
-			return fields;
+			return [];
 		}
 	},
 	"site":
 	{
 		"getFields": function(record) {
 			if (hasField(record, "location-sitename"))
-				return record["location-sitename"];
+				return [ record["location-sitename"][0] ];
 			return [];
 		}
 	},
 	"state":
 	{
 		"getFields": function(record) {
-			var fields = [];
 			if (hasField(record, "location-state"))
 			{
-				for (var i = 0 ; i < record["location-state"].length ; i++)
-				{
-					var code = record["location-state"][i];
-					var state = getStateString(code);
-					if (code != state)
-						$.merge(fields, [ code, state ]);
-					else
-						fields.push(state);
-				}	
+				var code = record["location-state"][0];
+				var state = getStateString(code);
+				if (code != state)
+					return [ code, state ];
+				else
+					return [ state ];
 			}
-			return fields;
+			return [];
 		}
 	},
 	"system":
@@ -277,14 +257,14 @@ var filterMap = {
 	"type": {
 		"getFields": function(record) {
 			var fields = [];
-			$.merge(fields, record["type"]);
 			var type = record["type"][0];
+			fields.push(type);
 			if (hasField(record, type + "-type"))
 			{
 				var subtype = record[type + "-type"][0]
-				$.merge(fields, record[type + "-type"]);
+				fields.push(subtype);
 				if (hasField(record, subtype + "-type"))
-					$.merge(fields, record[subtype + "-type"]);
+					fields.push(record[subtype + "-type"][0]);
 			}
 			return fields;
 		}
@@ -293,7 +273,9 @@ var filterMap = {
 	{
 		"getFields": function(record) {
 			if (hasField(record, "pshost-toolkitversion"))
-				return record["pshost-toolkitversion"];
+				return [ record["pshost-toolkitversion"][0] ];
+			if (hasField(record, "service-version"))
+				return [ record["service-version"][0] ];
 			return [];
 		}
 	},
@@ -301,7 +283,7 @@ var filterMap = {
 	{
 		"getFields": function(record) {
 			if (hasField(record, "location-code"))
-				return record["location-code"];
+				return [ record["location-code"][0] ];
 			return [];
 		}
 	},
@@ -410,13 +392,47 @@ var filterAliases = {
 function getFilteredRecords(records, filter)
 {
 	var filtered = [];
+	var matched = [];
 	var matcher = parser.parse(filter);
 	for (var i = 0 ; i < records.length ; i++)
 	{
 		if (matcher(records[i]))
-			filtered.push(records[i]);
+			matched.push(records[i]);
 	}
-	return filtered;
+	for (var i = 0 ; i < matched.length ; i++)
+	{
+		var type = matched[i]["type"][0];
+		if (type == "host")
+		{
+			if (matched[i].administrators)
+				$.merge(filtered, matched[i].administrators);
+			if (matched[i].interfaces)
+				$.merge(filtered, matched[i].interfaces);
+			if (matched[i].services)
+				$.merge(filtered, matched[i].services);
+		}
+		else if (type == "interface")
+		{
+			if (matched[i].host)
+				matched.push(matched[i].host);
+		}
+		else if (type == "person")
+		{
+			if (matched[i].services)
+				$.merge(filtered, matched[i].services);
+			if (matched[i].hosts)
+				$.merge(matched, matched[i].hosts);
+		}
+		else if (type == "service")
+		{
+			if (matched[i].host)
+				filtered.push(matched[i].host);
+			if (matched[i].administrators)
+				$.merge(filtered, matched[i].administrators);
+		}
+		filtered.push(matched[i]);
+	}
+	return filtered.unique();
 }
 
 function matchFields(fields, operand)
@@ -432,24 +448,35 @@ function matchFields(fields, operand)
 
 function matchRecord(record, operator, operand)
 {
+	var fields = [];
 	if (operator)
 	{
-		operator = operator.toLowerCase().replace("_", "-");
 		if (filterAliases[operator])
-		{
-			var fields = filterAliases[operator].getFields(record);
-			return matchFields(fields, operand);
-		}
-		else
-		{
-			if (record[operator] instanceof Array)
-				return matchFields(record[operator], operand);
-			return false;
-		}
+			fields = filterAliases[operator].getFields(record);
+		else if (record[operator] instanceof Array)
+			fields = record[operator];
 	}
 	else
 	{
-		var fields = filterMap["default"].getFields(record);
-		return matchFields(fields, operand);
+		fields = filterMap["default"].getFields(record);
 	}
+	var parsed = parseOperand(operand);
+	if (parsed)
+		return matchFields(fields, parsed) || matchFields(fields, operand);
+	else
+		return matchFields(fields, operand);
+}
+
+function parseOperand(operand)
+{
+	var rate = parseRate(operand, true);
+	if (rate)
+		return formatRate(rate);
+	var size = parseSize(operand);
+	if (size)
+		return formatSize(size);
+	var speed = parseSpeed(operand);
+	if (speed)
+		return formatSpeed(speed);
+	return null;
 }

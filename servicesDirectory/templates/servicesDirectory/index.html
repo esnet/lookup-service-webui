@@ -92,11 +92,11 @@
 							<div class="content">
 								<table class="table table-bordered">
 									<tr>
-										<th>Service Name</th>
-										<th>Addresses</th>
-										<th>Geographic Location</th>
-										<th>Communities</th>
-										<th>Custom</th>
+										<th id="service-name-header">Service Name</th>
+										<th id="service-locator-header">Addresses</th>
+										<th id="service-location-header">Geographic Location</th>
+										<th id="service-communities-header">Communities</th>
+										<th id="service-custom-header">Custom</th>
 									</tr><tr>
 										<td><div class="table-info" id="service-name"></div></td>
 										<td><div class="table-info" id="service-locator"></div></td>
@@ -118,11 +118,11 @@
 							<div class="content">
 								<table class="table table-bordered">
 									<tr>
-										<th>Host Name</th>
-										<th>Hardware</th>
-										<th>System Info</th>
-										<th>Toolkit Version</th>
-										<th>Communities</th>
+										<th id="host-name-header">Host Name</th>
+										<th id="host-hardware-header">Hardware</th>
+										<th id="host-os-header">System Info</th>
+										<th id="host-version-header">Toolkit Version</th>
+										<th id="host-communities-header">Communities</th>
 									</tr><tr>
 										<td><div class="table-info" id="host-name"></div></td>
 										<td><div class="table-info" id="host-hardware"></div></td>
@@ -155,7 +155,7 @@
 				<h4>Search Help</h4>
 			</div>
 			<div class="modal-body">
-				The search box provides similar capabilities to a Google search when looking for particular services.
+				The search box provides functionality similar to Google Search to find particular services.
 				<hr>
 				<h5>Search Terms</h5>
 				<div>
@@ -173,7 +173,7 @@
 				<h5>Boolean Expressions</h5>
 				<div>
 					<p>Boolean expressions including <b>AND</b>, <b>OR</b>, and <b>NOT</b> are supported.
-					In addition nested expressions with parentheses can be used.</p>
+					In addition parentheses can be used in nested expressions.</p>
 					Examples:
 					<ul>
 						<li>es.net AND nersc - search for es.net and nersc</li>
