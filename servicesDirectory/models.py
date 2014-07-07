@@ -1,15 +1,28 @@
 import logging
 import math
+import re
 import socket
 from urlparse import urlparse
 
 from django.db import models
 from django.core.cache import cache
 
-from IPy import IP
-
 from servicesDirectory import settings
 from servicesDirectory import simplels_client
+
+_ip_enabled = False
+try:
+    from IPy import IP
+    _ip_enabled = True
+except ImportError:
+    pass
+
+_url_enabled = False
+try:
+    from yurl import URL
+    _url_enabled = True
+except ImportError:
+    pass
 
 _concurrency_enabled = False
 try:
@@ -447,14 +460,27 @@ def get_hostname_from_ip(ip):
     return result
 
 def get_hostname_from_url(url):
-    hostname = urlparse(url).hostname
+    hostname = ""
+    if _url_enabled:
+        hostname = URL(url).host.strip("[]")
+    else:
+        hostname = urlparse(url).hostname
     if hostname is None:
         hostname = url.lower()
     return hostname
 
 def is_ip_address(address):
-    try:
-        ip_form = IP(address)
+    ip_form = None
+    if _ip_enabled:
+        try:
+            ip_form = IP(address)
+        except:
+            pass
+    else:
+        ipv4_format = r"^\[?([\d]{1,3}\.){3}[\d]{1,3}\]?(:\d*){0,1}$"
+        ipv6_format = r"^\[?([\da-fA-F]{0,4}:){3,7}[\da-fA-F]{0,4}\]?(:\d*){0,1}$"
+        ip_form = re.match(ipv4_format, address) or re.match(ipv6_format, address)
+    if ip_form:
         return True
-    except:
+    else:
         return False

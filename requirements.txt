@@ -1,5 +1,6 @@
 Django==1.6.2
 IPy==0.81
+YURL==0.12
 dnspython==1.11.1
 futures==2.1.6
 pygeocoder==1.2.1.1

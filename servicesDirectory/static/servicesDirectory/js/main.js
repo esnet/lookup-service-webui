@@ -39,6 +39,7 @@ var markers = {};
 
 var treeNodes = initTreeNodes();
 var tree = initTree(treeNodes);
+var activeNode = null;
 
 ////////////////////////////////////////
 // Initialize Input Events
@@ -272,6 +273,7 @@ function onNodeActivate(node)
 {
 	if (!node.data["service"])
 		return;
+	activeNode = node;
 	var service = node.data["service"];
 	var latlng = getLatLng(service);
 	if ((latlng) && (markers[latlng]))
@@ -323,7 +325,7 @@ function showHostInfo(host)
 	if (!host)
 		return;
 	if (hasField(host, "host-name"))
-		$("#host-name").html(host["host-name"].join("<br>"));
+		$("#host-name").html(getHostnames(host)).join("<br>"));
 	var processorString = getProcessorString(host);
 	if (processorString)
 		$("#host-hardware").append("Processor: " + processorString + "<br>");
@@ -459,7 +461,10 @@ function updateInfoWindow()
 	for (var section in contentMap)
 		sections.push(section);
 	sections.sort();
-	var clickEvent = function(event) { onInfoWindowActivate($(this).data("service")); };
+	var clickEvent = function(event) {
+		onInfoWindowActivate($(this).data("service"));
+		event.preventDefault();
+	};
 	var content = $("dl");
 	for (var i = 0 ; i < sections.length ; i++)
 	{
