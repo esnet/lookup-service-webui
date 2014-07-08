@@ -451,6 +451,7 @@ function matchRecord(record, operator, operand)
 	var fields = [];
 	if (operator)
 	{
+		operator = operator.toLowerCase();
 		if (filterAliases[operator])
 			fields = filterAliases[operator].getFields(record);
 		else if (record[operator] instanceof Array)

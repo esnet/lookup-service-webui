@@ -9,7 +9,7 @@ var serviceMap = {
 		"custom": {
 			"title": "Example Command-Line",
 			"type": "cli",
-			"format": "bwctl -T iperf -t 20 -i 1 -f m -c <address>:<port>"
+			"format": "bwctl -T iperf -t 20 -i 1 -f m -c <address>"
 		},
 		"action": "Test"
 	},
@@ -19,7 +19,7 @@ var serviceMap = {
 		"custom": {
 			"title": "Example Command-Line",
 			"type": "cli",
-			"format": "owping -c 10000 -i 0.01 <address>:<port>"
+			"format": "owping -c 10000 -i 0.01 <address>"
 		},
 		"action": "Ping"
 	},
@@ -297,9 +297,17 @@ RecordMap.prototype = {
 // Record Data Functions
 ////////////////////////////////////////
 
-function getCommandLine(service)
+function getCommandLine(service, format)
 {
-	
+	var commandLine = [];
+	if (hasField(service, "service-locator"))
+	{
+		for (var i = 0 ; i < service["service-locator"].length ; i++)
+		{
+			var address = getURLParser(service["service-locator"][i]).host;
+		}
+	}
+	return commandLine;
 }
 
 function getHostname(record)
@@ -429,28 +437,46 @@ function getOSString(host)
 	return $.trim(OSString);
 }
 
-function getProcessorString(host)
+function getProcessorStrings(host)
 {
-	var processorString = "";
+	var processorStrings = [];
+	var processors = 1;
 	if (hasField(host, "host-hardware-processorcount"))
-	{
-		var processors = parseInt(host["host-hardware-processorcount"][0]);
-		processorString += processors + "x ";
-	}
+		processors = parseInt(host["host-hardware-processorcount"][0]);
+	var speed = "";
 	if (hasField(host, "host-hardware-processorspeed"))
-	{
-		var speed = parseSpeed(host["host-hardware-processorspeed"][0]);
-		processorString += formatSpeed(speed, 2, "GHz") + " ";
-	}
+		speed += formatSpeed(parseSpeed(host["host-hardware-processorspeed"][0]), 2, "GHz") + " ";
+	var cores = 0;
 	if (hasField(host, "host-hardware-processorcore"))
+		cores = Math.ceil(parseInt(host["host-hardware-processorcore"][0]) / processors);
+	var processorString = ""
+	if (speed)
 	{
-		var cores = parseInt(host["host-hardware-processorcore"][0]);
-		if (cores > 1)
-			processorString += "(" + cores + " cores" + ")";
+		if (cores)
+		{
+			if (cores == 1)
+				processorString = speed + "(" + cores + " core)";
+			else
+				processorString = speed + "(" + cores + " cores)";
+		}
 		else
-			processorString += "(" + cores + " core" + ")";
+		{
+			processorString = speed;
+		}
 	}
-	return $.trim(processorString);
+	else if (cores)
+	{
+		if (cores == 1)
+			processorString = cores + " core";
+		else
+			processorString = cores + " cores";
+	}
+	if (processorString)
+	{
+		for (var i = 0 ; i < processors ; i++)
+			processorStrings.push(processorString);
+	}
+	return processorStrings;
 }
 
 function getServiceMapping(service)

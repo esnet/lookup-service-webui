@@ -404,10 +404,17 @@ function getHostnameFromURL(url)
 		return url;
 }
 
+function getLinks(addresses, prefix)
+{
+	var links = [];
+	for (var i = 0 ; i < addresses.length ; i++)
+		links.push("<a href=\"" + prefix + addresses[i] + "/\" target=\"_blank\">" + addresses[i] + "</a>");
+	return links;
+}
+
 function getURLParser(url)
 {
-	var parser = document.createElement("a");
-	parser.href = url;
+	var parser = $("<a>").attr("href", url).get(0);
 	return parser;
 }
 
