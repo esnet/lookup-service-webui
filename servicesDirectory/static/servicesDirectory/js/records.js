@@ -6,37 +6,57 @@ var serviceMap = {
 	"bwctl": {
 		"title": "BWCTL Server",
 		"defaults": [ "bwctl server" ],
-		"custom": "bwctl -T iperf -t 20 -i 1 -f m -c <address>:<port>",
+		"custom": {
+			"title": "Example Command-Line",
+			"type": "cli",
+			"format": "bwctl -T iperf -t 20 -i 1 -f m -c <address>:<port>"
+		},
 		"action": "Test"
 	},
 	"owamp": {
 		"title": "OWAMP Server",
 		"defaults": [ "owamp server" ],
-		"custom": "owping -c 10000 -i 0.01 <address>:<port>",
+		"custom": {
+			"title": "Example Command-Line",
+			"type": "cli",
+			"format": "owping -c 10000 -i 0.01 <address>:<port>"
+		},
 		"action": "Ping"
 	},
 	"ndt": {
 		"title": "NDT Server",
 		"defaults": [ "ndt server" ],
-		"custom": "web100clt -n <address> -ll",
+		"custom": {
+			"title": "Example Command-Line",
+			"type": "cli",
+			"format": "web100clt -n <address> -ll"
+		},
 		"action": "Test"
 	},
 	"npad": {
 		"title": "NPAD Server",
 		"defaults": [ "npad server" ],
-		"custom": "",
+		"custom": {},
 		"action": "Test"
 	},
 	"ping": {
 		"title": "Ping Responder",
 		"defaults": [ "ping responder" ],
-		"custom": "ping <address>",
+		"custom": {
+			"title": "Example Command-Line",
+			"type": "cli",
+			"format": "ping <address>"
+		},
 		"action": "Ping"
 	},
 	"traceroute": {
 		"title": "Traceroute Responder",
 		"defaults": [ "traceroute responder" ],
-		"custom": "traceroute <address>",
+		"custom": {
+			"title": "Example Command-Line",
+			"type": "cli",
+			"format": "traceroute <address>"
+		},
 		"action": "Traceroute"
 	},
 	"ma": {
@@ -45,24 +65,36 @@ var serviceMap = {
 			"bwctl": {
 				"title": "BWCTL MA",
 				"defaults": [ "perfsonarbuoy ma", "perfsonar-buoy ma" ],
-				"custom": "",
+				"custom": {
+					"title": "Access URLs",
+					"type": "ma",
+				},
 				"action": "Query"
 			},
 			"owamp": {
 				"title": "OWAMP MA",
 				"defaults": [ "perfsonarbuoy ma", "perfsonar-buoy ma" ],
-				"custom": "",
+				"custom": {
+					"title": "Access URLs",
+					"type": "ma",
+				},
 				"action": "Query"
 			},
 			"traceroute": {
 				"title": "Traceroute MA",
 				"defaults": [ "traceroute ma" ],
-				"custom": "",
+				"custom": {
+					"title": "Access URLs",
+					"type": "ma",
+				},
 				"action": "Query"
 			}
 		},
 		"defaults": [ "measurement archive", "perfsonar-buoy ma", "perfsonarbuoy ma", "traceroute ma" ],
-		"custom": "",
+		"custom": {
+			"title": "Access URLs",
+			"type": "ma",
+		},
 		"action": "Query"
 	}
 };
@@ -264,6 +296,11 @@ RecordMap.prototype = {
 ////////////////////////////////////////
 // Record Data Functions
 ////////////////////////////////////////
+
+function getCommandLine(service)
+{
+	
+}
 
 function getHostname(record)
 {

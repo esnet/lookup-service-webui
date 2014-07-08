@@ -325,7 +325,7 @@ function showHostInfo(host)
 	if (!host)
 		return;
 	if (hasField(host, "host-name"))
-		$("#host-name").html(getHostnames(host)).join("<br>"));
+		$("#host-name").html(getHostnames(host).join("<br>"));
 	var processorString = getProcessorString(host);
 	if (processorString)
 		$("#host-hardware").append("Processor: " + processorString + "<br>");
