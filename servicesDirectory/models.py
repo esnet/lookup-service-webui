@@ -393,7 +393,7 @@ def get_hostname(record, host, depth = 1):
     hostname = record.get(record_type + "-hostname", "")
     if hostname:
         return hostname
-    hostnames = sorted(get_hostnames(record), key = lambda v: v.replace("-v6", "~"))
+    hostnames = sorted(get_hostnames(record), key = lambda v: re.sub(r"(-v6|-ip6)", "~", v))
     for hostname in hostnames:
         if not is_ip_address(hostname):
             return hostname

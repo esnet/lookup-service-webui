@@ -2,6 +2,15 @@
 // Declare Variables
 ////////////////////////////////////////
 
+var sortOrder = {
+	"hostname": {
+		"Hostname": 0,
+		"URL": 0,
+		"IPv4": 1,
+		"IPv6": 2
+	}
+};
+
 var metricPrefixes = {
 	"short": [ "K", "M", "G", "T", "P", "E", "Z", "Y" ],
 	"long": [ "kilo", "mega", "giga", "tera", "peta", "exa", "zetta", "yotta" ]
@@ -338,15 +347,10 @@ Array.prototype.unique = function() {
 
 function compareHostnames(hostname_a, hostname_b)
 {
-	order = {
-		"Hostname": 0,
-		"IPv4": 1,
-		"IPv6": 2
-	};
-	hostname_a = hostname_a.replace("-v6", "~");
-	hostname_b = hostname_b.replace("-v6", "~");
-	order_a = order[getAddressType(hostname_a)];
-	order_b = order[getAddressType(hostname_b)];
+	hostname_a = hostname_a.replace(/(-v6|-ip6)/, "~");
+	hostname_b = hostname_b.replace(/(-v6|-ip6)/, "~");
+	order_a = sortOrder["hostname"][getAddressType(hostname_a)];
+	order_b = sortOrder["hostname"][getAddressType(hostname_b)];
 	return order_a > order_b ? 1 : order_a < order_b ? -1 : hostname_a > hostname_b ? 1 : hostname_a < hostname_b ? -1 : 0;
 }
 
@@ -387,25 +391,43 @@ function getAddressType(address)
 {
 	var IPv4Format = /^\[?([\d]{1,3}\.){3}[\d]{1,3}\]?(:\d*){0,1}$/;
 	var IPv6Format = /^\[?([\da-fA-F]{0,4}:){3,7}[\da-fA-F]{0,4}\]?(:\d*){0,1}$/;
+	var hostnameFormat = /^[A-Za-z0-9]+((\-|\.)[A-Za-z0-9]+)*$/;
 	if (IPv4Format.test(address))
 		return "IPv4";
 	else if (IPv6Format.test(address))
 		return "IPv6";
-	else
+	else if (hostnameFormat.test(address))
 		return "Hostname";
+	else
+		return "URL";
+}
+
+function getHostFromURL(url)
+{
+	if (getAddressType(url) == "URL")
+	{
+		var host = getURLParser(url).host;
+		if (host)
+			return host;
+	}
+	return url;
 }
 
 function getHostnameFromURL(url)
 {
-	var hostname = getURLParser(url).hostname;
-	if ((hostname) && (hostname != window.location.hostname))
-		return hostname.replace(/[\[\]]+/g, "");
-	else
-		return url;
+	if (getAddressType(url) == "URL")
+	{
+		var hostname = getURLParser(url).hostname;
+		if (hostname)
+			return hostname.replace(/[\[\]]+/g, "");
+	}
+	return url;
 }
 
 function getLinks(addresses, prefix)
 {
+	if (!prefix)
+		prefix = "";
 	var links = [];
 	for (var i = 0 ; i < addresses.length ; i++)
 		links.push("<a href=\"" + prefix + addresses[i] + "/\" target=\"_blank\">" + addresses[i] + "</a>");

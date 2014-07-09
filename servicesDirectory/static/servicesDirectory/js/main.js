@@ -295,11 +295,8 @@ function showServiceInfo(service)
 		return;
 	if (hasField(service, "service-name"))
 		$("#service-name").html(service["service-name"][0]);
-	if (hasField(service, "service-locator"))
-	{
-		var links = getLinks(getHostnames(service), "http://");
-		$("#service-locator").html(links.join("<br>"));
-	}
+	var links = getLinks(getHostnames(service), "http://");
+	$("#service-locator").html(links.join("<br>"));
 	var locationString = getLocationString(service);
 	var latlngString = getLatLngString(service);
 	$("#service-location").html(locationString + "<br><div class=\"muted\">" + latlngString + "</div");
@@ -325,8 +322,8 @@ function showCustomInfo(service)
 		}
 		else if (custom["type"] == "ma")
 		{
-			var accessURLs = getAccessURLs(service);
-			$("#service-custom").html(accessURLs.join("<br>"));
+			var links = getLinks(getAddresses(service));
+			$("#service-custom").html(links.join("<br>"));
 		}
 		$("#service-custom-header").show();
 		$("#service-custom").parent().show();

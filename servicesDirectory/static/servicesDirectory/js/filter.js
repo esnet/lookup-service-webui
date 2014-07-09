@@ -6,13 +6,7 @@ var filterMap = {
 	"address":
 	{
 		"getFields": function(record) {
-			if (hasField(record, "host-names"))
-				return record["host-names"];
-			if (hasField(record, "interface-addresses"))
-				return record["interface-addresses"];
-			if (hasField(record, "service-locators"))
-				return record["service-locators"];
-			return [];
+			return getAddresses(record);
 		}
 	},
 	"administrator":

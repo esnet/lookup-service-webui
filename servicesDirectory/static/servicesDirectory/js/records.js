@@ -297,16 +297,37 @@ RecordMap.prototype = {
 // Record Data Functions
 ////////////////////////////////////////
 
+function getAddresses(record)
+{
+	var addresses = [];
+	var type = record["type"][0];
+	if (type == "host")
+	{
+		if (hasField(record, "host-name"))
+			addresses = record["host-name"];
+	}
+	else if (type == "interface")
+	{
+		if (hasField(record, "interface-addresses"))
+			addresses = record["interface-addresses"];
+	}
+	else if (type == "service")
+	{
+		if (hasField(record, "service-locator"))
+			addresses = record["service-locator"];
+	}
+	return addresses;
+}
+
 function getCommandLine(service, format)
 {
 	var commandLine = [];
-	if (hasField(service, "service-locator"))
-	{
-		for (var i = 0 ; i < service["service-locator"].length ; i++)
-		{
-			var address = getURLParser(service["service-locator"][i]).host;
-		}
-	}
+	var addresses = getAddresses(service);
+	for (var i = 0 ; i < addresses.length ; i++)
+		addresses[i] = getHostFromURL(addresses[i]);
+	addresses.sort(function(a, b) { return compareHostnames(a, b); });
+	for (var i = 0 ; i < addresses.length ; i++)
+		commandLine.push(format.replace("<address>", addresses[i]));
 	return commandLine;
 }
 
@@ -324,29 +345,14 @@ function getHostname(record)
 
 function getHostnames(record)
 {
-	var addresses = [];
 	var hostnames = [];
+	var addresses = getAddresses(record);
 	var type = record["type"][0];
-	if (type == "host")
-	{
-		if (hasField(record, "host-name"))
-			addresses = record["host-name"];
-	}
-	else if (type == "interface")
-	{
-		if (hasField(record, "interface-addresses"))
-			addresses = record["interface-addresses"];
-	}
-	else if (type == "service")
-	{
-		if (hasField(record, "service-locator"))
-			addresses = record["service-locator"];
-	}
 	if (hasField(record, type + "-hostname"))
 		hostnames.push(record[type + "-hostname"]);
 	for (var i = 0 ; i < addresses.length ; i++)
 		hostnames.push(getHostnameFromURL(addresses[i]));
-	hostnames = hostnames.sort(function(a, b) { compareHostnames(a, b); }).unique();
+	hostnames = hostnames.sort(function(a, b) { return compareHostnames(a, b); }).unique();
 	return hostnames;
 }
 
