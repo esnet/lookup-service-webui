@@ -3,12 +3,11 @@
 ////////////////////////////////////////
 
 var initialized = false;
-
 var recordMap = null;
-
 var filteredMap = null;
-
 var filter = "";
+var activeService = null;
+var activeHost = null;
 
 ////////////////////////////////////////
 // Initialize Map
@@ -30,8 +29,8 @@ var defaultMarkerIcon = {
 	"strokeColor": "#E36C65",
 	"strokeWeight": 1
 };
-var activeMarker = null;
 var markers = {};
+var activeMarker = null;
 
 ////////////////////////////////////////
 // Initialize Tree
@@ -116,25 +115,29 @@ function initTreeNodes()
 	var treeNodes = [];
 	for (var type in serviceMap)
 	{
-		var children = [];
+		var subnodes = [];
 		if (serviceMap[type]["types"])
 		{
 			for (var subtype in serviceMap[type]["types"])
 			{
-				children.push({
+				var subnode = subnodes[subnodes.push({
 					"title": serviceMap[type]["types"][subtype]["title"],
+					"tooltip": serviceMap[type]["types"][subtype]["title"],
 					"type": subtype,
 					"folder": true,
-					"children": []
-				});
+					"visible": true
+				}) - 1];
+				subnode.children = [];
 			}
 		}
-		treeNodes.push({
+		var node = treeNodes[treeNodes.push({
 			"title": serviceMap[type]["title"],
+			"tooltip": serviceMap[type]["title"],
 			"type": type,
 			"folder": true,
-			"children": children
-		});
+			"visible": true
+		}) - 1];
+		node.children = subnodes;
 	}
 	return treeNodes;
 }
@@ -167,7 +170,6 @@ function addServiceMarker(service)
 		{
 			marker = map.gmap("addMarker", {
 				"position": latlng,
-				"title": "?",
 				"icon": defaultMarkerIcon,
 				"optimized": false
 			}).click(function() { onMarkerActivate(this); }).get(0);
@@ -204,11 +206,11 @@ function addServiceNode(service)
 			node = treeNodes[i];
 			if (subtype)
 			{
-				for (var j = 0 ; j < node["children"].length ; j++)
+				for (var j = 0 ; j < node.children.length ; j++)
 				{
-					if (node["children"][j]["type"] == subtype)
+					if (node.children[j]["type"] == subtype)
 					{
-						subnode = node["children"][j];
+						subnode = node.children[j];
 						break;
 					}
 				}
@@ -220,30 +222,35 @@ function addServiceNode(service)
 	{
 		node = treeNodes[treeNodes.push({
 			"title": type,
+			"tooltip": type,
 			"type": type,
 			"folder": true,
-			"children": []
+			"visible": true
 		}) - 1];
+		node.children = [];
 	}
 	if ((!subnode) && (subtype))
 	{
 		subnode = node["children"][node["children"].push({
 			"title": subtype,
+			"tooltip": subtype,
 			"type": subtype,
 			"folder": true,
-			"children": []
+			"visible": true
 		}) - 1];
+		subnode.children = [];
 	}
 	var serviceNode = {
 		"title": title,
+		"tooltip": hostname,
 		"type": "service",
-		"tooltip": hostname
+		"visible": true
 	};
 	serviceNode.service = service;
 	if (subtype)
-		subnode["children"].push(serviceNode);
+		subnode.children.push(serviceNode);
 	else if (type)
-		node["children"].push(serviceNode);
+		node.children.push(serviceNode);
 	else
 		treeNodes.push(serviceNode);
 }
@@ -293,6 +300,7 @@ function showServiceInfo(service)
 	clearServiceInfo();
 	if (!service)
 		return;
+	activeService = service;
 	if (hasField(service, "service-name"))
 		$("#service-name").html(service["service-name"][0]);
 	var links = getLinks(getHostnames(service), "http://");
@@ -337,6 +345,7 @@ function showCustomInfo(service)
 
 function clearServiceInfo()
 {
+	activeService = null;
 	$("#service-name").empty();
 	$("#service-location").empty();
 	$("#service-locator").empty();
@@ -349,6 +358,7 @@ function showHostInfo(host)
 	clearHostInfo();
 	if (!host)
 		return;
+	activeHost = host;
 	if (hasField(host, "host-name"))
 	{
 		var links = getLinks(getHostnames(host), "http://");
@@ -401,6 +411,7 @@ function showHostInfo(host)
 
 function clearHostInfo()
 {
+	activeHost = null;
 	$("#host-name").empty();
 	$("#host-hardware").empty();
 	$("#host-os").empty();
@@ -464,30 +475,49 @@ function updateInfoWindow()
 {
 	if (!activeMarker)
 		return;
-	var contentMap = {};
+	var sections = [];
 	var services = activeMarker.filtered;
 	for (var i = 0 ; i < services.length ; i++)
 	{
 		var service = services[i];
-		var section = "";
-		if (services[i].host)
-			section = getTitle(service.host);
-		else
-			section = getTitle(service);
-		var hostname = getHostname(service);
-		if ((!section) || (!hostname))
+		var host = null;
+		var title = "";
+		var hostname = "";
+		if (service.host)
+			host = service.host;
+			title = getTitle(service.host);
+			hostname = getHostname(service.host);
+		if (!title)
+			title = getTitle(service);
+		if (!hostname)
+			hostname = getHostname(service);
+		if ((!title) || (!hostname))
 			continue;
-		if (section != hostname)
-			section += " (" + hostname + ")";
-		if (contentMap[section])
-			contentMap[section].push(service);
+		if (title != hostname)
+			title += " (" + hostname + ")";
+		var section = null;
+		for (var j = 0 ; j < sections.length ; j++)
+		{
+			if (sections[j].host && sections[j].host == host)
+				section = sections[j];
+			else if (sections[j]["hostname"] == hostname)
+				section = sections[j];
+		}
+		if (section)
+		{
+			section.services.push(service);
+		}
 		else
-			contentMap[section] = [ service ];
+		{
+			section = sections[sections.push({
+				"title": title,
+				"hostname": hostname,
+			}) - 1];
+			section.host = host;
+			section.services = [ service ];
+		}
 	}
-	var sections = [];
-	for (var section in contentMap)
-		sections.push(section);
-	sections.sort();
+	sections.sort(function(a, b) { return compareHostnames(a["hostname"], b["hostname"]); });
 	var clickEvent = function(event) {
 		onInfoWindowActivate($(this).data("service"));
 		event.preventDefault();
@@ -496,8 +526,8 @@ function updateInfoWindow()
 	for (var i = 0 ; i < sections.length ; i++)
 	{
 		var section = sections[i];
-		content.append($("<dt>").text(section));
-		contentMap[section].sort(function(a, b) {
+		content.append($("<dt>").text(section["title"]));
+		section.services.sort(function(a, b) {
 			var type_a = "";
 			var type_b = "";
 			if (hasField(a, "service-type"))
@@ -506,15 +536,14 @@ function updateInfoWindow()
 				type_b = b["service-type"][0].toLowerCase();
 			return type_a > type_b ? 1 : type_a < type_b ? -1 : 0;
 		});
-		for (var j = 0 ; j < contentMap[section].length ; j++)
+		for (var j = 0 ; j < section.services.length ; j++)
 		{
-			var service = contentMap[section][j];
-			var title = getServiceTypeTitle(service);
-			var hostname = getHostname(service);
+			var service = section.services[j];
+			var name = getServiceTypeTitle(service);
 			content.append($("<dd>").append($("<a>").attr({
-				"title": hostname, 
+				"title": name, 
 				"href": "#"
-			}).text(title).data("service", service).click(clickEvent)));
+			}).text(name).data("service", service).click(clickEvent)));
 		}
 	}
 }
@@ -527,9 +556,9 @@ function updateMap()
 	{
 		var marker = markers[latlng];
 		marker.filtered = [];
-		for (var i = 0 ; i < marker["services"].length ; i++)
+		for (var i = 0 ; i < marker.services.length ; i++)
 		{
-			var service = marker["services"][i];
+			var service = marker.services[i];
 			if ($.inArray(service, filteredMap.getServices(service)) >= 0)
 				marker.filtered.push(service);
 		}
@@ -551,15 +580,9 @@ function updateStatus()
 function updateTree()
 {
 	activeNode = null;
+	updateTreeNodes();
 	tree.fancytree("getTree").reload();
-	tree.fancytree("getTree").filterNodes(function(node) {
-		var service = node.data.service;
-		if (node.isFolder())
-			return true;
-		else if ($.inArray(service, filteredMap.getServices(service)) >= 0)
-			return true;
-		return false;
-	});
+	tree.fancytree("getTree").filterNodes(function(node) { return node.data.visible; });
 	tree.fancytree("getRootNode").sortChildren(function(a, b) {
 		var isFolder_a = a.isFolder();
 		var isFolder_b = b.isFolder();
@@ -569,7 +592,7 @@ function updateTree()
 	}, true);
 }
 
-function updateTreeNodeCounts(nodes)
+function updateTreeNodes(nodes)
 {
 	if (!nodes)
 		nodes = treeNodes;
@@ -579,14 +602,22 @@ function updateTreeNodeCounts(nodes)
 		var node = nodes[i];
 		if (node["folder"])
 		{
-			var childCount = updateTreeNodeCounts(node["children"]);
+			var childCount = updateTreeNodes(node.children);
 			var title = $("<div>" + node["title"] + "</div>").children().remove().end().text();
 			node["title"] = title + "<span class=\"badge tree-badge\">" + childCount + "</span>";
 			count += childCount;
 		}
-		else if (node.isVisible())
+		else if (node.service)
 		{
-			count++;
+			if ($.inArray(node.service, filteredMap.getServices(node.service)) >= 0)
+			{
+				node["visible"] = true;
+				count++;
+			}
+			else
+			{
+				node["visible"] = false;
+			}
 		}
 	}
 	return count;

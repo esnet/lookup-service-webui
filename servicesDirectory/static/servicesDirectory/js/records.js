@@ -322,9 +322,10 @@ function getAddresses(record)
 function getCommandLine(service, format)
 {
 	var commandLine = [];
-	var addresses = getAddresses(service);
-	for (var i = 0 ; i < addresses.length ; i++)
-		addresses[i] = getHostFromURL(addresses[i]);
+	var locators = getAddresses(service);
+	var addresses = [];
+	for (var i = 0 ; i < locators.length ; i++)
+		addresses.push(getHostFromURL(locators[i]));
 	addresses.sort(function(a, b) { return compareHostnames(a, b); });
 	for (var i = 0 ; i < addresses.length ; i++)
 		commandLine.push(format.replace("<address>", addresses[i]));

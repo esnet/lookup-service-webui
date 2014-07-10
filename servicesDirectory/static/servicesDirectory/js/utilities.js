@@ -347,8 +347,8 @@ Array.prototype.unique = function() {
 
 function compareHostnames(hostname_a, hostname_b)
 {
-	hostname_a = hostname_a.replace(/(-v6|-ip6)/, "~");
-	hostname_b = hostname_b.replace(/(-v6|-ip6)/, "~");
+	hostname_a = hostname_a.replace(/(-v6|-ip6|-ipv6)/i, "~");
+	hostname_b = hostname_b.replace(/(-v6|-ip6|-ipv6)/i, "~");
 	order_a = sortOrder["hostname"][getAddressType(hostname_a)];
 	order_b = sortOrder["hostname"][getAddressType(hostname_b)];
 	return order_a > order_b ? 1 : order_a < order_b ? -1 : hostname_a > hostname_b ? 1 : hostname_a < hostname_b ? -1 : 0;
@@ -415,7 +415,8 @@ function getHostFromURL(url)
 
 function getHostnameFromURL(url)
 {
-	if (getAddressType(url) == "URL")
+	var type = getAddressType(url);
+	if (type == "URL")
 	{
 		var hostname = getURLParser(url).hostname;
 		if (hostname)
