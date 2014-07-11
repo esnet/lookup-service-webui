@@ -393,7 +393,8 @@ def get_hostname(record, host, depth = 1):
     hostname = record.get(record_type + "-hostname", "")
     if hostname:
         return hostname
-    hostnames = sorted(get_hostnames(record), key = lambda v: re.sub(r"(-v6|-ip6|-ipv6)", "~", v, flags = re.IGNORECASE))
+	pattern = re.compile(r"(-v6|-ip6|-ipv6)", flags = re.IGNORECASE)
+    hostnames = sorted(get_hostnames(record), key = lambda v: re.sub(pattern, "~", v))
     for hostname in hostnames:
         if not is_ip_address(hostname):
             return hostname
@@ -477,8 +478,8 @@ def is_ip_address(address):
         except:
             pass
     else:
-        ipv4_format = r"^\[?([\d]{1,3}\.){3}[\d]{1,3}\]?(:\d*){0,1}$"
-        ipv6_format = r"^\[?([\da-fA-F]{0,4}:){3,7}[\da-fA-F]{0,4}\]?(:\d*){0,1}$"
+        ipv4_format = re.compile(r"^\[?([\d]{1,3}\.){3}[\d]{1,3}\]?(:\d*){0,1}$")
+        ipv6_format = re.compile(r"^\[?([\da-fA-F]{0,4}:){3,7}[\da-fA-F]{0,4}\]?(:\d*){0,1}$")
         ip_form = re.match(ipv4_format, address) or re.match(ipv6_format, address)
     if ip_form:
         return True
