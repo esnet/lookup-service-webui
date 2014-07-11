@@ -383,50 +383,16 @@ var filterAliases = {
 // Filter Functions
 ////////////////////////////////////////
 
-function getFilteredRecords(records, filter)
+function getFilteredRecords(services, filter)
 {
 	var filtered = [];
-	var matched = [];
 	var matcher = parser.parse(filter);
-	for (var i = 0 ; i < records.length ; i++)
+	for (var i = 0 ; i < services.length ; i++)
 	{
-		if (matcher(records[i]))
-			matched.push(records[i]);
+		if (matcher(services[i]))
+			filtered.push(services[i]);
 	}
-	for (var i = 0 ; i < matched.length ; i++)
-	{
-		var type = matched[i]["type"][0];
-		if (type == "host")
-		{
-			if (matched[i].administrators)
-				$.merge(filtered, matched[i].administrators);
-			if (matched[i].interfaces)
-				$.merge(filtered, matched[i].interfaces);
-			if (matched[i].services)
-				$.merge(filtered, matched[i].services);
-		}
-		else if (type == "interface")
-		{
-			if (matched[i].host)
-				matched.push(matched[i].host);
-		}
-		else if (type == "person")
-		{
-			if (matched[i].services)
-				$.merge(filtered, matched[i].services);
-			if (matched[i].hosts)
-				$.merge(matched, matched[i].hosts);
-		}
-		else if (type == "service")
-		{
-			if (matched[i].host)
-				filtered.push(matched[i].host);
-			if (matched[i].administrators)
-				$.merge(filtered, matched[i].administrators);
-		}
-		filtered.push(matched[i]);
-	}
-	return filtered.unique();
+	return filtered;
 }
 
 function matchFields(fields, operand)
@@ -440,20 +406,32 @@ function matchFields(fields, operand)
 	return false;
 }
 
-function matchRecord(record, operator, operand)
+function matchRecord(service, operator, operand)
 {
 	var fields = [];
+	var records = getLinkedRecords(service);
+	records.push(service);
 	if (operator)
 	{
 		operator = operator.toLowerCase();
 		if (filterAliases[operator])
-			fields = filterAliases[operator].getFields(record);
-		else if (record[operator] instanceof Array)
-			fields = record[operator];
+		{
+		    for (var i = 0 ; i < records.length ; i++)
+			    $.merge(fields, filterAliases[operator].getFields(records[i]));
+		}
+		else
+		{
+		    for (var i = 0 ; i < records.length ; i++)
+		    {
+		        if (records[i][operator] instanceof Array)
+			        $.merge(fields, records[i][operator]);
+			}
+		}
 	}
 	else
 	{
-		fields = filterMap["default"].getFields(record);
+	    for (var i = 0 ; i < records.length ; i++)
+		    $.merge(fields, filterMap["default"].getFields(records[i]));
 	}
 	var parsed = parseOperand(operand);
 	if (parsed)

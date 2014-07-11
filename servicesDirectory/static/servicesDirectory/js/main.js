@@ -447,7 +447,7 @@ function updateFilter()
 		try
 		{
 			filter = search;
-			var filtered = getFilteredRecords(recordMap.getRecords(), filter);
+			var filtered = getFilteredRecords(recordMap.getServices(), filter);
 			filteredMap = new RecordMap(filtered, false);
 		}
 		catch (err)
@@ -464,7 +464,7 @@ function updateFilter()
 function clearFilter()
 {
 	filter = "";
-	filteredMap = new RecordMap(recordMap.getRecords(), false);
+	filteredMap = new RecordMap(recordMap.getServices(), false);
 	updateCommunities();
 	updateMap();
 	updateTree();
@@ -484,9 +484,11 @@ function updateInfoWindow()
 		var title = "";
 		var hostname = "";
 		if (service.host)
+		{
 			host = service.host;
 			title = getTitle(service.host);
 			hostname = getHostname(service.host);
+		}
 		if (!title)
 			title = getTitle(service);
 		if (!hostname)

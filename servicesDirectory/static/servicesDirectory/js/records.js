@@ -193,6 +193,8 @@ RecordMap.prototype = {
 		return this.getRecords("service", record);
 	},
 	"getAdministrators": function(record, persons) {
+	    if (!persons)
+		    persons = this.getPersons(record);
 		var type = record["type"][0];
 		if (hasField(record, type + "-administrators"))
 		{
@@ -208,6 +210,8 @@ RecordMap.prototype = {
 		return null;
 	},
 	"getHost": function(record, hosts) {
+		if (!hosts)
+		    hosts = this.getHosts(record);
 		var type = record["type"][0];
 		if (type == "host")
 		{
@@ -244,7 +248,7 @@ RecordMap.prototype = {
 		return null;
 	},
 	"mapHost": function(host) {
-		var administrators = this.getAdministrators(host, this.getPersons(host));
+		var administrators = this.getAdministrators(host);
 		if (administrators)
 		{
 			for (var i = 0 ; i < administrators.length ; i++)
@@ -258,7 +262,7 @@ RecordMap.prototype = {
 		}
 	},
 	"mapInterface": function(interface) {
-		var host = this.getHost(interface, this.getHosts(interface));
+		var host = this.getHost(interface);
 		if (host)
 		{
 			if (host.interfaces)
@@ -269,7 +273,7 @@ RecordMap.prototype = {
 		}
 	},
 	"mapService": function(service) {
-		var host = this.getHost(service, this.getHosts(service));
+		var host = this.getHost(service);
 		if (host)
 		{
 			if (host.services)
@@ -278,7 +282,7 @@ RecordMap.prototype = {
 				host.services = [ service ];
 			service.host = host;
 		}
-		var administrators = this.getAdministrators(service, this.getPersons(service));
+		var administrators = this.getAdministrators(service);
 		if (administrators)
 		{
 			for (var i = 0 ; i < administrators.length ; i++)
@@ -383,6 +387,23 @@ function getLatLngString(record)
 		latlngString += "(" + lat + ", " + lng + ")";
 	}
 	return latlngString;
+}
+
+function getLinkedRecords(service)
+{
+    var linked = [];
+    if (service.adminstrators)
+        $.merge(linked, service.administrators);
+    if (service.host)
+    {
+        var host = service.host;
+        linked.push(host);
+        if (host.adminstrators)
+            $.merge(linked, host.administrators);
+        if (host.interfaces)
+            $.merge(linked, host.interfaces);
+    }
+    return linked;
 }
 
 function getLocationString(record)
