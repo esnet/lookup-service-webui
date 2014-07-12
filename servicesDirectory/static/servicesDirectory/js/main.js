@@ -553,23 +553,40 @@ function updateInfoWindow()
 function updateMap()
 {
 	map.gmap("closeInfoWindow");
-	activeMarker = null;
+    updateMarkers();
+	zoomToFitMarkers();
+}
+
+function updateMarkers()
+{
+    activeMarker = null;
 	for (var latlng in markers)
 	{
 		var marker = markers[latlng];
 		marker.filtered = [];
+		var titles = [];
 		for (var i = 0 ; i < marker.services.length ; i++)
 		{
 			var service = marker.services[i];
 			if ($.inArray(service, filteredMap.getServices(service)) >= 0)
-				marker.filtered.push(service);
+			{
+			    marker.filtered.push(service);
+				if (service.host)
+				    titles.push(getTitle(service.host));
+				else
+				    titles.push(getTitle(service));
+			}
 		}
+		titles = titles.sort(function(a, b) { return compareHostnames(a, b); }).unique();
+		if (titles.length == 1)
+		    marker.setTitle(titles[0]);
+		else if (titles.length > 1)
+		    marker.setTitle(titles[0] + "...");
 		if (marker.filtered.length > 0)
 			marker.setVisible(true);
 		else
 			marker.setVisible(false);
 	}
-	zoomToFitMarkers();
 }
 
 function updateStatus()
