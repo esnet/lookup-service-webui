@@ -10,6 +10,12 @@ var activeService = null;
 var activeHost = null;
 
 ////////////////////////////////////////
+// Loading
+////////////////////////////////////////
+
+$("#loading").modal("show");
+
+////////////////////////////////////////
 // Initialize Map
 ////////////////////////////////////////
 
@@ -586,11 +592,12 @@ function updateMarkers()
 	}
 }
 
-function updateStatus()
+function updateStatus(status)
 {
-	var filtered = filteredMap.getServices().length;
-	var total = recordMap.getServices().length;
-	$("#status").html("Showing: " + filtered + " of " + total + " services.");
+    var filtered = filteredMap.getServices().length;
+    var total = recordMap.getServices().length;
+    $("#status").html("Showing: " + filtered + " of " + total + " services.");
+    $("#loading").modal("hide");
 }
 
 function updateTree()

@@ -12,8 +12,10 @@
 		#browser-accordion { max-height: 100%; overflow: auto; }
 		#info-accordion { max-height: 100%; overflow: auto; }
 		#left-pane { padding-bottom: 10px; }
+		#loading { top: 35%; }
+		#noscript { top: 35%; }
 		#right-pane { padding-bottom: 10px; }
-		#search { margin-top: 5px; width: 400px }
+		#search { margin-top: 5px; width: 95% }
 		.map-canvas { height: 600px; }
 		.map-canvas img { max-width: none; }
 		.map-canvas label { width: auto; display: inline; }
@@ -27,6 +29,33 @@
 {% block header %}<h3>Lookup Service Directory</h3>{% endblock %}
 
 {% block content %}
+		<noscript>
+			<div class="modal in" id="noscript" tabindex="-1" role="dialog">
+				<div class="modal-header">
+					<h4 class="text-error">Warning</h4>
+				</div>
+				<div class="modal-body">
+					<div>Javascript is disabled in your browser. Please
+					<a href="http://www.enable-javascript.com" target="_blank">Enable Javascript</a>
+					to use this tool.</div><br>
+					<div class="text-center"><a class="btn" role="button" href="">Reload</a></div>
+				</div>
+			</div>
+			<div class="modal-backdrop"></div>
+		</noscript>
+		<div class="modal fade hide" id="loading" tabindex="-1" role="dialog">
+			<div class="modal-header">
+				<button type="button" class="close" data-dismiss="modal">&times;</button>
+				<h4>Loading...</h4>
+			</div>
+			<div class="modal-body">
+				<div class="progress progress-striped active">
+					<div class="bar" style="width:100%"></div>
+				</div>
+				<span class="muted">Note this may take several minutes. Please be patient.</span>
+				<button type="button" class="btn pull-right" data-dismiss="modal">Dismiss</button>
+			</div>
+		</div>
 		<div class="row-fluid fill-vertical">
 			<div class="span3 fill-vertical" id="left-pane">
 				<div class="accordion" id="browser-accordion">
