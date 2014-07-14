@@ -5,8 +5,8 @@ from django.http import HttpResponse
 from django.middleware.gzip import GZipMiddleware
 from django.shortcuts import render
 
+from servicesDirectory import config
 from servicesDirectory import models
-from servicesDirectory import settings
 from servicesDirectory.simplels_client import hash_to_query
 
 logger = logging.getLogger(__name__)
@@ -31,7 +31,7 @@ def query(request):
     geocode_records = query.pop("geocode", ["false"])[0].lower() in ("yes", "true",)
     remap_records = query.pop("remap", ["false"])[0].lower() in ("yes", "true",)
     
-    if settings.UI_CACHE_REQUESTS and cached_records:
+    if config.UI_CACHE_REQUESTS and cached_records:
         records = models.cache_get_records(cache_key)
         
     if records is None:
@@ -41,8 +41,8 @@ def query(request):
             records = models.geocode_records(records)
         if remap_records:
             records = models.remap_records(records)
-        if settings.UI_CACHE_REQUESTS:
-            models.cache_set_records(cache_key, records, settings.UI_CACHE_TIMEOUT)
+        if config.UI_CACHE_REQUESTS:
+            models.cache_set_records(cache_key, records, config.UI_CACHE_TIMEOUT)
     else:
         logger.info("Using UI cache for %s" % cache_key)
     

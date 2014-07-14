@@ -7,7 +7,7 @@ from urlparse import urlparse
 from django.db import models
 from django.core.cache import cache
 
-from servicesDirectory import settings
+from servicesDirectory import config
 from servicesDirectory import simplels_client
 
 _ip_enabled = False
@@ -71,7 +71,7 @@ def query_ls(query = "", cached_records=True):
     except:
         pass
     records = None
-    if settings.LS_CACHE_QUERIES:
+    if config.LS_CACHE_QUERIES:
         cache_key = "LS_QUERY(%s)" % query
         if cached_records:
             records = cache_get_records(cache_key)
@@ -85,8 +85,8 @@ def query_ls(query = "", cached_records=True):
 ##############################
 # Record Caching
 ##############################
-def cache_set_records(cache_key, records, timeout = settings.LS_CACHE_TIMEOUT):
-    max_records = settings.SINGLE_CACHE_MAX_RECORDS
+def cache_set_records(cache_key, records, timeout = config.LS_CACHE_TIMEOUT):
+    max_records = config.SINGLE_CACHE_MAX_RECORDS
     if max_records < 1:
         max_records = 512
     if len(records) == 0:
@@ -97,7 +97,7 @@ def cache_set_records(cache_key, records, timeout = settings.LS_CACHE_TIMEOUT):
             cache.set(cache_key + "." + str(i), records[i * max_records : (i + 1) * max_records], timeout)
 
 def cache_get_records(cache_key):
-    max_records = settings.SINGLE_CACHE_MAX_RECORDS
+    max_records = config.SINGLE_CACHE_MAX_RECORDS
     if max_records < 1:
         max_records = 512
     records = []
@@ -164,7 +164,7 @@ def filter_default(records):
 # Record Geocoding
 ##############################
 def geocode_records(records):
-    if settings.GEOCODE and _geocoder_enabled:
+    if config.GEOCODE and _geocoder_enabled:
         if _concurrency_enabled:
             with concurrent.futures.ThreadPoolExecutor(max_workers = _MAX_CONCURRENT_REQUESTS) as pool:
                 list(pool.map(geocode_record, records))
@@ -217,24 +217,24 @@ def geocode_record(record):
 def get_geocoder():
     global _geocoder
     if not _geocoder:
-        if settings.GEOCODE_API_PRIVATE_KEY and settings.GEOCODE_API_CLIENT_ID:
-            _geocoder = Geocoder(settings.GEOCODE_API_CLIENT_ID, settings.GEOCODE_API_PRIVATE_KEY)
+        if config.GEOCODE_API_PRIVATE_KEY and config.GEOCODE_API_CLIENT_ID:
+            _geocoder = Geocoder(config.GEOCODE_API_CLIENT_ID, config.GEOCODE_API_PRIVATE_KEY)
         else:
             _geocoder = Geocoder
     return _geocoder
 
 def geocode(query):
     result = {}
-    if settings.GEOCODE_CACHE_QUERIES:
+    if config.GEOCODE_CACHE_QUERIES:
         cache_key = "GEO_QUERY(%s)" % "".join(query.lower().split())
         result = cache.get(cache_key)
         if result is None:
             try:
                 results = get_geocoder().geocode(query)
                 result = results[0].raw
-                cache.set(cache_key, result, settings.GEOCODE_CACHE_TIMEOUT)
+                cache.set(cache_key, result, config.GEOCODE_CACHE_TIMEOUT)
             except:
-                cache.set(cache_key, {}, settings.GEOCODE_CACHE_TIMEOUT)
+                cache.set(cache_key, {}, config.GEOCODE_CACHE_TIMEOUT)
     else:
         try:
             results = get_geocoder().geocode(query)
@@ -245,16 +245,16 @@ def geocode(query):
 
 def reverse_geocode(latitude, longitude):
     result = {}
-    if settings.GEOCODE_CACHE_QUERIES:
+    if config.GEOCODE_CACHE_QUERIES:
         cache_key = "GEO_QUERY(%s)" % "".join((latitude +  "," + longitude).split())
         result = cache.get(cache_key)
         if result is None:
             try:
                 results = get_geocoder().reverse_geocode(float(latitude), float(longitude))
                 result = results[0].raw
-                cache.set(cache_key, result, settings.GEOCODE_CACHE_TIMEOUT)
+                cache.set(cache_key, result, config.GEOCODE_CACHE_TIMEOUT)
             except:
-                cache.set(cache_key, {}, settings.GEOCODE_CACHE_TIMEOUT)
+                cache.set(cache_key, {}, config.GEOCODE_CACHE_TIMEOUT)
     else:
         try:
             results = get_geocoder().reverse_geocode(latitude, longitude)
@@ -403,7 +403,7 @@ def get_hostname(record, host, depth = 1):
             hostname = get_hostname(host, None, depth - 1)
             if hostname is not None:
                 return hostname
-        if settings.RDNS:
+        if config.RDNS:
             for hostname in hostnames:
                 hostname = get_hostname_from_ip(hostname)
                 if hostname:
@@ -444,15 +444,15 @@ def gethostbyaddr(ip):
         
 def get_hostname_from_ip(ip):
     result = ""
-    if settings.RDNS_CACHE_QUERIES:
+    if config.RDNS_CACHE_QUERIES:
         cache_key = "RDNS_QUERY(%s)" % ip
         result = cache.get(cache_key)
         if result is None:
             try:
                 result = gethostbyaddr(ip)
-                cache.set(cache_key, result, settings.RDNS_CACHE_TIMEOUT)
+                cache.set(cache_key, result, config.RDNS_CACHE_TIMEOUT)
             except:
-                cache.set(cache_key, "", settings.RDNS_CACHE_TIMEOUT)
+                cache.set(cache_key, "", config.RDNS_CACHE_TIMEOUT)
     else:
         try:
             result = gethostbyaddr(ip)

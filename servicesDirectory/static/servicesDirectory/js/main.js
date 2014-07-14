@@ -65,18 +65,15 @@ $("#clear").click(function(event) {
 	}
 });
 
-$("#search").click(function(event) {
+$("#search").keypress(function(event) {
 	if (initialized)
 	{
-		$("#search-control").removeClass("error");
-	}
-});
-
-$("#search").keypress(function(event) {
-	if ((initialized) && (event.keyCode == 13))
-	{
-		updateFilter();
-		event.preventDefault();
+	    $("#search-control").removeClass("error");
+	    if (event.keyCode == 13)
+		{
+		    updateFilter();
+		    event.preventDefault();
+		}
 	}
 });
 
