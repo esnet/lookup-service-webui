@@ -329,7 +329,7 @@ function getCommandLine(service, format)
 	var locators = getAddresses(service);
 	var addresses = [];
 	for (var i = 0 ; i < locators.length ; i++)
-		addresses.push(getHostFromURL(locators[i]));
+		addresses.push(getHostFromURI(locators[i]));
 	addresses.sort(function(a, b) { return compareHostnames(a, b); });
 	for (var i = 0 ; i < addresses.length ; i++)
 		commandLine.push(format.replace("<address>", addresses[i]));
@@ -356,7 +356,7 @@ function getHostnames(record)
 	if (hasField(record, type + "-hostname"))
 		hostnames.push(record[type + "-hostname"]);
 	for (var i = 0 ; i < addresses.length ; i++)
-		hostnames.push(getHostnameFromURL(addresses[i]));
+		hostnames.push(getHostnameFromURI(addresses[i]));
 	hostnames = hostnames.sort(function(a, b) { return compareHostnames(a, b); }).unique();
 	return hostnames;
 }

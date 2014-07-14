@@ -402,27 +402,20 @@ function getAddressType(address)
 		return "URL";
 }
 
-function getHostFromURL(url)
+function getHostFromURI(uri)
 {
-	if (getAddressType(url) == "URL")
-	{
-		var host = getURLParser(url).host;
-		if (host)
-			return host;
-	}
-	return url;
+	var host = new URI(uri).host();
+	if (host)
+	    return host;
+	return uri;
 }
 
-function getHostnameFromURL(url)
+function getHostnameFromURI(uri)
 {
-	var type = getAddressType(url);
-	if (type == "URL")
-	{
-		var hostname = getURLParser(url).hostname;
-		if (hostname)
-			return hostname.replace(/[\[\]]+/g, "");
-	}
-	return url;
+	var hostname = new URI(uri).hostname();
+	if (hostname)
+	    return hostname;
+	return uri;
 }
 
 function getLinks(addresses, prefix)
@@ -433,12 +426,6 @@ function getLinks(addresses, prefix)
 	for (var i = 0 ; i < addresses.length ; i++)
 		links.push("<a href=\"" + prefix + addresses[i] + "/\" target=\"_blank\">" + addresses[i] + "</a>");
 	return links;
-}
-
-function getURLParser(url)
-{
-	var parser = $("<a>").attr("href", url).get(0);
-	return parser;
 }
 
 function parseMetricPrefix(prefix)

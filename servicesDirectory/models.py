@@ -136,7 +136,7 @@ def filter_default(records):
             if service_type == "phoebus":
                 records.remove(record)
                 continue
-            service_locators = record.get("service-locators", [ "" ])[0]
+            service_locators = record.get("service-locators", [])
             if service_locators:
                 private_addresses = False
                 for locator in service_locators:
@@ -302,8 +302,15 @@ def remap_interface(interface, hosts, interfaces = [], services = []):
     # hostname = get_hostname(interface, host)
     # if hostname:
     #     interface["interface-hostname"] = hostname
-    # if not host:
-    #     host = get_host(interface, hosts, interfaces, services)
+    #    if host:
+    #         host_names = host.get("host-name", [])
+    #         if host_names:
+    #             if hostname not in host_names:
+    #                 host["host-name"].append(hostname)
+    #         else:
+    #             host["host-name"] = [ hostname ]
+    #     else:
+    #         host = get_host(interface, hosts, interfaces, services)
     if host:
         host_interfaces = host.get("host-net-interfaces", [])
         if host_interfaces:
@@ -317,9 +324,16 @@ def remap_service(service, hosts, interfaces = [], services = []):
     hostname = get_hostname(service, host)
     if hostname:
         service["service-hostname"] = hostname
-    if not host:
-        host = get_host(service, hosts, interfaces, services) 
-    if host:
+        if host:
+            host_names = host.get("host-name", [])
+            if host_names:
+                if hostname not in host_names:
+                    host["host-name"].append(hostname)
+            else:
+                host["host-name"] = [ hostname ]
+        else:
+            host = get_host(service, hosts, interfaces, services) 
+    if host:            
         service_hosts = service.get("service-host", [])
         if service_hosts:
             if host["uri"] not in service_hosts:
