@@ -67,7 +67,7 @@ var serviceMap = {
 				"defaults": [ "perfsonarbuoy ma", "perfsonar-buoy ma" ],
 				"custom": {
 					"title": "Access URLs",
-					"type": "ma",
+					"type": "ma"
 				},
 				"action": "Query"
 			},
@@ -76,7 +76,7 @@ var serviceMap = {
 				"defaults": [ "perfsonarbuoy ma", "perfsonar-buoy ma" ],
 				"custom": {
 					"title": "Access URLs",
-					"type": "ma",
+					"type": "ma"
 				},
 				"action": "Query"
 			},
@@ -85,7 +85,7 @@ var serviceMap = {
 				"defaults": [ "traceroute ma" ],
 				"custom": {
 					"title": "Access URLs",
-					"type": "ma",
+					"type": "ma"
 				},
 				"action": "Query"
 			}
@@ -93,7 +93,7 @@ var serviceMap = {
 		"defaults": [ "measurement archive", "perfsonar-buoy ma", "perfsonarbuoy ma", "traceroute ma" ],
 		"custom": {
 			"title": "Access URLs",
-			"type": "ma",
+			"type": "ma"
 		},
 		"action": "Query"
 	}

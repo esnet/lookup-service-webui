@@ -384,7 +384,7 @@ function formatSpeed(speed, precision, unit, nounit)
 function formatUnitString(number, precision, unit, units, nounit)
 {
 	number /= parseUnitPrefix($.trim(unit), units, nounit);
-	return ((number) || (number == 0)) ? number.toFixed(precision) + unit : null;
+	return ((number) || (number === 0)) ? number.toFixed(precision) + unit : null;
 }
 
 function getAddressType(address)
@@ -443,7 +443,7 @@ function parseMetricPrefix(prefix)
 			prefix = prefix.toUpperCase();
 			power = ($.inArray(prefix, metricPrefixes["short"]) + 1) * 3;
 		}
-		if (power == 0)
+		if (power === 0)
 			return NaN;
 	}
 	return Math.pow(10, power);
