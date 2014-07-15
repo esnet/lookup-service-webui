@@ -434,12 +434,7 @@ function updateCommunities()
 	communities = communities.sort().unique();
 	var options = $("#communities").empty();
 	for (var i = 0 ; i < communities.length ; i++)
-	{
-		options.append($("<option>").attr({
-			"selected": "true",
-			"value": i
-		}).text(communities[i]));
-	}
+		options.append($("<option>").val(i).prop("selected", true).text(communities[i]));
 }
 
 function updateFilter()
@@ -545,7 +540,7 @@ function updateInfoWindow()
 		{
 			var service = section.services[j];
 			var name = getServiceTypeTitle(service);
-			content.append($("<dd>").append($("<a>").attr({
+			content.append($("<dd>").append($("<a>").prop({
 				"title": name, 
 				"href": "#"
 			}).text(name).data("service", service).click(clickEvent)));
