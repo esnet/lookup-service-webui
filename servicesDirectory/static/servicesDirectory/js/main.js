@@ -516,7 +516,7 @@ function updateInfoWindow()
 		{
 			section = sections[sections.push({
 				"title": title,
-				"hostname": hostname,
+				"hostname": hostname
 			}) - 1];
 			section.host = host;
 			section.services = [ service ];
@@ -592,7 +592,7 @@ function updateMarkers()
 	}
 }
 
-function updateStatus(status)
+function updateStatus()
 {
     var filtered = filteredMap.getServices().length;
     var total = recordMap.getServices().length;
