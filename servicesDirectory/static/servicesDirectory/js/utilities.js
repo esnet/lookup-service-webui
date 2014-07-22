@@ -2,6 +2,10 @@
 // Declare Variables
 ////////////////////////////////////////
 
+var IPv4Format = /^([\d]{1,3}\.){3}[\d]{1,3}(:\d+)?$/;
+var IPv6Format = /^(([\da-fA-F]{0,4}:){3,7}[\da-fA-F]{0,4}|\[([\da-fA-F]{0,4}:){3,7}[\da-fA-F]{0,4}\](:\d+)?)$/;
+var hostnameFormat = /^[A-Za-z0-9]+((\-|\.)[A-Za-z0-9]+)*(:\d+)?$/;
+
 var sortOrder = {
 	"hostname": {
 		"Hostname": 0,
@@ -63,9 +67,9 @@ var countryCodes = {
 	"CC": "Cocos (Keeling) Islands",
 	"CD": "Congo, Democratic People's Republic",
 	"CF": "Central African Republic",
-	"CG": "Congo, Republic of",
+	"CG": "Republic of Congo",
 	"CH": "Switzerland",
-	"CI": "C&ocirc;te d'Ivoire",
+	"CI": "Cote d'Ivoire",
 	"CK": "Cook Islands",
 	"CL": "Chile",
 	"CM": "Cameroon",
@@ -93,7 +97,7 @@ var countryCodes = {
 	"FI": "Finland",
 	"FJ": "Fiji",
 	"FK": "Falkland Islands (Malvina)",
-	"FM": "Micronesia, Federal State of",
+	"FM": "Federal State of Micronesia",
 	"FO": "Faroe Islands",
 	"FR": "France",
 	"GA": "Gabon",
@@ -161,7 +165,7 @@ var countryCodes = {
 	"MD": "Modolva",
 	"MG": "Madagascar",
 	"MH": "Marshall Islands",
-	"MK": "Macedonia, Former Yugoslav Republic",
+	"MK": "Macedonia (Yugoslav Republic)",
 	"ML": "Mali",
 	"MM": "Myanmar",
 	"MN": "Mongolia",
@@ -224,7 +228,7 @@ var countryCodes = {
 	"SN": "Senegal",
 	"SO": "Somalia",
 	"SR": "Suriname",
-	"ST": "S&atilde;o Tome and Principe",
+	"ST": "Sao Tome and Principe",
 	"SV": "El Salvador",
 	"SY": "Syria",
 	"SZ": "Swaziland",
@@ -246,9 +250,9 @@ var countryCodes = {
 	"TZ": "Tanzania",
 	"UA": "Ukraine",
 	"UG": "Uganda",
-	"UK": "UK",
+	"UK": "United Kingdom",
 	"UM": "US Minor Outlying Islands",
-	"US": "USA",
+	"US": "United States",
 	"UY": "Uruguay",
 	"UZ": "Uzbekistan",
 	"VA": "Vatican City",
@@ -354,6 +358,14 @@ function compareHostnames(hostname_a, hostname_b)
 	return order_a > order_b ? 1 : order_a < order_b ? -1 : hostname_a > hostname_b ? 1 : hostname_a < hostname_b ? -1 : 0;
 }
 
+function IPv6Fix(address)
+{
+	var badFormat = /^([\da-fA-F]{0,4}:){3,7}[\da-fA-F]{0,4}$/;
+	if (badFormat.test(address))
+		return "[" + address + "]";
+	return address;
+}
+
 function formatRate(rate, precision, unit, nounit)
 {
 	if (!precision)
@@ -389,9 +401,6 @@ function formatUnitString(number, precision, unit, units, nounit)
 
 function getAddressType(address)
 {
-	var IPv4Format = /^\[?([\d]{1,3}\.){3}[\d]{1,3}\]?(:\d*){0,1}$/;
-	var IPv6Format = /^\[?([\da-fA-F]{0,4}:){3,7}[\da-fA-F]{0,4}\]?(:\d*){0,1}$/;
-	var hostnameFormat = /^[A-Za-z0-9]+((\-|\.)[A-Za-z0-9]+)*$/;
 	if (IPv4Format.test(address))
 		return "IPv4";
 	else if (IPv6Format.test(address))
@@ -424,7 +433,7 @@ function getLinks(addresses, prefix)
 		prefix = "";
 	var links = [];
 	for (var i = 0 ; i < addresses.length ; i++)
-		links.push("<a href=\"" + prefix + addresses[i] + "/\" target=\"_blank\">" + addresses[i] + "</a>");
+		links.push("<a href=\"" + prefix + IPv6Fix(addresses[i]) + "/\" target=\"_blank\">" + addresses[i] + "</a>");
 	return links;
 }
 

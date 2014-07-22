@@ -9,7 +9,7 @@ var serviceMap = {
 		"custom": {
 			"title": "Example Command-Line",
 			"type": "cli",
-			"format": "bwctl -T iperf -t 20 -i 1 -f m -c <address>"
+			"format": "bwctl -T <tool> -t 20 -i 1 -f m -c \"<address>\""
 		},
 		"action": "Test"
 	},
@@ -19,7 +19,7 @@ var serviceMap = {
 		"custom": {
 			"title": "Example Command-Line",
 			"type": "cli",
-			"format": "owping -c 10000 -i 0.01 <address>"
+			"format": "owping -c 10000 -i 0.01 \"<address>\""
 		},
 		"action": "Ping"
 	},
@@ -29,7 +29,7 @@ var serviceMap = {
 		"custom": {
 			"title": "Example Command-Line",
 			"type": "cli",
-			"format": "web100clt -n <address> -ll"
+			"format": "web100clt -n \"<address>\" -ll"
 		},
 		"action": "Test"
 	},
@@ -45,7 +45,7 @@ var serviceMap = {
 		"custom": {
 			"title": "Example Command-Line",
 			"type": "cli",
-			"format": "ping <address>"
+			"format": "ping \"<address>\""
 		},
 		"action": "Ping"
 	},
@@ -55,7 +55,7 @@ var serviceMap = {
 		"custom": {
 			"title": "Example Command-Line",
 			"type": "cli",
-			"format": "traceroute <address>"
+			"format": "traceroute \"<address>\""
 		},
 		"action": "Traceroute"
 	},
@@ -331,8 +331,20 @@ function getCommandLine(service, format)
 	for (var i = 0 ; i < locators.length ; i++)
 		addresses.push(getHostFromURI(locators[i]));
 	addresses.sort(function(a, b) { return compareHostnames(a, b); });
-	for (var i = 0 ; i < addresses.length ; i++)
-		commandLine.push(format.replace("<address>", addresses[i]));
+	if (format.search("<tool>") >= 0)
+	{
+		var tools = getServiceTools(service);
+		for (var i = 0 ; i < addresses.length ; i++)
+		{
+			for (var j = 0 ; j < tools.length ; j++)
+				commandLine.push(format.replace("<address>", addresses[i]).replace("<tool>", tools[j]));
+		}
+	}
+	else
+	{
+		for (var i = 0 ; i < addresses.length ; i++)
+			commandLine.push(format.replace("<address>", addresses[i]));
+	}
 	return commandLine;
 }
 
@@ -387,23 +399,6 @@ function getLatLngString(record)
 		latlngString += "(" + lat + ", " + lng + ")";
 	}
 	return latlngString;
-}
-
-function getLinkedRecords(service)
-{
-    var linked = [];
-    if (service.adminstrators)
-        $.merge(linked, service.administrators);
-    if (service.host)
-    {
-        var host = service.host;
-        linked.push(host);
-        if (host.adminstrators)
-            $.merge(linked, host.administrators);
-        if (host.interfaces)
-            $.merge(linked, host.interfaces);
-    }
-    return linked;
 }
 
 function getLocationString(record)
@@ -525,6 +520,32 @@ function getServiceMapping(service)
 	return null;
 }
 
+function getServiceTools(service)
+{
+	var tools = [];
+	var type = "";
+	if (hasField(service, "service-type"))
+		type = service["service-type"][0];
+	if (hasField(service, type + "-tools"))
+	{
+		tools = service[type + "-tools"];
+	}
+	else if (type == "bwctl")
+	{
+		if ((service.host) && (hasField(service.host, "pshost-toolkitversion")))
+		{
+			var version = parseFloat(service.host["pshost-toolkitversion"]);
+			if (version > 3.2)
+				tools = [ "iperf3" ];
+			else
+				tools = [ "iperf" ];
+		}
+		if (tools.length == 0)
+			tools = [ "iperf" ];
+	}
+	return tools;
+}
+
 function getServiceTypeTitle(service)
 {
 	var type = "";
@@ -575,6 +596,13 @@ function getTitle(record)
 		if (hostname)
 			return hostname;
 	}
+	else if (type == "person")
+	{
+	    if (hasField(record, "person-name"))
+		    return record["person-name"][0];
+		if (hasField(record, "person-emails"))
+		    return record["person-emails"][0];
+	}
 	else if (type == "service")
 	{
 		if (hasField(record, "location-sitename"))
@@ -603,12 +631,15 @@ function getTitle(record)
 		if (hostname)
 			return hostname;
 	}
-	if (hasField(record, type + "-name"))
-		return record[type + "-name"][0];
+	else
+	{
+	    if (hasField(record, type + "-name"))
+		    return record[type + "-name"][0];
+	}
 	return null;
 }
 
 function hasField(record, field)
 {
-	return ((record[field]) && (record[field][0]));
+	return ((record[field]) && (record[field].length > 0));
 }

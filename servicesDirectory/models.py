@@ -176,13 +176,13 @@ def geocode_records(records):
 def geocode_record(record):
     result = {}
     reverse = False
-    latitude = record.get("location-latitude", [ False ])[0]
-    longitude = record.get("location-longitude", [ False ])[0]
     sitename = record.get("location-sitename", [ False ])[0]
     city = record.get("location-city", [ False ])[0]
     state = record.get("location-state", [ False ])[0]
     code = record.get("location-code", [ False ])[0]
     country = record.get("location-country", [ False ])[0]
+    latitude = record.get("location-latitude", [ False ])[0]
+    longitude = record.get("location-longitude", [ False ])[0]
     if latitude and longitude:
         reverse = True
         result = reverse_geocode(latitude, longitude)
@@ -195,9 +195,8 @@ def geocode_record(record):
         if state:
             query += state
             if code:
-                query += " " + code + ", "
-            else:
-                query += ", "
+                query += " " + code
+            query += ", "
         elif code:
             query += code + ", "
         if country:
@@ -206,6 +205,7 @@ def geocode_record(record):
             result = geocode(query)
     if result:
         result = GeocoderResult(result)
+        record["location-sitename"] = [ sitename or result.establishment or "" ]
         record["location-city"] = [ city or result.city or "" ]
         record["location-state"] = [ state or result.state or "" ]
         record["location-code"] = [ code or result.postal_code or "" ]

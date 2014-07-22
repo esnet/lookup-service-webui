@@ -385,14 +385,44 @@ var filterAliases = {
 
 function getFilteredRecords(services, filter)
 {
-	var filtered = [];
-	var matcher = parser.parse(filter);
-	for (var i = 0 ; i < services.length ; i++)
+	var matched = [];
+	if (filter)
 	{
-		if (matcher(services[i]))
-			filtered.push(services[i]);
+		var matcher = parser.parse(filter);
+		for (var i = 0 ; i < services.length ; i++)
+		{
+			if (matcher(services[i]))
+				matched.push(services[i]);
+		}
 	}
-	return filtered;
+	else
+	{
+		matched = services;
+	}
+	var filtered = [];
+	for (var i = 0 ; i < matched.length ; i++)
+	{
+	    $.merge(filtered, getLinkedRecords(matched[i]));
+	    filtered.push(matched[i]);
+	}
+	return filtered.unique();
+}
+
+function getLinkedRecords(service)
+{
+    var linked = [];
+    if (service.adminstrators)
+        $.merge(linked, service.administrators);
+    if (service.host)
+    {
+        var host = service.host;
+        linked.push(host);
+        if (host.adminstrators)
+            $.merge(linked, host.administrators);
+        if (host.interfaces)
+            $.merge(linked, host.interfaces);
+    }
+    return linked;
 }
 
 function matchFields(fields, operand)

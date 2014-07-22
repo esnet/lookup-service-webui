@@ -11,6 +11,7 @@
 	<style type="text/css">
 		#browser-accordion { max-height: 100%; overflow: auto; }
 		#info-accordion { max-height: 100%; overflow: auto; }
+		#info-window { margin-bottom: 0px; margin-top: 0px; }
 		#left-pane { padding-bottom: 10px; }
 		#loading { top: 35%; }
 		#noscript { top: 35%; }
@@ -75,8 +76,8 @@
 								</div>
 								<div class="control-group" id="search-control">
 									<input type="search" id="search"><br>
-									<button type="button" class="btn btn-primary" id="update">Search</button>
-									<button type="button" class="btn" id="clear">Show All</button>
+									<button type="button" class="btn btn-primary" id="search-update">Search</button>
+									<button type="button" class="btn" id="search-reset">Show All</button>
 								</div>
 							</div>
 						</div>
@@ -104,6 +105,8 @@
 							<div class="content">
 								<div class="info muted">Select one or more communities to refine results.</div>
 								<div class="filter"><select multiple="true" size="6" id="communities" class="fill-horizontal"></select></div>
+								<button type="button" class="btn btn-primary" id="communities-update">Update</button>
+								<button type="button" class="btn" id="communities-reset">Reset</button>
 							</div>
 						</div>
 					</div>
