@@ -497,6 +497,15 @@ function showInfoWindow(marker)
 	}
 	sections.sort(function(a, b) { return compareHostnames(a["hostname"], b["hostname"]); });
 	var content = $("<dl>").prop("id", "info-window");
+	var sortServices = function(a, b) {
+		var type_a = "";
+		var type_b = "";
+		if (hasField(a, "service-type"))
+			type_a = a["service-type"][0].toLowerCase();
+		if (hasField(b, "service-type"))
+			type_b = b["service-type"][0].toLowerCase();
+		return type_a > type_b ? 1 : type_a < type_b ? -1 : 0;
+	};
 	var clickEvent = function(event) {
 		onInfoWindowActivate($(this).data("service"));
 		event.preventDefault();
@@ -505,15 +514,7 @@ function showInfoWindow(marker)
 	{
 		var section = sections[i];
 		content.append($("<dt>").text(section["title"]));
-		section.services.sort(function(a, b) {
-			var type_a = "";
-			var type_b = "";
-			if (hasField(a, "service-type"))
-				type_a = a["service-type"][0].toLowerCase();
-			if (hasField(b, "service-type"))
-				type_b = b["service-type"][0].toLowerCase();
-			return type_a > type_b ? 1 : type_a < type_b ? -1 : 0;
-		});
+		section.services.sort(sortServices);
 		for (var j = 0 ; j < section.services.length ; j++)
 		{
 			var service = section.services[j];
@@ -531,7 +532,7 @@ function updateCommunities()
 {
 	var selected = $("#communities option").filter(":selected");
 	var communities = selected.map(function() { return $(this).val(); });
-	var filtered = getFilteredRecords(recordMap.getServices(), filter);
+	var filtered = getFilteredRecords(recordMap.getServices(), filter, true);
 	filteredMap = new RecordMap(filtered);
 	var services = filteredMap.getServices();
 	var matched = [];
@@ -591,7 +592,7 @@ function updateMarkers()
 					titles.push(getTitle(service));
 			}
 		}
-		titles = titles.sort(function(a, b) { return compareHostnames(a, b); }).unique();
+		titles = titles.sort(compareHostnames).unique();
 		if (titles.length == 1)
 			marker.setTitle(titles[0]);
 		else if (titles.length > 1)

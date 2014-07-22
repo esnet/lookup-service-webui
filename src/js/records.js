@@ -193,8 +193,8 @@ RecordMap.prototype = {
 		return this.getRecords("service", record);
 	},
 	"getAdministrators": function(record, persons) {
-	    if (!persons)
-		    persons = this.getPersons(record);
+		if (!persons)
+			persons = this.getPersons(record);
 		var type = record["type"][0];
 		if (hasField(record, type + "-administrators"))
 		{
@@ -211,7 +211,7 @@ RecordMap.prototype = {
 	},
 	"getHost": function(record, hosts) {
 		if (!hosts)
-		    hosts = this.getHosts(record);
+			hosts = this.getHosts(record);
 		var type = record["type"][0];
 		if (type == "host")
 		{
@@ -472,7 +472,7 @@ function getProcessorStrings(host)
 	var cores = 0;
 	if (hasField(host, "host-hardware-processorcore"))
 		cores = Math.ceil(parseInt(host["host-hardware-processorcore"][0]) / processors);
-	var processorString = ""
+	var processorString = "";
 	if (speed)
 	{
 		if (cores)
@@ -598,10 +598,10 @@ function getTitle(record)
 	}
 	else if (type == "person")
 	{
-	    if (hasField(record, "person-name"))
-		    return record["person-name"][0];
+		if (hasField(record, "person-name"))
+			return record["person-name"][0];
 		if (hasField(record, "person-emails"))
-		    return record["person-emails"][0];
+			return record["person-emails"][0];
 	}
 	else if (type == "service")
 	{
@@ -633,8 +633,8 @@ function getTitle(record)
 	}
 	else
 	{
-	    if (hasField(record, type + "-name"))
-		    return record[type + "-name"][0];
+		if (hasField(record, type + "-name"))
+			return record[type + "-name"][0];
 	}
 	return null;
 }

@@ -353,8 +353,8 @@ function compareHostnames(hostname_a, hostname_b)
 {
 	hostname_a = hostname_a.replace(/(-v6|-ip6|-ipv6)/i, "~");
 	hostname_b = hostname_b.replace(/(-v6|-ip6|-ipv6)/i, "~");
-	order_a = sortOrder["hostname"][getAddressType(hostname_a)];
-	order_b = sortOrder["hostname"][getAddressType(hostname_b)];
+	var order_a = sortOrder["hostname"][getAddressType(hostname_a)];
+	var order_b = sortOrder["hostname"][getAddressType(hostname_b)];
 	return order_a > order_b ? 1 : order_a < order_b ? -1 : hostname_a > hostname_b ? 1 : hostname_a < hostname_b ? -1 : 0;
 }
 
@@ -415,7 +415,7 @@ function getHostFromURI(uri)
 {
 	var host = new URI(uri).host();
 	if (host)
-	    return host;
+		return host;
 	return uri;
 }
 
@@ -423,7 +423,7 @@ function getHostnameFromURI(uri)
 {
 	var hostname = new URI(uri).hostname();
 	if (hostname)
-	    return hostname;
+		return hostname;
 	return uri;
 }
 

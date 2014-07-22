@@ -255,7 +255,7 @@ var filterMap = {
 			fields.push(type);
 			if (hasField(record, type + "-type"))
 			{
-				var subtype = record[type + "-type"][0]
+				var subtype = record[type + "-type"][0];
 				fields.push(subtype);
 				if (hasField(record, subtype + "-type"))
 					fields.push(record[subtype + "-type"][0]);
@@ -383,7 +383,7 @@ var filterAliases = {
 // Filter Functions
 ////////////////////////////////////////
 
-function getFilteredRecords(services, filter)
+function getFilteredRecords(services, filter, matchedOnly)
 {
 	var matched = [];
 	if (filter)
@@ -399,30 +399,37 @@ function getFilteredRecords(services, filter)
 	{
 		matched = services;
 	}
-	var filtered = [];
-	for (var i = 0 ; i < matched.length ; i++)
+	if (matchedOnly)
 	{
-	    $.merge(filtered, getLinkedRecords(matched[i]));
-	    filtered.push(matched[i]);
+		return matched;
 	}
-	return filtered.unique();
+	else
+	{
+		var filtered = [];
+		for (var i = 0 ; i < matched.length ; i++)
+		{
+		$.merge(filtered, getLinkedRecords(matched[i]));
+		filtered.push(matched[i]);
+		}
+		return filtered.unique();
+	}
 }
 
 function getLinkedRecords(service)
 {
-    var linked = [];
-    if (service.adminstrators)
-        $.merge(linked, service.administrators);
-    if (service.host)
-    {
-        var host = service.host;
-        linked.push(host);
-        if (host.adminstrators)
-            $.merge(linked, host.administrators);
-        if (host.interfaces)
-            $.merge(linked, host.interfaces);
-    }
-    return linked;
+	var linked = [];
+	if (service.adminstrators)
+		$.merge(linked, service.administrators);
+	if (service.host)
+	{
+		var host = service.host;
+		linked.push(host);
+		if (host.adminstrators)
+			$.merge(linked, host.administrators);
+		if (host.interfaces)
+			$.merge(linked, host.interfaces);
+	}
+	return linked;
 }
 
 function matchFields(fields, operand)
@@ -446,22 +453,22 @@ function matchRecord(service, operator, operand)
 		operator = operator.toLowerCase();
 		if (filterAliases[operator])
 		{
-		    for (var i = 0 ; i < records.length ; i++)
-			    $.merge(fields, filterAliases[operator].getFields(records[i]));
+			for (var i = 0 ; i < records.length ; i++)
+				$.merge(fields, filterAliases[operator].getFields(records[i]));
 		}
 		else
 		{
-		    for (var i = 0 ; i < records.length ; i++)
-		    {
-		        if (records[i][operator] instanceof Array)
-			        $.merge(fields, records[i][operator]);
+			for (var i = 0 ; i < records.length ; i++)
+			{
+				if (records[i][operator] instanceof Array)
+					$.merge(fields, records[i][operator]);
 			}
 		}
 	}
 	else
 	{
-	    for (var i = 0 ; i < records.length ; i++)
-		    $.merge(fields, filterMap["default"].getFields(records[i]));
+		for (var i = 0 ; i < records.length ; i++)
+			$.merge(fields, filterMap["default"].getFields(records[i]));
 	}
 	var parsed = parseOperand(operand);
 	if (parsed)
