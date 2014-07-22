@@ -427,13 +427,15 @@ function getHostnameFromURI(uri)
 	return uri;
 }
 
-function getLinks(addresses, prefix)
+function getLinks(addresses, prefix, suffix)
 {
 	if (!prefix)
 		prefix = "";
+	if (!suffix)
+		suffix = "";
 	var links = [];
 	for (var i = 0 ; i < addresses.length ; i++)
-		links.push("<a href=\"" + prefix + IPv6Fix(addresses[i]) + "/\" target=\"_blank\">" + addresses[i] + "</a>");
+		links.push("<a href=\"" + prefix + IPv6Fix(addresses[i]) + suffix + "\" target=\"_blank\">" + addresses[i] + "</a>");
 	return links;
 }
 

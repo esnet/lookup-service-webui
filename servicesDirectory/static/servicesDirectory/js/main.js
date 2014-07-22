@@ -318,7 +318,7 @@ function showServiceInfo(service)
 	activeService = service;
 	if (hasField(service, "service-name"))
 		$("#service-name").html(service["service-name"][0]);
-	var links = getLinks(getHostnames(service), "http://");
+	var links = getLinks(getHostnames(service), "http://", "/");
 	$("#service-locator").html(links.join("<br>"));
 	var locationString = getLocationString(service);
 	var latlngString = getLatLngString(service);
@@ -376,7 +376,7 @@ function showHostInfo(host)
 	activeHost = host;
 	if (hasField(host, "host-name"))
 	{
-		var links = getLinks(getHostnames(host), "http://");
+		var links = getLinks(getHostnames(host), "http://", "/");
 		$("#host-name").html(links.join("<br>"));
 	}
 	var processorStrings = getProcessorStrings(host);
