@@ -641,5 +641,5 @@ function getTitle(record)
 
 function hasField(record, field)
 {
-	return ((record[field]) && (record[field].length > 0));
+	return ((record[field]) && (record[field][0]));
 }
