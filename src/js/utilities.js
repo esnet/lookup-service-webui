@@ -1,30 +1,6 @@
 ////////////////////////////////////////
-// Declare Variables
+// Location Code Mappings
 ////////////////////////////////////////
-
-var IPv4Format = /^([\d]{1,3}\.){3}[\d]{1,3}(:\d+)?$/;
-var IPv6Format = /^(([\da-fA-F]{0,4}:){3,7}[\da-fA-F]{0,4}|\[([\da-fA-F]{0,4}:){3,7}[\da-fA-F]{0,4}\](:\d+)?)$/;
-var hostnameFormat = /^[A-Za-z0-9]+((\-|\.)[A-Za-z0-9]+)*(:\d+)?$/;
-
-var sortOrder = {
-	"hostname": {
-		"Hostname": 0,
-		"URL": 0,
-		"IPv4": 1,
-		"IPv6": 2
-	}
-};
-
-var metricPrefixes = {
-	"short": [ "K", "M", "G", "T", "P", "E", "Z", "Y" ],
-	"long": [ "kilo", "mega", "giga", "tera", "peta", "exa", "zetta", "yotta" ]
-};
-
-var units = {
-	"rate": [ "b/s", "bit/s", "bps" ],
-	"size": [ "byte", "bytes", "B" ],
-	"speed": [ "hertz", "Hz" ]
-};
 
 var countryCodes = {
 	"AC": "Ascension Island",
@@ -35,7 +11,6 @@ var countryCodes = {
 	"AI": "Anguilla",
 	"AL": "Albania",
 	"AM": "Armenia",
-	"AN": "Netherlands Antilles",
 	"AO": "Angola",
 	"AQ": "Antarctica",
 	"AR": "Argentina",
@@ -43,6 +18,7 @@ var countryCodes = {
 	"AT": "Austria",
 	"AU": "Australia",
 	"AW": "Aruba",
+	"AX": "Åland Islands",
 	"AZ": "Azerbaijan",
 	"BA": "Bosnia and Herzegovina",
 	"BB": "Barbados",
@@ -53,9 +29,11 @@ var countryCodes = {
 	"BH": "Bahrain",
 	"BI": "Burundi",
 	"BJ": "Benin",
+	"BL": "Saint Barthélemy",
 	"BM": "Bermuda",
-	"BN": "Brunei",
-	"BO": "Bolivia",
+	"BN": "Brunei Darussalam",
+	"BO": "Plurinational State of Bolivia",
+	"BQ": "Bonaire, Sint Eustatius and Saba",
 	"BR": "Brazil",
 	"BS": "Bahamas",
 	"BT": "Bhutan",
@@ -65,28 +43,32 @@ var countryCodes = {
 	"BZ": "Belize",
 	"CA": "Canada",
 	"CC": "Cocos (Keeling) Islands",
-	"CD": "Congo, Democratic People's Republic",
+	"CD": "The Democratic Republic of the Congo",
 	"CF": "Central African Republic",
-	"CG": "Republic of Congo",
+	"CG": "Congo",
 	"CH": "Switzerland",
-	"CI": "Cote d'Ivoire",
+	"CI": "Côte d'Ivoire",
 	"CK": "Cook Islands",
 	"CL": "Chile",
 	"CM": "Cameroon",
 	"CN": "China",
 	"CO": "Colombia",
+	"CP": "Clipperton Island",
 	"CR": "Costa Rica",
 	"CU": "Cuba",
-	"CV": "Cape Verde",
+	"CV": "Cabo Verde",
+	"CW": "Curaçao",
 	"CX": "Christmas Island",
 	"CY": "Cyprus",
 	"CZ": "Czech Republic",
 	"DE": "Germany",
+	"DG": "Diego Garcia",
 	"DJ": "Djibouti",
 	"DK": "Denmark",
 	"DM": "Dominica",
 	"DO": "Dominican Republic",
 	"DZ": "Algeria",
+	"EA": "Ceuta and Melilla",
 	"EC": "Ecuador",
 	"EE": "Estonia",
 	"EG": "Egypt",
@@ -94,13 +76,15 @@ var countryCodes = {
 	"ER": "Eritrea",
 	"ES": "Spain",
 	"ET": "Ethiopia",
+	"EU": "European Union",
 	"FI": "Finland",
 	"FJ": "Fiji",
-	"FK": "Falkland Islands (Malvina)",
-	"FM": "Federal State of Micronesia",
+	"FK": "Falkland Islands (Malvinas)",
+	"FM": "Federated States of Micronesia",
 	"FO": "Faroe Islands",
 	"FR": "France",
 	"GA": "Gabon",
+	"GB": "United Kingdom",
 	"GD": "Grenada",
 	"GE": "Georgia",
 	"GF": "French Guiana",
@@ -119,11 +103,12 @@ var countryCodes = {
 	"GW": "Guinea-Bissau",
 	"GY": "Guyana",
 	"HK": "Hong Kong",
-	"HM": "Heard and McDonald Islands",
+	"HM": "Heard Island and McDonald Islands",
 	"HN": "Honduras",
-	"HR": "Croatia/Hrvatska",
+	"HR": "Croatia",
 	"HT": "Haiti",
 	"HU": "Hungary",
+	"IC": "Canary Islands",
 	"ID": "Indonesia",
 	"IE": "Ireland",
 	"IL": "Israel",
@@ -131,7 +116,7 @@ var countryCodes = {
 	"IN": "India",
 	"IO": "British Indian Ocean Territory",
 	"IQ": "Iraq",
-	"IR": "Iran",
+	"IR": "Islamic Republic of Iran",
 	"IS": "Iceland",
 	"IT": "Italy",
 	"JE": "Jersey",
@@ -144,12 +129,12 @@ var countryCodes = {
 	"KI": "Kiribati",
 	"KM": "Comoros",
 	"KN": "Saint Kitts and Nevis",
-	"KP": "North Korea",
-	"KR": "South Korea",
+	"KP": "Democratic People's Republic of Korea",
+	"KR": "Republic of Korea",
 	"KW": "Kuwait",
 	"KY": "Cayman Islands",
-	"KZ": "Kazakstan",
-	"LA": "Laos",
+	"KZ": "Kazakhstan",
+	"LA": "Lao People's Democratic Republic",
 	"LB": "Lebanon",
 	"LC": "Saint Lucia",
 	"LI": "Liechtenstein",
@@ -159,17 +144,19 @@ var countryCodes = {
 	"LT": "Lithuania",
 	"LU": "Luxembourg",
 	"LV": "Latvia",
-	"LY": "Lybia",
+	"LY": "Libya",
 	"MA": "Morocco",
 	"MC": "Monaco",
-	"MD": "Modolva",
+	"MD": "Republic of Moldova",
+	"ME": "Montenegro",
+	"MF": "Saint Martin (French part)",
 	"MG": "Madagascar",
 	"MH": "Marshall Islands",
-	"MK": "Macedonia (Yugoslav Republic)",
+	"MK": "The former Yugoslav Republic of Macedonia",
 	"ML": "Mali",
 	"MM": "Myanmar",
 	"MN": "Mongolia",
-	"MO": "Macau",
+	"MO": "Macao",
 	"MP": "Northern Mariana Islands",
 	"MQ": "Martinique",
 	"MR": "Mauritania",
@@ -179,7 +166,7 @@ var countryCodes = {
 	"MV": "Maldives",
 	"MW": "Malawi",
 	"MX": "Mexico",
-	"MY": "Maylaysia",
+	"MY": "Malaysia",
 	"MZ": "Mozambique",
 	"NA": "Namibia",
 	"NC": "New Caledonia",
@@ -201,134 +188,190 @@ var countryCodes = {
 	"PH": "Philippines",
 	"PK": "Pakistan",
 	"PL": "Poland",
-	"PM": "St. Pierre and Miquelon",
-	"PN": "Pitcairn Island",
+	"PM": "Saint Pierre and Miquelon",
+	"PN": "Pitcairn",
 	"PR": "Puerto Rico",
-	"PS": "Palestinian Territories",
+	"PS": "State of Palestine",
 	"PT": "Portugal",
 	"PW": "Palau",
 	"PY": "Paraguay",
 	"QA": "Qatar",
-	"RE": "Reunion",
+	"RE": "Réunion",
 	"RO": "Romania",
+	"RS": "Serbia",
 	"RU": "Russian Federation",
-	"RW": "Twanda",
+	"RW": "Rwanda",
 	"SA": "Saudi Arabia",
 	"SB": "Solomon Islands",
 	"SC": "Seychelles",
-	"SU": "Sudan",
+	"SD": "Sudan",
 	"SE": "Sweden",
 	"SG": "Singapore",
-	"SH": "St. Helena",
+	"SH": "Saint Helena, Ascension and Tristan da Cunha",
 	"SI": "Slovenia",
-	"SJ": "Svalbard and Jan Mayan Islands",
+	"SJ": "Svalbard and Jan Mayen",
 	"SK": "Slovakia",
 	"SL": "Sierra Leone",
 	"SM": "San Marino",
 	"SN": "Senegal",
 	"SO": "Somalia",
 	"SR": "Suriname",
+	"SS": "South Sudan",
 	"ST": "Sao Tome and Principe",
 	"SV": "El Salvador",
-	"SY": "Syria",
+	"SX": "Sint Maarten (Dutch part)",
+	"SY": "Syrian Arab Republic",
 	"SZ": "Swaziland",
-	"TC": "Turks and Ciacos Islands",
+	"TA": "Tristan da Cunha",
+	"TC": "Turks and Caicos Islands",
 	"TD": "Chad",
 	"TF": "French Southern Territories",
 	"TG": "Togo",
 	"TH": "Thailand",
 	"TJ": "Tajikistan",
 	"TK": "Tokelau",
+	"TL": "Timor-Leste",
 	"TM": "Turkmenistan",
 	"TN": "Tunisia",
 	"TO": "Tonga",
-	"TP": "East Timor",
 	"TR": "Turkey",
 	"TT": "Trinidad and Tobago",
 	"TV": "Tuvalu",
-	"TW": "Taiwan",
-	"TZ": "Tanzania",
+	"TW": "Taiwan, Province of China",
+	"TZ": "United Republic of Tanzania",
 	"UA": "Ukraine",
 	"UG": "Uganda",
 	"UK": "United Kingdom",
-	"UM": "US Minor Outlying Islands",
+	"UM": "United States Minor Outlying Islands",
 	"US": "United States",
 	"UY": "Uruguay",
 	"UZ": "Uzbekistan",
-	"VA": "Vatican City",
+	"VA": "Holy See (Vatican City State)",
 	"VC": "Saint Vincent and the Grenadines",
-	"VE": "Venezuela",
+	"VE": "Bolivarian Republic of Venezuela",
 	"VG": "British Virgin Islands",
-	"VI": "US Virgin Islands",
-	"VN": "Vietnam",
+	"VI": "United States Virgin Islands",
+	"VN": "Viet Nam",
 	"VU": "Vanuatu",
-	"WF": "Wallis and Futuna Islands",
-	"WS": "Western Samoa",
+	"WF": "Wallis and Futuna",
+	"WS": "Samoa",
 	"YE": "Yemen",
 	"YT": "Mayotte",
-	"YU": "Yugoslavia",
 	"ZA": "South Africa",
 	"ZM": "Zambia",
-	"ZR": "Zaire",
 	"ZW": "Zimbabwe"
 };
 
 var stateCodes = {
-	"AL": "Alabama",
 	"AK": "Alaska",
-	"AZ": "Arizona",
+	"AL": "Alabama",
 	"AR": "Arkansas",
+	"AS": "American Samoa",
+	"AZ": "Arizona",
 	"CA": "California",
 	"CO": "Colorado",
 	"CT": "Connecticut",
+	"DC": "District of Columbia",
 	"DE": "Delaware",
 	"FL": "Florida",
 	"GA": "Georgia",
+	"GU": "Guam",
 	"HI": "Hawaii",
+	"IA": "Iowa",
 	"ID": "Idaho",
 	"IL": "Illinois",
 	"IN": "Indiana",
-	"IA": "Iowa",
 	"KS": "Kansas",
 	"KY": "Kentucky",
 	"LA": "Louisiana",
-	"ME": "Maine",
-	"MD": "Maryland",
 	"MA": "Massachusetts",
+	"MD": "Maryland",
+	"ME": "Maine",
 	"MI": "Michigan",
 	"MN": "Minnesota",
-	"MS": "Mississippi",
 	"MO": "Missouri",
+	"MP": "Northern Mariana Islands",
+	"MS": "Mississippi",
 	"MT": "Montana",
+	"NC": "North Carolina",
+	"ND": "North Dakota",
 	"NE": "Nebraska",
-	"NV": "Nevada",
 	"NH": "New Hampshire",
 	"NJ": "New Jersey",
 	"NM": "New Mexico",
+	"NV": "Nevada",
 	"NY": "New York",
-	"NC": "North Carolina",
-	"ND": "North Dakota",
 	"OH": "Ohio",
 	"OK": "Oklahoma",
 	"OR": "Oregon",
 	"PA": "Pennsylvania",
+	"PR": "Puerto Rico",
 	"RI": "Rhode Island",
 	"SC": "South Carolina",
 	"SD": "South Dakota",
 	"TN": "Tennessee",
 	"TX": "Texas",
+	"UM": "United States Minor Outlying Islands",
 	"UT": "Utah",
-	"VT": "Vermont",
 	"VA": "Virginia",
+	"VI": "United States Virgin Islands",
+	"VT": "Vermont",
 	"WA": "Washington",
-	"WV": "West Virginia",
 	"WI": "Wisconsin",
-	"WY": "Wyoming"
+	"WV": "West Virginia",
+	"WY": "Wyoming",
 };
 
 ////////////////////////////////////////
-// Utility Functions
+// Regexes
 ////////////////////////////////////////
+
+var IPv4Format = /^([\d]{1,3}\.){3}[\d]{1,3}(:\d+)?$/;
+var IPv6Format = /^(([\da-fA-F]{0,4}:){3,7}[\da-fA-F]{0,4}|\[([\da-fA-F]{0,4}:){3,7}[\da-fA-F]{0,4}\](:\d+)?)$/;
+var hostnameFormat = /^[A-Za-z0-9]+((\-|\.)[A-Za-z0-9]+)*(:\d+)?$/;
+
+////////////////////////////////////////
+// Sort Order Mappings
+////////////////////////////////////////
+
+var sortOrder = {
+	"hostname": {
+		"Hostname": 0,
+		"URL": 0,
+		"IPv4": 1,
+		"IPv6": 2
+	}
+};
+
+////////////////////////////////////////
+// Unit and Prefix Mappings
+////////////////////////////////////////
+
+var metricPrefixes = {
+	"short": [ "K", "M", "G", "T", "P", "E", "Z", "Y" ],
+	"long": [ "kilo", "mega", "giga", "tera", "peta", "exa", "zetta", "yotta" ]
+};
+
+var units = {
+	"rate": [ "b/s", "bit/s", "bps" ],
+	"size": [ "byte", "bytes", "B" ],
+	"speed": [ "hertz", "Hz" ]
+};
+
+////////////////////////////////////////
+// Array Prototype Functions
+////////////////////////////////////////
+
+Array.prototype.equals = function(compare) {
+	if (this.length != compare.length)
+		return false;
+	for (var i = 0 ; i < this.length ; i++)
+	{
+		if (this[i] !== compare[i])
+			return false;
+	}
+	return true;
+};
 
 Array.prototype.contains = function(key) {
 	for (var i = 0 ; i < this.length ; i++)
@@ -349,55 +392,9 @@ Array.prototype.unique = function() {
 	return unique; 
 };
 
-function compareHostnames(hostname_a, hostname_b)
-{
-	hostname_a = hostname_a.replace(/(-v6|-ip6|-ipv6)/i, "~");
-	hostname_b = hostname_b.replace(/(-v6|-ip6|-ipv6)/i, "~");
-	var order_a = sortOrder["hostname"][getAddressType(hostname_a)];
-	var order_b = sortOrder["hostname"][getAddressType(hostname_b)];
-	return order_a > order_b ? 1 : order_a < order_b ? -1 : hostname_a > hostname_b ? 1 : hostname_a < hostname_b ? -1 : 0;
-}
-
-function IPv6Fix(address)
-{
-	var badFormat = /^([\da-fA-F]{0,4}:){3,7}[\da-fA-F]{0,4}$/;
-	if (badFormat.test(address))
-		return "[" + address + "]";
-	return address;
-}
-
-function formatRate(rate, precision, unit, nounit)
-{
-	if (!precision)
-		precision = 0;
-	if (!unit)
-		unit = units["rate"][1];
-	return formatUnitString(rate, precision, unit, units["rate"], nounit);
-}
-
-function formatSize(size, precision, unit, nounit)
-{
-	if (!precision)
-		precision = 0;
-	if (!unit)
-		unit = units["size"][1];
-	return formatUnitString(size, precision, unit, units["size"], nounit);
-}
-
-function formatSpeed(speed, precision, unit, nounit)
-{
-	if (!precision)
-		precision = 0;
-	if (!unit)
-		unit = units["speed"][1];
-	return formatUnitString(speed, precision, unit, units["speed"], nounit);
-}
-
-function formatUnitString(number, precision, unit, units, nounit)
-{
-	number /= parseUnitPrefix($.trim(unit), units, nounit);
-	return ((number) || (number === 0)) ? number.toFixed(precision) + unit : null;
-}
+////////////////////////////////////////
+// Address Functions
+////////////////////////////////////////
 
 function getAddressType(address)
 {
@@ -438,6 +435,55 @@ function getLinks(addresses, prefix, suffix)
 		links.push("<a href=\"" + prefix + IPv6Fix(addresses[i]) + suffix + "\" target=\"_blank\">" + addresses[i] + "</a>");
 	return links;
 }
+
+function IPv6Fix(address)
+{
+	var badFormat = /^([\da-fA-F]{0,4}:){3,7}[\da-fA-F]{0,4}$/;
+	if (badFormat.test(address))
+		return "[" + address + "]";
+	return address;
+}
+
+////////////////////////////////////////
+// Formatting Functions
+////////////////////////////////////////
+
+function formatRate(rate, precision, unit, nounit)
+{
+	if (!precision)
+		precision = 0;
+	if (!unit)
+		unit = units["rate"][1];
+	return formatUnitString(rate, precision, unit, units["rate"], nounit);
+}
+
+function formatSize(size, precision, unit, nounit)
+{
+	if (!precision)
+		precision = 0;
+	if (!unit)
+		unit = units["size"][1];
+	return formatUnitString(size, precision, unit, units["size"], nounit);
+}
+
+function formatSpeed(speed, precision, unit, nounit)
+{
+	if (!precision)
+		precision = 0;
+	if (!unit)
+		unit = units["speed"][1];
+	return formatUnitString(speed, precision, unit, units["speed"], nounit);
+}
+
+function formatUnitString(number, precision, unit, units, nounit)
+{
+	number /= parseUnitPrefix($.trim(unit), units, nounit);
+	return ((number) || (number === 0)) ? number.toFixed(precision) + unit : null;
+}
+
+////////////////////////////////////////
+// Parsing Functions
+////////////////////////////////////////
 
 function parseMetricPrefix(prefix)
 {
@@ -500,6 +546,10 @@ function parseUnitString(unitString, units, nounit)
 	return number;
 }
 
+////////////////////////////////////////
+// Location Functions
+////////////////////////////////////////
+
 function getCountryString(country)
 {
 	if (countryCodes[country])
@@ -514,4 +564,57 @@ function getStateString(state)
 		return stateCodes[state];
 	else
 		return state;
+}
+
+////////////////////////////////////////
+// Query Functions
+////////////////////////////////////////
+
+function hashToQuery(hash)
+{
+	var query = "";
+	var params = [];
+	for (var param in hash)
+	{
+		var args = "";
+		if (hash[param] instanceof Array)
+			args = hash[param].join(",");
+		else
+			args = hash[param];
+		params.push(encodeURIComponent(param) + "=" + encodeURIComponent(args));
+	}
+	query += params.join("&");
+	return query;
+}
+
+function queryToHash(query)
+{
+	var hash = {};
+	var params = query.substring(1).split("&");
+	for (var i = 0 ; i < params.length ; i++)
+	{
+		var parts = params[i].split("=");
+		if (parts[0])
+		{
+			var param = decodeURIComponent(parts[0]);
+			var args = [];
+			if (parts.length > 1)
+				args = decodeURIComponent(parts[1]).split(",");
+			hash[param] = args;
+		}
+	}
+	return hash;
+}
+
+////////////////////////////////////////
+// Sorting Functions
+////////////////////////////////////////
+
+function compareHostnames(hostname_a, hostname_b)
+{
+	hostname_a = hostname_a.replace(/(-v6|-ip6|-ipv6)/i, "~");
+	hostname_b = hostname_b.replace(/(-v6|-ip6|-ipv6)/i, "~");
+	var order_a = sortOrder["hostname"][getAddressType(hostname_a)];
+	var order_b = sortOrder["hostname"][getAddressType(hostname_b)];
+	return order_a > order_b ? 1 : order_a < order_b ? -1 : hostname_a > hostname_b ? 1 : hostname_a < hostname_b ? -1 : 0;
 }

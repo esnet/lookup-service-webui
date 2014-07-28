@@ -1,11 +1,16 @@
 ////////////////////////////////////////
-// Declare Variables
+// Global Variables
 ////////////////////////////////////////
 
-var initialized = false;
+var inputLocks = [ "init" ];
+var ignoreHashChanges = 0;
 var recordMap = null;
 var filteredMap = null;
-var filter = "";
+var communities;
+var filter = {
+	"search": "",
+	"communities": []
+};
 var activeService = null;
 var activeHost = null;
 
@@ -50,43 +55,51 @@ var activeNode = null;
 // Initialize Input Events
 ////////////////////////////////////////
 
+$(window).on("hashchange", function(event) {
+	if ((inputLocks.length === 0) && (ignoreHashChanges === 0))
+	{
+		updateHash();
+	}
+	else
+	{
+		ignoreHashChanges--;
+	}
+});
+
 $("#communities-update").click(function(event) {
-	if (initialized)
+	if (inputLocks.length === 0)
 	{
 		updateCommunities();
 	}
 });
 
 $("#communities-reset").click(function(event) {
-	if (initialized)
+	if (inputLocks.length === 0)
 	{
 		resetCommunities();
 	}
 });
 
 $("#search-update").click(function(event) {
-	if (initialized)
+	if (inputLocks.length === 0)
 	{
 		updateSearch();
 	}
 });
 
 $("#search-reset").click(function(event) {
-	if (initialized)
+	if (inputLocks.length === 0)
 	{
 		resetSearch();
 	}
 });
 
 $("#search").keydown(function(event) {
-	if (initialized)
+	$("#search-control").removeClass("error");
+	if ((inputLocks.length === 0) && (event.keyCode == 13))
 	{
-		$("#search-control").removeClass("error");
-		if (event.keyCode == 13)
-		{
-			updateSearch();
-			event.preventDefault();
-		}
+		updateSearch();
+		event.preventDefault();
 	}
 });
 
@@ -168,7 +181,10 @@ function initialize(records)
 	updateMap();
 	updateTree();
 	updateStatus();
-	initialized = true;
+	updateHash();
+	$("#loading").modal("hide");
+	$(".modal-backdrop").remove();
+	inputLocks = [];
 }
 
 function addServiceMarker(service)
@@ -289,6 +305,7 @@ function onInfoWindowActivate(service)
 {
 	showServiceInfo(service);
 	showHostInfo(service.host);
+	showHash();
 }
 
 function onNodeActivate(node)
@@ -304,6 +321,7 @@ function onNodeActivate(node)
 		map.gmap("closeInfoWindow");
 	showServiceInfo(service);
 	showHostInfo(service.host);
+	showHash();
 }
 
 ////////////////////////////////////////
@@ -436,7 +454,7 @@ function clearHostInfo()
 
 function showCommunities()
 {
-	var communities = [];
+	communities = [];
 	var records = filteredMap.getServices();
 	for (var i = 0 ; i < records.length ; i++)
 	{
@@ -447,6 +465,20 @@ function showCommunities()
 	var options = $("#communities").empty();
 	for (var i = 0 ; i < communities.length ; i++)
 		options.append($("<option>").val(communities[i]).prop("selected", true).text(communities[i]));
+	filter["communities"] = communities;
+}
+
+function showHash()
+{
+	var hash = {};
+	if (filter["search"])
+		hash["search"] = filter["search"];
+	if (filter["communities"].length != communities.length)
+		hash["communities"] = filter["communities"];
+	if (activeService)
+		hash["uri"] = activeService["uri"];
+	ignoreHashChanges++;
+	window.location.hash = hashToQuery(hash);
 }
 
 function showInfoWindow(marker)
@@ -530,39 +562,120 @@ function showInfoWindow(marker)
 
 function updateCommunities()
 {
-	var selected = $("#communities option").filter(":selected");
-	var communities = selected.map(function() { return $(this).val(); });
-	var filtered = getFilteredRecords(recordMap.getServices(), filter, true);
-	filteredMap = new RecordMap(filtered);
-	var services = filteredMap.getServices();
-	var matched = [];
-	for (var i = 0 ; i < services.length ; i++)
+	var lock = inputLocks.push("showCommunities") - 1;
+	var options = $("#communities option");
+	var selected = options.filter(":selected").map(function() { return $(this).val(); }).get();
+	if (selected.length == communities.length)
 	{
-		for (var j = 0 ; j < communities.length ; j++)
+		resetCommunities();
+	}
+	else if (!((selected.length == filter["communities"].length) && (selected.equals(filter["communities"]))))
+	{
+		var filtered = getFilteredRecords(recordMap.getServices(), filter["search"], true);
+		filteredMap = new RecordMap(filtered);
+		var services = filteredMap.getServices();
+		var matched = [];
+		for (var i = 0 ; i < services.length ; i++)
 		{
-			if (hasField(services[i], "group-communities"))
+			for (var j = 0 ; j < selected.length ; j++)
 			{
-				if ($.inArray(communities[j], services[i]["group-communities"]) >= 0)
-					matched.push(services[i]);
+				if (hasField(services[i], "group-communities"))
+				{
+					if ($.inArray(selected[j], services[i]["group-communities"]) >= 0)
+						matched.push(services[i]);
+				}
 			}
 		}
+		filtered = getFilteredRecords(matched, "");
+		filteredMap = new RecordMap(filtered);
+		filter["communities"] = selected;
+		showHash();
+		updateMap();
+		updateTree();
+		updateStatus();
 	}
-	filtered = getFilteredRecords(matched, "");
-	filteredMap = new RecordMap(filtered);
-	updateMap();
-	updateTree();
-	updateStatus();
+	inputLocks.splice(lock, 1);
 }
 
 function resetCommunities()
 {
-	var deselected = $("#communities option").not(":selected");
+	var lock = inputLocks.push("resetCommunities") - 1;
+	var options = $("#communities option");
+	var deselected = options.not(":selected");
+	if (filter["communities"].length != communities.length)
+	{
+		var filtered = getFilteredRecords(recordMap.getServices(), filter["search"]);
+		filteredMap = new RecordMap(filtered);
+		filter["communities"] = communities;
+		showHash();
+		updateMap();
+		updateTree();
+		updateStatus();
+	}
 	deselected.prop("selected", true);
-	var filtered = getFilteredRecords(recordMap.getServices(), filter);
-	filteredMap = new RecordMap(filtered);
-	updateMap();
-	updateTree();
-	updateStatus();
+	inputLocks.splice(lock, 1);
+}
+
+function updateHash()
+{
+	var lock = inputLocks.push("updateHash") - 1;
+	var hash = queryToHash(window.location.hash);
+	if (hash["search"])
+	{
+		$("#search").val(hash["search"]);
+		updateSearch();
+	}
+	else
+	{
+		resetSearch();
+	}
+	if (hash["communities"])
+	{
+		var options = $("#communities option");
+		options.each(function(i, element) {
+			var option = $(element);
+			if ($.inArray(option.val(), hash["communities"]) >= 0)
+				option.prop("selected", true);
+			else
+				option.prop("selected", false);
+		});
+		updateCommunities();
+	}
+	else
+	{
+		resetCommunities();
+	}
+	if (hash["uri"])
+	{
+		var service = null;
+		var services = recordMap.getServices();
+		for (var i = 0 ; i < services.length ; i++)
+		{
+			if (services[i]["uri"] == hash["uri"])
+			{
+				service = services[i];
+				break;
+			}
+		}
+		if (service)
+		{
+			var latlng = getLatLng(service);
+			if ((latlng) && (markers[latlng]))
+				onMarkerActivate(markers[latlng]);
+			else
+				map.gmap("closeInfoWindow");
+			showServiceInfo(service);
+			showHostInfo(service.host);
+			showHash();
+		}
+	}
+	else
+	{
+		map.gmap("closeInfoWindow");
+		clearServiceInfo();
+		clearHostInfo();
+	}
+	inputLocks.splice(lock, 1);
 }
 
 function updateMap()
@@ -606,14 +719,15 @@ function updateMarkers()
 
 function updateSearch()
 {
+	var lock = inputLocks.push("updateSearch") - 1;
 	var search = $("#search").val();
-	if (search != filter)
+	if (search != filter["search"])
 	{
 		try
 		{
 			var filtered = getFilteredRecords(recordMap.getServices(), search);
 			filteredMap = new RecordMap(filtered);
-			filter = search;
+			filter["search"] = search;
 		}
 		catch (err)
 		{
@@ -621,24 +735,29 @@ function updateSearch()
 			return;
 		}
 		showCommunities();
+		showHash();
 		updateMap();
 		updateTree();
 		updateStatus();
 	}
+	inputLocks.splice(lock, 1);
 }
 
 function resetSearch()
 {
-	if (filter)
+	var lock = inputLocks.push("resetSearch") - 1;
+	if (filter["search"])
 	{
 		var filtered = getFilteredRecords(recordMap.getServices(), "");
 		filteredMap = new RecordMap(filtered);
-		filter = "";
+		filter["search"] = "";
 		showCommunities();
+		showHash();
 		updateMap();
 		updateTree();
 		updateStatus();
 	}
+	inputLocks.splice(lock, 1);
 }
 
 function updateStatus()
@@ -650,7 +769,6 @@ function updateStatus()
 		$("#status").html("Showing: " + filteredServices + " of " + totalServices + " services on " + filteredHosts + " host.");
 	else
 		$("#status").html("Showing: " + filteredServices + " of " + totalServices + " services on " + filteredHosts + " hosts.");
-	$("#loading").modal("hide");
 }
 
 function updateTree()
