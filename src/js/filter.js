@@ -437,7 +437,7 @@ function matchFields(fields, operand)
 	var regex = new RegExp(operand, "i");
 	for (var i = 0 ; i < fields.length ; i++)
 	{
-		if (fields[i].search(regex) >= 0)
+		if (regex.test(fields[i]))
 			return true;
 	}
 	return false;

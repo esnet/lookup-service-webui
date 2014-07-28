@@ -9,7 +9,17 @@ var serviceMap = {
 		"custom": {
 			"title": "Example Command-Line",
 			"type": "cli",
-			"format": "bwctl -T <tool> -t 20 -i 1 -f m -c \"<address>\""
+			"formats": {
+				"iperf3": "bwctl -T iperf3 -t 30 -i 1 -f m -c \"<address>\"",
+				"tracepath": "bwtraceroute -T tracepath -c \"<address>\"",
+				"ping": "bwping -c \"<address>\"",
+				"iperf": "bwctl -T iperf -t 30 -i 1 -f m -c \"<address>\"",
+				"nuttcp": "bwctl -T nuttcp -t 30 -i 1 -f m -c \"<address>\"",
+				"owamp": "bwctl -T owamp -t 30 -i 1 -f m -c \"<address>\"",
+				"traceroute": "bwtraceroute -c \"<address>\"",
+				"default3.3": "bwctl -T iperf3 -t 30 -i 1 -f m -c \"<address>\"",
+				"default": "bwctl -T iperf -t 20 -i 1 -f m -c \"<address>\""
+			}
 		},
 		"action": "Test"
 	},
@@ -19,7 +29,9 @@ var serviceMap = {
 		"custom": {
 			"title": "Example Command-Line",
 			"type": "cli",
-			"format": "owping -c 10000 -i 0.01 \"<address>\""
+			"formats": { 
+				"default": "owping -c 10000 -i 0.01 \"<address>\""
+			}
 		},
 		"action": "Ping"
 	},
@@ -29,7 +41,9 @@ var serviceMap = {
 		"custom": {
 			"title": "Example Command-Line",
 			"type": "cli",
-			"format": "web100clt -n \"<address>\" -ll"
+			"formats": {
+				"default": "web100clt -n \"<address>\" -ll"
+			}
 		},
 		"action": "Test"
 	},
@@ -45,7 +59,10 @@ var serviceMap = {
 		"custom": {
 			"title": "Example Command-Line",
 			"type": "cli",
-			"format": "ping \"<address>\""
+			"formats": {
+				"default-v6": "ping6 \"<address>\"",
+				"default": "ping \"<address>\""
+			}
 		},
 		"action": "Ping"
 	},
@@ -55,7 +72,10 @@ var serviceMap = {
 		"custom": {
 			"title": "Example Command-Line",
 			"type": "cli",
-			"format": "traceroute \"<address>\""
+			"formats": {
+				"default-v6": "traceroute6 \"<address>\"",
+				"default": "traceroute \"<address>\""
+			}
 		},
 		"action": "Traceroute"
 	},
@@ -323,27 +343,53 @@ function getAddresses(record)
 	return addresses;
 }
 
-function getCommandLine(service, format)
+function getCommandLine(service, formats)
 {
 	var commandLine = [];
+	var type = "";
+	if (hasField(service, "service-type"))
+		type = service["service-type"][0];
 	var locators = getAddresses(service);
 	var addresses = [];
 	for (var i = 0 ; i < locators.length ; i++)
 		addresses.push(getHostFromURI(locators[i]));
 	addresses.sort(function(a, b) { return compareHostnames(a, b); });
-	if (format.search("<tool>") >= 0)
+	var version = "";
+	if ((service.host) && (hasField(service.host, "pshost-toolkitversion")))
+		version += parseFloat(service.host["pshost-toolkitversion"]);
+	for (var i = 0 ; i < addresses.length ; i++)
 	{
-		var tools = getServiceTools(service);
-		for (var i = 0 ; i < addresses.length ; i++)
+		var address = addresses[i];
+		var v6 = "";
+		if ((hostnamev6.test(address)) || (getAddressType(address) == "IPv6"))
+			v6 = "-v6";
+		if (hasField(service, type + "-tools"))
 		{
-			for (var j = 0 ; j < tools.length ; j++)
-				commandLine.push(format.replace("<address>", addresses[i]).replace("<tool>", tools[j]));
+			for (var format in formats)
+			{
+				if ($.inArray(format, service[type + "-tools"]) >= 0)
+				{
+					if (formats[format + version + v6])
+						format += version + v6;
+					else if (formats[format + version])
+						format += version;
+					else if (formats[format + v6])
+						format += v6;
+					commandLine.push(formats[format].replace("<address>", addresses[i]));
+				}
+			}
 		}
-	}
-	else
-	{
-		for (var i = 0 ; i < addresses.length ; i++)
-			commandLine.push(format.replace("<address>", addresses[i]));
+		else
+		{
+			var format = "default";
+			if (formats[format + version + v6])
+				format += version + v6;
+			else if (formats[format + version])
+				format += version;
+			else if (formats[format + v6])
+				format += v6;
+			commandLine.push(formats[format].replace("<address>", addresses[i]));
+		}
 	}
 	return commandLine;
 }
@@ -518,32 +564,6 @@ function getServiceMapping(service)
 			return serviceMap[type];
 	}
 	return null;
-}
-
-function getServiceTools(service)
-{
-	var tools = [];
-	var type = "";
-	if (hasField(service, "service-type"))
-		type = service["service-type"][0];
-	if (hasField(service, type + "-tools"))
-	{
-		tools = service[type + "-tools"];
-	}
-	else if (type == "bwctl")
-	{
-		if ((service.host) && (hasField(service.host, "pshost-toolkitversion")))
-		{
-			var version = parseFloat(service.host["pshost-toolkitversion"]);
-			if (version > 3.2)
-				tools = [ "iperf3" ];
-			else
-				tools = [ "iperf" ];
-		}
-		if (tools.length == 0)
-			tools = [ "iperf" ];
-	}
-	return tools;
 }
 
 function getServiceTypeTitle(service)

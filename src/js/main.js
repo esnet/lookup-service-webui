@@ -358,7 +358,7 @@ function showCustomInfo(service)
 			$("#service-custom-header").text("Custom");
 		if (custom["type"] == "cli")
 		{
-			var commandLine = getCommandLine(service, custom["format"]);
+			var commandLine = getCommandLine(service, custom["formats"]);
 			$("#service-custom").html(commandLine.join("<br>"));
 		}
 		else if (custom["type"] == "ma")
@@ -562,7 +562,7 @@ function showInfoWindow(marker)
 
 function updateCommunities()
 {
-	var lock = inputLocks.push("showCommunities") - 1;
+	var lock = inputLocks.push("updateCommunities") - 1;
 	var options = $("#communities option");
 	var selected = options.filter(":selected").map(function() { return $(this).val(); }).get();
 	if (selected.length == communities.length)

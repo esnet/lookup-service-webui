@@ -329,6 +329,7 @@ var stateCodes = {
 var IPv4Format = /^([\d]{1,3}\.){3}[\d]{1,3}(:\d+)?$/;
 var IPv6Format = /^(([\da-fA-F]{0,4}:){3,7}[\da-fA-F]{0,4}|\[([\da-fA-F]{0,4}:){3,7}[\da-fA-F]{0,4}\](:\d+)?)$/;
 var hostnameFormat = /^[A-Za-z0-9]+((\-|\.)[A-Za-z0-9]+)*(:\d+)?$/;
+var hostnamev6 = /(-v6|-ip6|-ipv6)/i;
 
 ////////////////////////////////////////
 // Sort Order Mappings
@@ -438,8 +439,8 @@ function getLinks(addresses, prefix, suffix)
 
 function IPv6Fix(address)
 {
-	var badFormat = /^([\da-fA-F]{0,4}:){3,7}[\da-fA-F]{0,4}$/;
-	if (badFormat.test(address))
+	var nonLiteral = /^([\da-fA-F]{0,4}:){3,7}[\da-fA-F]{0,4}$/;
+	if (nonLiteral.test(address))
 		return "[" + address + "]";
 	return address;
 }
@@ -612,8 +613,8 @@ function queryToHash(query)
 
 function compareHostnames(hostname_a, hostname_b)
 {
-	hostname_a = hostname_a.replace(/(-v6|-ip6|-ipv6)/i, "~");
-	hostname_b = hostname_b.replace(/(-v6|-ip6|-ipv6)/i, "~");
+	hostname_a = hostname_a.replace(hostnamev6, "~");
+	hostname_b = hostname_b.replace(hostnamev6, "~");
 	var order_a = sortOrder["hostname"][getAddressType(hostname_a)];
 	var order_b = sortOrder["hostname"][getAddressType(hostname_b)];
 	return order_a > order_b ? 1 : order_a < order_b ? -1 : hostname_a > hostname_b ? 1 : hostname_a < hostname_b ? -1 : 0;

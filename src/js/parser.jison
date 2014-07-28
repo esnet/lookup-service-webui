@@ -126,7 +126,7 @@ parser.processArgs = function(record, args) {
 	{
 		return function(record) { return parser.matchArg(record, args[0]); };
 	}
-}
+};
 
 parser.matchArg = function(record, arg) {
 	/* Implement Later */
@@ -135,4 +135,4 @@ parser.matchArg = function(record, arg) {
 		return !match;
 	else
 		return match;
-}
+};
