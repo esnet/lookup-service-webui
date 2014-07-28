@@ -365,7 +365,7 @@ options: {},
 performAction: function anonymous(yy, yy_, $avoiding_name_collisions, YY_START) { 
 var YYSTATE=YY_START;
 switch($avoiding_name_collisions) {
-case 0: /* ignore whitespace */ 
+case 0: /* ignore whitespace */ break;
 case 1: return "AND";
 case 2: return "OR";
 case 3: return "NOT";
