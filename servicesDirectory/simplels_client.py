@@ -12,7 +12,7 @@ try:
 except ImportError:
     pass
 
-_LS_HINTS = "http://ps1.es.net:8096/lookup/activehosts.json"
+_LS_HINTS = "http://ps-west.es.net:8096/lookup/activehosts.json"
 
 def get_hosts():
     hosts = requests.get(_LS_HINTS).json().get("hosts", [])
