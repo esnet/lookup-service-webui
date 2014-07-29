@@ -10,14 +10,14 @@ var serviceMap = {
 			"title": "Example Command-Line",
 			"type": "cli",
 			"formats": {
-				"iperf3": "bwctl -T iperf3 -t 30 -i 1 -f m -c \"<address>\"",
+				"iperf3": "bwctl -T iperf3 -t 30 -O 4 -c \"<address>\"",
 				"tracepath": "bwtraceroute -T tracepath -c \"<address>\"",
 				"ping": "bwping -c \"<address>\"",
 				"iperf": "bwctl -T iperf -t 30 -i 1 -f m -c \"<address>\"",
 				"nuttcp": "bwctl -T nuttcp -t 30 -i 1 -f m -c \"<address>\"",
-				"owamp": "bwctl -T owamp -t 30 -i 1 -f m -c \"<address>\"",
+				"owamp": "bwping -T owamp -N 1000 -i 0.01 -c \"<address>\"",
 				"traceroute": "bwtraceroute -c \"<address>\"",
-				"default3.3": "bwctl -T iperf3 -t 30 -i 1 -f m -c \"<address>\"",
+				"default3.3": "bwctl -T iperf3 -t 30 -O 4 -c \"<address>\"",
 				"default": "bwctl -T iperf -t 20 -i 1 -f m -c \"<address>\""
 			}
 		},
@@ -468,7 +468,7 @@ function getLocationString(record)
 	}
 	if (hasField(record, "location-country"))
 		locationString += getCountryString(record["location-country"][0]);
-	return $.trim(locationString);
+	return locationString.replace(/^[\s,]+|[\s,]+$/g, "");
 }
 
 function getMemoryString(host)

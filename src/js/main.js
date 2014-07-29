@@ -528,7 +528,8 @@ function showInfoWindow(marker)
 		}
 	}
 	sections.sort(function(a, b) { return compareHostnames(a["hostname"], b["hostname"]); });
-	var content = $("<dl>").prop("id", "info-window");
+	var container = $("<div>").prop("id", "info-window");
+	var content = $("<dl>").prop("id", "info-window-content").appendTo(container);
 	var sortServices = function(a, b) {
 		var type_a = "";
 		var type_b = "";
@@ -557,7 +558,7 @@ function showInfoWindow(marker)
 			}).text(name).data("service", service).click(clickEvent)));
 		}
 	}
-	map.gmap("openInfoWindow", { "content": content.get(0) }, marker);
+	map.gmap("openInfoWindow", { "content": container.get(0) }, marker);
 }
 
 function updateCommunities()
