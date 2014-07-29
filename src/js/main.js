@@ -18,7 +18,7 @@ var activeHost = null;
 // Loading
 ////////////////////////////////////////
 
-$("#loading").modal("show");
+showLoading();
 
 ////////////////////////////////////////
 // Initialize Map
@@ -58,7 +58,7 @@ var activeNode = null;
 $(window).on("hashchange", function(event) {
 	if ((inputLocks.length === 0) && (ignoreHashChanges === 0))
 	{
-		updateHash();
+		hashChange();
 	}
 	else
 	{
@@ -69,28 +69,28 @@ $(window).on("hashchange", function(event) {
 $("#communities-update").click(function(event) {
 	if (inputLocks.length === 0)
 	{
-		updateCommunities();
+		communitiesUpdate();
 	}
 });
 
 $("#communities-reset").click(function(event) {
 	if (inputLocks.length === 0)
 	{
-		resetCommunities();
+		communitiesReset();
 	}
 });
 
 $("#search-update").click(function(event) {
 	if (inputLocks.length === 0)
 	{
-		updateSearch();
+		searchUpdate();
 	}
 });
 
 $("#search-reset").click(function(event) {
 	if (inputLocks.length === 0)
 	{
-		resetSearch();
+		searchReset();
 	}
 });
 
@@ -98,7 +98,7 @@ $("#search").keydown(function(event) {
 	$("#search-control").removeClass("error");
 	if ((inputLocks.length === 0) && (event.keyCode == 13))
 	{
-		updateSearch();
+		searchUpdate();
 		event.preventDefault();
 	}
 });
@@ -107,7 +107,7 @@ $("#search").keydown(function(event) {
 // Load Data
 ////////////////////////////////////////
 
-$.getJSON("query?filter=default&geocode=true&remap=true", function(records) { initialize(records); });
+$.getJSON("records?filter=default&geocode=true&remap=true", initialize).fail(showError);
 
 ////////////////////////////////////////
 // Initialize Functions
@@ -122,7 +122,7 @@ function initMap(mapOptions)
 function initTree(treeNodes)
 {
 	var tree = $("#tree").fancytree({
-		"activate": function(event, data) { onNodeActivate(data.node); },
+		"activate": function(event, data) { nodeActivate(data.node); },
 		"extensions": [ "filter" ],
 		"filter": { "mode": "hide" },
 		"source": treeNodes
@@ -168,23 +168,29 @@ function initTreeNodes()
 
 function initialize(records)
 {
-	recordMap = new RecordMap(records, true);
-	var services = recordMap.getServices();
-	for (var i = 0 ; i < services.length ; i++)
+	try
 	{
-		addServiceNode(services[i]);
-		addServiceMarker(services[i]);
+		recordMap = new RecordMap(records, true);
+		var services = recordMap.getServices();
+		for (var i = 0 ; i < services.length ; i++)
+		{
+			addServiceNode(services[i]);
+			addServiceMarker(services[i]);
+		}
+		var filtered = getFilteredRecords(services, "");
+		filteredMap = new RecordMap(filtered);
+		updateCommunities();
+		updateMap();
+		updateTree();
+		updateStatus();
+		hashChange();
+		hideLoading();
+		inputLocks = [];
 	}
-	var filtered = getFilteredRecords(services, "");
-	filteredMap = new RecordMap(filtered);
-	showCommunities();
-	updateMap();
-	updateTree();
-	updateStatus();
-	updateHash();
-	$("#loading").modal("hide");
-	$(".modal-backdrop").remove();
-	inputLocks = [];
+	catch (error)
+	{
+		showError();
+	}
 }
 
 function addServiceMarker(service)
@@ -203,7 +209,7 @@ function addServiceMarker(service)
 				"position": latlng,
 				"icon": defaultMarkerIcon,
 				"optimized": false
-			}).click(function() { onMarkerActivate(this); }).get(0);
+			}).click(function() { markerActivate(this); }).get(0);
 			marker.filtered = [];
 			marker.services = [];
 			markers[latlng] = marker;
@@ -290,10 +296,135 @@ function addServiceNode(service)
 }
 
 ////////////////////////////////////////
-// Event Functions
+// Input Event Functions
 ////////////////////////////////////////
 
-function onMarkerActivate(marker)
+function communitiesUpdate()
+{
+	var lock = inputLocks.push("communitiesUpdate") - 1;
+	var options = $("#communities option");
+	var selected = options.filter(":selected").map(function() { return $(this).val(); }).get();
+	if (selected.length == communities.length)
+	{
+		communitiesReset();
+	}
+	else if (!((selected.length == filter["communities"].length) && (selected.equals(filter["communities"]))))
+	{
+		var filtered = getFilteredRecords(recordMap.getServices(), filter["search"], true);
+		filteredMap = new RecordMap(filtered);
+		var services = filteredMap.getServices();
+		var matched = [];
+		for (var i = 0 ; i < services.length ; i++)
+		{
+			for (var j = 0 ; j < selected.length ; j++)
+			{
+				if (hasField(services[i], "group-communities"))
+				{
+					if ($.inArray(selected[j], services[i]["group-communities"]) >= 0)
+						matched.push(services[i]);
+				}
+			}
+		}
+		filtered = getFilteredRecords(matched, "");
+		filteredMap = new RecordMap(filtered);
+		filter["communities"] = selected;
+		updateHash();
+		updateMap();
+		updateTree();
+		updateStatus();
+	}
+	inputLocks.splice(lock, 1);
+}
+
+function communitiesReset()
+{
+	var lock = inputLocks.push("communitiesReset") - 1;
+	var options = $("#communities option");
+	var deselected = options.not(":selected");
+	if (filter["communities"].length != communities.length)
+	{
+		var filtered = getFilteredRecords(recordMap.getServices(), filter["search"]);
+		filteredMap = new RecordMap(filtered);
+		filter["communities"] = communities;
+		updateHash();
+		updateMap();
+		updateTree();
+		updateStatus();
+	}
+	deselected.prop("selected", true);
+	inputLocks.splice(lock, 1);
+}
+
+function hashChange()
+{
+	var lock = inputLocks.push("hashChange") - 1;
+	var hash = queryToHash(window.location.hash);
+	if (hash["search"])
+	{
+		$("#search").val(hash["search"]);
+		searchUpdate();
+	}
+	else
+	{
+		searchReset();
+	}
+	if (hash["communities"])
+	{
+		var options = $("#communities option");
+		options.each(function(i, element) {
+			var option = $(element);
+			if ($.inArray(option.val(), hash["communities"]) >= 0)
+				option.prop("selected", true);
+			else
+				option.prop("selected", false);
+		});
+		communitiesUpdate();
+	}
+	else
+	{
+		communitiesReset();
+	}
+	if (hash["uri"])
+	{
+		var service = null;
+		var services = recordMap.getServices();
+		for (var i = 0 ; i < services.length ; i++)
+		{
+			if (services[i]["uri"] == hash["uri"])
+			{
+				service = services[i];
+				break;
+			}
+		}
+		if (service)
+		{
+			var latlng = getLatLng(service);
+			if ((latlng) && (markers[latlng]))
+				markerActivate(markers[latlng]);
+			else
+				map.gmap("closeInfoWindow");
+			showServiceInfo(service);
+			showHostInfo(service.host);
+			updateHash();
+		}
+	}
+	else
+	{
+		map.gmap("closeInfoWindow");
+		clearServiceInfo();
+		clearHostInfo();
+	}
+	inputLocks.splice(lock, 1);
+}
+
+function infoWindowActivate(service)
+{
+	showServiceInfo(service);
+	showHostInfo(service.host);
+	updateHash();
+}
+
+function markerActivate(marker)
 {
 	activeMarker = marker;
 	if (!marker.services)
@@ -301,14 +432,7 @@ function onMarkerActivate(marker)
 	showInfoWindow(marker);
 }
 
-function onInfoWindowActivate(service)
-{
-	showServiceInfo(service);
-	showHostInfo(service.host);
-	showHash();
-}
-
-function onNodeActivate(node)
+function nodeActivate(node)
 {
 	activeNode = node;
 	if (!node.data["service"])
@@ -316,16 +440,58 @@ function onNodeActivate(node)
 	var service = node.data["service"];
 	var latlng = getLatLng(service);
 	if ((latlng) && (markers[latlng]))
-		onMarkerActivate(markers[latlng]);
+		markerActivate(markers[latlng]);
 	else
 		map.gmap("closeInfoWindow");
 	showServiceInfo(service);
 	showHostInfo(service.host);
-	showHash();
+	updateHash();
+}
+
+function searchUpdate()
+{
+	var lock = inputLocks.push("searchUpdate") - 1;
+	var search = $("#search").val();
+	if (search != filter["search"])
+	{
+		try
+		{
+			var filtered = getFilteredRecords(recordMap.getServices(), search);
+			filteredMap = new RecordMap(filtered);
+			filter["search"] = search;
+			updateCommunities();
+			updateHash();
+			updateMap();
+			updateTree();
+			updateStatus();
+		}
+		catch (error)
+		{
+			$("#search-control").addClass("error");
+		}
+	}
+	inputLocks.splice(lock, 1);
+}
+
+function searchReset()
+{
+	var lock = inputLocks.push("searchReset") - 1;
+	if (filter["search"])
+	{
+		var filtered = getFilteredRecords(recordMap.getServices(), "");
+		filteredMap = new RecordMap(filtered);
+		filter["search"] = "";
+		updateCommunities();
+		updateHash();
+		updateMap();
+		updateTree();
+		updateStatus();
+	}
+	inputLocks.splice(lock, 1);
 }
 
 ////////////////////////////////////////
-// GUI Functions
+// GUI Display Functions
 ////////////////////////////////////////
 
 function showServiceInfo(service)
@@ -452,35 +618,6 @@ function clearHostInfo()
 	$("#host-communities").empty();
 }
 
-function showCommunities()
-{
-	communities = [];
-	var records = filteredMap.getServices();
-	for (var i = 0 ; i < records.length ; i++)
-	{
-		if (hasField(records[i], "group-communities"))
-			$.merge(communities, records[i]["group-communities"]);
-	}
-	communities = communities.sort().unique();
-	var options = $("#communities").empty();
-	for (var i = 0 ; i < communities.length ; i++)
-		options.append($("<option>").val(communities[i]).prop("selected", true).text(communities[i]));
-	filter["communities"] = communities;
-}
-
-function showHash()
-{
-	var hash = {};
-	if (filter["search"])
-		hash["search"] = filter["search"];
-	if (filter["communities"].length != communities.length)
-		hash["communities"] = filter["communities"];
-	if (activeService)
-		hash["uri"] = activeService["uri"];
-	ignoreHashChanges++;
-	window.location.hash = hashToQuery(hash);
-}
-
 function showInfoWindow(marker)
 {
 	var sections = [];
@@ -540,7 +677,7 @@ function showInfoWindow(marker)
 		return type_a > type_b ? 1 : type_a < type_b ? -1 : 0;
 	};
 	var clickEvent = function(event) {
-		onInfoWindowActivate($(this).data("service"));
+		infoWindowActivate($(this).data("service"));
 		event.preventDefault();
 	};
 	for (var i = 0 ; i < sections.length ; i++)
@@ -561,122 +698,65 @@ function showInfoWindow(marker)
 	map.gmap("openInfoWindow", { "content": container.get(0) }, marker);
 }
 
-function updateCommunities()
+////////////////////////////////////////
+// GUI Modal Functions
+////////////////////////////////////////
+
+function showError()
 {
-	var lock = inputLocks.push("updateCommunities") - 1;
-	var options = $("#communities option");
-	var selected = options.filter(":selected").map(function() { return $(this).val(); }).get();
-	if (selected.length == communities.length)
-	{
-		resetCommunities();
-	}
-	else if (!((selected.length == filter["communities"].length) && (selected.equals(filter["communities"]))))
-	{
-		var filtered = getFilteredRecords(recordMap.getServices(), filter["search"], true);
-		filteredMap = new RecordMap(filtered);
-		var services = filteredMap.getServices();
-		var matched = [];
-		for (var i = 0 ; i < services.length ; i++)
-		{
-			for (var j = 0 ; j < selected.length ; j++)
-			{
-				if (hasField(services[i], "group-communities"))
-				{
-					if ($.inArray(selected[j], services[i]["group-communities"]) >= 0)
-						matched.push(services[i]);
-				}
-			}
-		}
-		filtered = getFilteredRecords(matched, "");
-		filteredMap = new RecordMap(filtered);
-		filter["communities"] = selected;
-		showHash();
-		updateMap();
-		updateTree();
-		updateStatus();
-	}
-	inputLocks.splice(lock, 1);
+	$('.modal').modal('hide');
+	$("#error").modal("show");
 }
 
-function resetCommunities()
+function hideError()
 {
-	var lock = inputLocks.push("resetCommunities") - 1;
-	var options = $("#communities option");
-	var deselected = options.not(":selected");
-	if (filter["communities"].length != communities.length)
+	$("#error").modal("hide");
+	$(".modal-backdrop").remove();
+}
+
+function showLoading()
+{
+	$('.modal').modal('hide');
+	$("#loading").modal("show");
+}
+
+function hideLoading()
+{
+	$("#loading").modal("hide");
+	$(".modal-backdrop").remove();
+}
+
+////////////////////////////////////////
+// GUI Update Functions
+////////////////////////////////////////
+
+function updateCommunities()
+{
+	communities = [];
+	var records = filteredMap.getServices();
+	for (var i = 0 ; i < records.length ; i++)
 	{
-		var filtered = getFilteredRecords(recordMap.getServices(), filter["search"]);
-		filteredMap = new RecordMap(filtered);
-		filter["communities"] = communities;
-		showHash();
-		updateMap();
-		updateTree();
-		updateStatus();
+		if (hasField(records[i], "group-communities"))
+			$.merge(communities, records[i]["group-communities"]);
 	}
-	deselected.prop("selected", true);
-	inputLocks.splice(lock, 1);
+	communities = communities.sort().unique();
+	var options = $("#communities").empty();
+	for (var i = 0 ; i < communities.length ; i++)
+		options.append($("<option>").val(communities[i]).prop("selected", true).text(communities[i]));
+	filter["communities"] = communities;
 }
 
 function updateHash()
 {
-	var lock = inputLocks.push("updateHash") - 1;
-	var hash = queryToHash(window.location.hash);
-	if (hash["search"])
-	{
-		$("#search").val(hash["search"]);
-		updateSearch();
-	}
-	else
-	{
-		resetSearch();
-	}
-	if (hash["communities"])
-	{
-		var options = $("#communities option");
-		options.each(function(i, element) {
-			var option = $(element);
-			if ($.inArray(option.val(), hash["communities"]) >= 0)
-				option.prop("selected", true);
-			else
-				option.prop("selected", false);
-		});
-		updateCommunities();
-	}
-	else
-	{
-		resetCommunities();
-	}
-	if (hash["uri"])
-	{
-		var service = null;
-		var services = recordMap.getServices();
-		for (var i = 0 ; i < services.length ; i++)
-		{
-			if (services[i]["uri"] == hash["uri"])
-			{
-				service = services[i];
-				break;
-			}
-		}
-		if (service)
-		{
-			var latlng = getLatLng(service);
-			if ((latlng) && (markers[latlng]))
-				onMarkerActivate(markers[latlng]);
-			else
-				map.gmap("closeInfoWindow");
-			showServiceInfo(service);
-			showHostInfo(service.host);
-			showHash();
-		}
-	}
-	else
-	{
-		map.gmap("closeInfoWindow");
-		clearServiceInfo();
-		clearHostInfo();
-	}
-	inputLocks.splice(lock, 1);
+	var hash = {};
+	if (filter["search"])
+		hash["search"] = filter["search"];
+	if (filter["communities"].length != communities.length)
+		hash["communities"] = filter["communities"];
+	if (activeService)
+		hash["uri"] = activeService["uri"];
+	ignoreHashChanges++;
+	window.location.hash = hashToQuery(hash);
 }
 
 function updateMap()
@@ -716,60 +796,6 @@ function updateMarkers()
 		else
 			marker.setVisible(false);
 	}
-}
-
-function updateSearch()
-{
-	var lock = inputLocks.push("updateSearch") - 1;
-	var search = $("#search").val();
-	if (search != filter["search"])
-	{
-		try
-		{
-			var filtered = getFilteredRecords(recordMap.getServices(), search);
-			filteredMap = new RecordMap(filtered);
-			filter["search"] = search;
-		}
-		catch (err)
-		{
-			$("#search-control").addClass("error");
-			return;
-		}
-		showCommunities();
-		showHash();
-		updateMap();
-		updateTree();
-		updateStatus();
-	}
-	inputLocks.splice(lock, 1);
-}
-
-function resetSearch()
-{
-	var lock = inputLocks.push("resetSearch") - 1;
-	if (filter["search"])
-	{
-		var filtered = getFilteredRecords(recordMap.getServices(), "");
-		filteredMap = new RecordMap(filtered);
-		filter["search"] = "";
-		showCommunities();
-		showHash();
-		updateMap();
-		updateTree();
-		updateStatus();
-	}
-	inputLocks.splice(lock, 1);
-}
-
-function updateStatus()
-{
-	var filteredHosts = filteredMap.getHosts().length;
-	var filteredServices = filteredMap.getServices().length;
-	var totalServices = recordMap.getServices().length;
-	if (filteredHosts == 1)
-		$("#status").html("Showing: " + filteredServices + " of " + totalServices + " services on " + filteredHosts + " host.");
-	else
-		$("#status").html("Showing: " + filteredServices + " of " + totalServices + " services on " + filteredHosts + " hosts.");
 }
 
 function updateTree()
@@ -823,6 +849,17 @@ function updateTreeNodes(nodes)
 		}
 	}
 	return count;
+}
+
+function updateStatus()
+{
+	var filteredHosts = filteredMap.getHosts().length;
+	var filteredServices = filteredMap.getServices().length;
+	var totalServices = recordMap.getServices().length;
+	if (filteredHosts == 1)
+		$("#status").html("Showing: " + filteredServices + " of " + totalServices + " services on " + filteredHosts + " host.");
+	else
+		$("#status").html("Showing: " + filteredServices + " of " + totalServices + " services on " + filteredHosts + " hosts.");
 }
 
 function zoomToFitMarkers()

@@ -15,6 +15,9 @@ def index(request):
     return render(request, 'servicesDirectory/index.html')
 
 def query(request):
+    return HttpResponse("There doesn't seem to be anything here yet...", content_type="text/plain")
+
+def records(request):
     query = request.GET.copy()
     records = None
     

@@ -14,8 +14,7 @@
 		#info-window { max-height: 100%; overflow: auto; }
 		#info-window-content { margin-bottom: 0px; margin-top: 0px; }
 		#left-pane { padding-bottom: 10px; }
-		#loading { top: 35%; }
-		#noscript { top: 35%; }
+		#error, #loading, #noscript { top: 35%; }
 		#right-pane { padding-bottom: 10px; }
 		#search { margin-top: 5px; width: 95% }
 		.map-canvas { height: 600px; }
@@ -37,9 +36,9 @@
 					<h4 class="text-error">Warning</h4>
 				</div>
 				<div class="modal-body">
-					<div>Javascript is disabled in your browser. Please
-					<a href="http://www.enable-javascript.com" target="_blank">Enable Javascript</a>
-					to use this tool.</div><br>
+					<div class="text-center">Javascript is disabled in your browser.<br>
+					Please <a href="http://www.enable-javascript.com" target="_blank">Enable Javascript</a>
+					to use this page.</div><br>
 					<div class="text-center"><a class="btn" role="button" href="">Reload</a></div>
 				</div>
 			</div>
@@ -56,6 +55,16 @@
 				</div>
 				<span class="muted">Note this may take several minutes. Please be patient.</span>
 				<button type="button" class="btn pull-right" data-dismiss="modal">Dismiss</button>
+			</div>
+		</div>
+		<div class="modal fade hide" id="error" tabindex="-1" role="dialog">
+			<div class="modal-header">
+				<h4 class="text-error">Error</h4>
+			</div>
+			<div class="modal-body">
+				<div class="text-center"><strong>An error occurred on this page.<br>
+				If this error persists please contact a site administrator.</strong></div><br>
+				<div class="text-center"><a class="btn" role="button" href="">Reload</a></div>
 			</div>
 		</div>
 		<div class="row-fluid fill-vertical">

@@ -60,7 +60,8 @@ var serviceMap = {
 			"title": "Example Command-Line",
 			"type": "cli",
 			"formats": {
-				"default-v6": "ping6 \"<address>\"",
+				"default-Hostnamev6": "ping6 \"<address>\"",
+				"default-IPv6": "ping6 \"<address>\"",
 				"default": "ping \"<address>\""
 			}
 		},
@@ -73,7 +74,8 @@ var serviceMap = {
 			"title": "Example Command-Line",
 			"type": "cli",
 			"formats": {
-				"default-v6": "traceroute6 \"<address>\"",
+				"default-Hostnamev6": "traceroute6 \"<address>\"",
+				"default-IPv6": "traceroute6 \"<address>\"",
 				"default": "traceroute \"<address>\""
 			}
 		},
@@ -354,26 +356,26 @@ function getCommandLine(service, formats)
 	for (var i = 0 ; i < locators.length ; i++)
 		addresses.push(getHostFromURI(locators[i]));
 	addresses.sort(function(a, b) { return compareHostnames(a, b); });
-	var version = "";
+	var toolkitVersion = "";
 	if ((service.host) && (hasField(service.host, "pshost-toolkitversion")))
-		version += parseFloat(service.host["pshost-toolkitversion"]);
+		toolkitVersion += parseFloat(service.host["pshost-toolkitversion"]);
 	for (var i = 0 ; i < addresses.length ; i++)
 	{
 		var address = addresses[i];
-		var v6 = "";
-		if ((hostnamev6.test(address)) || (getAddressType(address) == "IPv6"))
-			v6 = "-v6";
+		var addressType = getAddressType(address);
+		if (hostnamev6.test(address))
+			addressType += "v6";
 		if (hasField(service, type + "-tools"))
 		{
 			for (var format in formats)
 			{
 				if ($.inArray(format, service[type + "-tools"]) >= 0)
 				{
-					if (formats[format + version + v6])
-						format += version + v6;
-					else if (formats[format + version])
-						format += version;
-					else if (formats[format + v6])
+					if (formats[format + toolkitVersion + "-" + addressType])
+						format += toolkitVersion + "-" + addressType;
+					else if (formats[format + toolkitVersion])
+						format += toolkitVersion;
+					else if (formats[format + "-" + addressType])
 						format += v6;
 					commandLine.push(formats[format].replace("<address>", addresses[i]));
 				}
@@ -382,12 +384,12 @@ function getCommandLine(service, formats)
 		else
 		{
 			var format = "default";
-			if (formats[format + version + v6])
-				format += version + v6;
-			else if (formats[format + version])
-				format += version;
-			else if (formats[format + v6])
-				format += v6;
+			if (formats[format + toolkitVersion + "-" + addressType])
+				format += toolkitVersion + "-" + addressType;
+			else if (formats[format + toolkitVersion])
+				format += toolkitVersion;
+			else if (formats[format + "-" + addressType])
+				format += "-" + addressType;
 			commandLine.push(formats[format].replace("<address>", addresses[i]));
 		}
 	}

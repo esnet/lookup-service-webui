@@ -35,7 +35,7 @@ application = get_wsgi_application()
 """
 Add the following to your apache config:
 
-WSGIScriptAlias /ServicesDirectory/ /opt/perfsonar_ps/django/ServicesDirectory/wsgi.py/
+WSGIScriptAlias /ServicesDirectory /opt/perfsonar_ps/django/ServicesDirectory/wsgi.py/ServicesDirectory
 WSGIPythonPath /opt/perfsonar_ps/django/ServicesDirectory
 WSGIPassAuthorization Off
 
