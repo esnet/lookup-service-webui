@@ -354,7 +354,7 @@ function getCommandLine(service, formats)
 	var locators = getAddresses(service);
 	var addresses = [];
 	for (var i = 0 ; i < locators.length ; i++)
-		addresses.push(getHostFromURI(locators[i]));
+		addresses.push(getHostFromURL(locators[i]));
 	addresses.sort(function(a, b) { return compareHostnames(a, b); });
 	var toolkitVersion = "";
 	if ((service.host) && (hasField(service.host, "pshost-toolkitversion")))
@@ -416,7 +416,7 @@ function getHostnames(record)
 	if (hasField(record, type + "-hostname"))
 		hostnames.push(record[type + "-hostname"]);
 	for (var i = 0 ; i < addresses.length ; i++)
-		hostnames.push(getHostnameFromURI(addresses[i]));
+		hostnames.push(getHostnameFromURL(addresses[i]));
 	hostnames = hostnames.sort(function(a, b) { return compareHostnames(a, b); }).unique();
 	return hostnames;
 }

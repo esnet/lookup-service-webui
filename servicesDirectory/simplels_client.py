@@ -32,7 +32,7 @@ def query(query = "", hosts = _ls_hosts):
         query = hash_to_query(query)
     except:
         pass
-    json = []
+    records = []
     urls = [(host["locator"] + "?" + query) for host in _ls_hosts]
     if _concurrency_enabled:
         with concurrent.futures.ThreadPoolExecutor(max_workers = _MAX_CONCURRENT_REQUESTS) as pool:
@@ -42,7 +42,7 @@ def query(query = "", hosts = _ls_hosts):
                 ls_host = response.url.split("lookup/records")[0]
                 for record in response.json():
                     record["ls-host"] = ls_host
-                    json.append(record)
+                    records.append(record)
     else:
         for url in urls:
             response = get_url(url)
@@ -52,8 +52,8 @@ def query(query = "", hosts = _ls_hosts):
             for record in response.json():
                 if record.get("uri", "") and record.get("type", [ False ])[0]:
                     record["ls-host"] = ls_host
-                    json.append(record)
-    return json
+                    records.append(record)
+    return records
     
 def hash_to_query(query_hash = {}):
     query = urllib.urlencode(sorted(query_hash.items(), key = lambda v: v[0]), True)
@@ -68,5 +68,4 @@ def get_url(url):
         return requests.get(url)
     except:
         pass
-    
     return None

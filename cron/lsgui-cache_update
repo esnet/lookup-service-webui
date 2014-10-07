@@ -1,0 +1,1 @@
+0,30 * * * * root wget -T 1800 -o /tmp/lswebui-cache_update.log -O /tmp/lswebui-cache_update.out "http://localhost/ServicesDirectory/records?filter=default&geocode=false&remap=true&cached=false"

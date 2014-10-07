@@ -45,7 +45,6 @@ WSGIProcessGroup lswebui
 
 <Directory /opt/perfsonar_ps/django/ServicesDirectory/>
 <Files wsgi.py>
-AuthType None
 Order deny,allow
 Allow from all
 </Files>

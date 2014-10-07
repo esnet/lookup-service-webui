@@ -65,7 +65,7 @@ def get_communities():
             communities.add(community)
     return communities
 
-def query_ls(query = "", cached_records=True):
+def query_ls(query = "", cached_records = True):
     try:
         query = simplels_client.hash_to_query(query)
     except:

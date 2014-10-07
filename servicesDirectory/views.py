@@ -59,7 +59,7 @@ def records(request):
             context = { "records": records, "pretty": True }
         else:
             context = { "records": records, "pretty": False }
-        response = render(request, 'servicesDirectory/query.html', context)
+        response = render(request, 'servicesDirectory/records.html', context)
     else:
         content = ""
         if pretty_records or record_format in ("pretty",):
