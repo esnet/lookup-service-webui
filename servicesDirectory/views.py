@@ -52,7 +52,7 @@ def records(request):
     if record_filter in ("default",):
         records = models.filter_default(records)
     if record_sort not in ("none",):
-        records = sorted(records, key = lambda v: v.get(record_sort, ""))
+        records = sorted(records, key=lambda v: v.get(record_sort, ""))
     if record_format in ("html",):
         context = {}
         if pretty_records:
@@ -63,10 +63,10 @@ def records(request):
     else:
         content = ""
         if pretty_records or record_format in ("pretty",):
-            content = json.dumps(records, sort_keys = True, indent = 4)
+            content = json.dumps(records, sort_keys=True, indent=4)
         else:
             content = json.dumps(records)
-        response = HttpResponse(content, content_type = "application/json")
+        response = HttpResponse(content, content_type="application/json")
     if compress_records:
         gzip = GZipMiddleware()
         return gzip.process_response(request, response)

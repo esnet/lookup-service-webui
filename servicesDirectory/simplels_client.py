@@ -16,7 +16,7 @@ _LS_HINTS = "http://ps-west.es.net:8096/lookup/activehosts.json"
 
 def get_hosts():
     hosts = requests.get(_LS_HINTS).json().get("hosts", [])
-    hosts = sorted(hosts, key = lambda v: v.get("priority", ""), reverse=True)
+    hosts = sorted(hosts, key=lambda v: v.get("priority", ""), reverse=True)
     for host in hosts:
         if host.get("status", "") != "alive" or not host.get("locator", ""):
             hosts.remove(host)
@@ -27,7 +27,7 @@ def refresh_hosts():
 
 _ls_hosts = get_hosts()
 
-def query(query = "", hosts = _ls_hosts):
+def query(query="", hosts=_ls_hosts):
     try:
         query = hash_to_query(query)
     except:
@@ -35,7 +35,7 @@ def query(query = "", hosts = _ls_hosts):
     records = []
     urls = [(host["locator"] + "?" + query) for host in _ls_hosts]
     if _concurrency_enabled:
-        with concurrent.futures.ThreadPoolExecutor(max_workers = _MAX_CONCURRENT_REQUESTS) as pool:
+        with concurrent.futures.ThreadPoolExecutor(max_workers=_MAX_CONCURRENT_REQUESTS) as pool:
             for response in pool.map(get_url, urls):
                 if response is None:
                     continue
@@ -55,11 +55,11 @@ def query(query = "", hosts = _ls_hosts):
                     records.append(record)
     return records
     
-def hash_to_query(query_hash = {}):
-    query = urllib.urlencode(sorted(query_hash.items(), key = lambda v: v[0]), True)
+def hash_to_query(query_hash={}):
+    query = urllib.urlencode(sorted(query_hash.items(), key=lambda v: v[0]), True)
     return query
 
-def query_to_hash(query = ""):
+def query_to_hash(query=""):
     query_hash = parse_qs(query)
     return query_hash
 

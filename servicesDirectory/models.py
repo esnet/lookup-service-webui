@@ -65,7 +65,7 @@ def get_communities():
             communities.add(community)
     return communities
 
-def query_ls(query = "", cached_records = True):
+def query_ls(query="", cached_records=True):
     try:
         query = simplels_client.hash_to_query(query)
     except:
@@ -85,7 +85,7 @@ def query_ls(query = "", cached_records = True):
 ##############################
 # Record Caching
 ##############################
-def cache_set_records(cache_key, records, timeout = config.LS_CACHE_TIMEOUT):
+def cache_set_records(cache_key, records, timeout=config.LS_CACHE_TIMEOUT):
     max_records = config.SINGLE_CACHE_MAX_RECORDS
     if max_records < 1:
         max_records = 512
@@ -166,7 +166,7 @@ def filter_default(records):
 def geocode_records(records):
     if config.GEOCODE and _geocoder_enabled:
         if _concurrency_enabled:
-            with concurrent.futures.ThreadPoolExecutor(max_workers = _MAX_CONCURRENT_REQUESTS) as pool:
+            with concurrent.futures.ThreadPoolExecutor(max_workers=_MAX_CONCURRENT_REQUESTS) as pool:
                 list(pool.map(geocode_record, records))
         else:
             for record in records:
@@ -288,7 +288,7 @@ def remap_records(records):
         if _concurrency_enabled:
             # with concurrent.futures.ThreadPoolExecutor(max_workers = _MAX_CONCURRENT_REQUESTS) as pool:
             #    list(pool.map(remap_interface_helper, interfaces))
-            with concurrent.futures.ThreadPoolExecutor(max_workers = _MAX_CONCURRENT_REQUESTS) as pool:
+            with concurrent.futures.ThreadPoolExecutor(max_workers=_MAX_CONCURRENT_REQUESTS) as pool:
                 list(pool.map(remap_service_helper, services))
         else:
             # for interface in interfaces:
@@ -297,7 +297,7 @@ def remap_records(records):
                 remap_service_helper(service)
     return records
 
-def remap_interface(interface, hosts, interfaces = [], services = []):
+def remap_interface(interface, hosts, interfaces=[], services=[]):
     host = get_host(interface, hosts, interfaces, services)
     # hostname = get_hostname(interface, host)
     # if hostname:
@@ -319,7 +319,7 @@ def remap_interface(interface, hosts, interfaces = [], services = []):
         else:
             host["host-net-interfaces"] = [ interface["uri"] ]
 
-def remap_service(service, hosts, interfaces = [], services = []):
+def remap_service(service, hosts, interfaces=[], services=[]):
     host = get_host(service, hosts, interfaces, services)
     hostname = get_hostname(service, host)
     if hostname:
@@ -341,7 +341,7 @@ def remap_service(service, hosts, interfaces = [], services = []):
         else:
             service["service-host"] = [ host["uri"] ]
 
-def get_host(record, hosts, interfaces = [], services = [], depth = 1):
+def get_host(record, hosts, interfaces=[], services=[], depth=1):
     record_type = record["type"][0]
     if record_type == "host":
         return record
@@ -402,13 +402,13 @@ def get_host(record, hosts, interfaces = [], services = [], depth = 1):
                             return host
     return None
 
-def get_hostname(record, host, depth = 1):
+def get_hostname(record, host, depth=1):
     record_type = record["type"][0]
     hostname = record.get(record_type + "-hostname", "")
     if hostname:
         return hostname
-    pattern = re.compile(r"(-v6|-ip6|-ipv6)", flags = re.IGNORECASE)
-    hostnames = sorted(get_hostnames(record), key = lambda v: re.sub(pattern, "~", v))
+    pattern = re.compile(r"(-v6|-ip6|-ipv6)", flags=re.IGNORECASE)
+    hostnames = sorted(get_hostnames(record), key=lambda v: re.sub(pattern, "~", v))
     for hostname in hostnames:
         if not is_ip_address(hostname):
             return hostname

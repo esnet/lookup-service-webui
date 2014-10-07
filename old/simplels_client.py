@@ -21,7 +21,7 @@ def refresh_hosts():
 
 _ls_hosts = get_hosts()
 
-def query(query = "", hosts = _ls_hosts):
+def query(query="", hosts=_ls_hosts):
     try:
         query = hash_to_query(query)
     except AttributeError:
@@ -32,7 +32,7 @@ def query(query = "", hosts = _ls_hosts):
          json += response.json()
     return json
 
-def hash_to_query(hash = {}):
+def hash_to_query(hash={}):
     query = ""
     for k, v in hash.items():
         query += k + "=" + v + "&"
@@ -40,7 +40,7 @@ def hash_to_query(hash = {}):
         query = "?" + query[:-1]
     return query
 
-def query_to_hash(query = ""):
+def query_to_hash(query=""):
     hash = {}
     if query[0] == "?":
         query = query[1:]
