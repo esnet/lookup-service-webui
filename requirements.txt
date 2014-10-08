@@ -1,9 +1,9 @@
-Django==1.6.2
+Django==1.6.7
 IPy==0.81
 YURL==0.12
-dnspython==1.11.1
-futures==2.1.6
-pygeocoder==1.2.1.1
+dnspython==1.12.0
+futures==2.2.0
+pygeocoder==1.2.5
 python-memcached==1.53
-requests==2.2.1
+requests==2.4.3
 wsgiref==0.1.2

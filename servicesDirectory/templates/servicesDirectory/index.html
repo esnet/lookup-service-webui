@@ -114,9 +114,24 @@
 						<div class="accordion-body collapse" id="collapse-communities">
 							<div class="content">
 								<div class="info muted">Select one or more communities to refine results.</div>
-								<div class="filter"><select multiple="true" size="6" id="communities" class="fill-horizontal"></select></div>
+								<div class="filter"><select class="fill-horizontal" multiple="true" size="6" id="communities"></select></div>
 								<button type="button" class="btn btn-primary" id="communities-update">Update</button>
 								<button type="button" class="btn" id="communities-reset">Reset</button>
+							</div>
+						</div>
+					</div>
+					<div class="accordion-group content-group" id="developer-section">
+						<div class="accordion-heading">
+							<a class="accordion-toggle content-toggle" data-toggle="collapse" href="#collapse-developer">
+								<h4 class="content-header">Developer</h4>
+							</a>
+						</div>
+						<div class="accordion-body collapse" id="collapse-developer">
+							<div class="content">
+								<div><strong>Record Statistics</strong></div>
+								<div><strong>Raw Output</strong></div>
+								<textarea class="fill-horizontal" id="json"></textarea>
+								<button type="button" class="btn btn-small" id="search-reset">Generate Json</button>
 							</div>
 						</div>
 					</div>

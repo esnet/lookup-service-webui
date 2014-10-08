@@ -12,6 +12,8 @@ that later delegates to the Django one. For example, you could introduce WSGI
 middleware here, or combine a Django application with an application of another
 framework.
 
+For more information on this file, see
+https://docs.djangoproject.com/en/1.6/howto/deployment/wsgi/
 """
 import os
 
@@ -31,23 +33,21 @@ application = get_wsgi_application()
 # from helloworld.wsgi import HelloWorldApplication
 # application = HelloWorldApplication(application)
 
-
 """
-Add the following to your apache config:
+Add the following to your Apache/httpd config:
 
-WSGIScriptAlias /ServicesDirectory /opt/perfsonar_ps/django/ServicesDirectory/wsgi.py/ServicesDirectory
-WSGIPythonPath /opt/perfsonar_ps/django/ServicesDirectory
+WSGIScriptAlias /ServicesDirectory /opt/lookup-service/django/ServicesDirectory/wsgi.py/ServicesDirectory
+WSGIPythonPath /opt/lookup-service/django/ServicesDirectory
 WSGIPassAuthorization Off
 
-WSGISocketPrefix /var/lib/perfsonar_ps/django/ServicesDirectory
-WSGIDaemonProcess lswebui python-path=/opt/perfsonar_ps/django/ServicesDirectory processes=2 threads=8
+WSGISocketPrefix /var/lib/lookup-service/django/ServicesDirectory
+WSGIDaemonProcess lswebui python-path=/opt/lookup-service/django/ServicesDirectory processes=2 threads=8
 WSGIProcessGroup lswebui
 
-<Directory /opt/perfsonar_ps/django/ServicesDirectory/>
+<Directory /opt/lookup-service/django/ServicesDirectory/>
 <Files wsgi.py>
 Order deny,allow
 Allow from all
 </Files>
 </Directory>
 """
-

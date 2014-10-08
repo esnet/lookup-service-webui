@@ -1,0 +1,9 @@
+include README
+include LICENSE
+recursive-include config *
+recursive-include cron *
+recursive-include servicesDirectory *
+recursive-include src *
+recursive-exclude * __pycache__
+recursive-exclude * *.py[co]
+recursive-exclude * .DS_Store
