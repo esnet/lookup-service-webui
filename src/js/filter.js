@@ -290,6 +290,7 @@ var filterMap = {
 			$.merge(fields, filterMap["community"].getFields(record));
 			$.merge(fields, filterMap["hostname"].getFields(record));
 			$.merge(fields, filterMap["location"].getFields(record));
+			$.merge(fields, filterMap["name"].getFields(record));
 			$.merge(fields, filterMap["system"].getFields(record));
 			$.merge(fields, filterMap["type"].getFields(record));
 			return fields;
@@ -408,8 +409,8 @@ function getFilteredRecords(services, filter, matchedOnly)
 		var filtered = [];
 		for (var i = 0 ; i < matched.length ; i++)
 		{
-		$.merge(filtered, getLinkedRecords(matched[i]));
-		filtered.push(matched[i]);
+			$.merge(filtered, getLinkedRecords(matched[i]));
+			filtered.push(matched[i]);
 		}
 		return filtered.unique();
 	}
@@ -424,7 +425,7 @@ function getLinkedRecords(service)
 	{
 		var host = service.host;
 		linked.push(host);
-		if (host.adminstrators)
+		if (host.administrators)
 			$.merge(linked, host.administrators);
 		if (host.interfaces)
 			$.merge(linked, host.interfaces);

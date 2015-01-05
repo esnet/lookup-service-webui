@@ -409,20 +409,20 @@ function getAddressType(address)
 		return "URL";
 }
 
-function getHostFromURL(url)
+function getHostFromURI(uri)
 {
-	var host = new URI(url).host();
+	var host = new URI(uri).host();
 	if (host)
 		return host;
-	return url;
+	return uri;
 }
 
-function getHostnameFromURL(url)
+function getHostnameFromURI(uri)
 {
-	var hostname = new URI(url).hostname();
+	var hostname = new URI(uri).hostname();
 	if (hostname)
 		return hostname;
-	return url;
+	return uri;
 }
 
 function getLinks(addresses, prefix, suffix)

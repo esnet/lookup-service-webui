@@ -509,6 +509,8 @@ function showServiceInfo(service)
 	$("#service-location").html(locationString + "<br><div class=\"muted\">" + latlngString + "</div");
 	if (hasField(service, "group-communities"))
 		$("#service-communities").html(service["group-communities"].sort().join("<br>"));
+	if (hasField(service, "service-version"))
+		$("#service-version").html(service["service-version"][0]);
 	showCustomInfo(service);
 }
 
@@ -527,7 +529,7 @@ function showCustomInfo(service)
 			var commandLine = getCommandLine(service, custom["formats"]);
 			$("#service-custom").html(commandLine.join("<br>"));
 		}
-		else if (custom["type"] == "ma")
+		else if ((custom["type"] == "ma") || (custom["type"] == "mp"))
 		{
 			var links = getLinks(getAddresses(service));
 			$("#service-custom").html(links.join("<br>"));
@@ -549,6 +551,7 @@ function clearServiceInfo()
 	$("#service-location").empty();
 	$("#service-locator").empty();
 	$("#service-communities").empty();
+	$("#service-version").empty();
 	$("#service-custom").empty();
 }
 
@@ -868,7 +871,12 @@ function zoomToFitMarkers()
 	for (var latlng in markers)
 	{
 		if (markers[latlng].visible)
-			bounds.extend(markers[latlng].getPosition());
+		{
+			latlng = markers[latlng].getPosition();
+			// Maximum Latitude on GMaps projection
+			if (Math.abs(latlng.lat()) <= 85)
+				bounds.extend(latlng);
+		}
 	}
 	if (!bounds.isEmpty())
 		map.gmap("get", "map").fitBounds(bounds);

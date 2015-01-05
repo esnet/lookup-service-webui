@@ -118,6 +118,24 @@ var serviceMap = {
 			"type": "ma"
 		},
 		"action": "Query"
+	},
+	"mp-bwctl": {
+		"title": "BWCTL MP",
+		"defaults": [ "bwctl measurement point" ],
+		"custom": {
+			"title": "Access URLs",
+			"type": "mp"
+		},
+		"action": "Query"
+	},
+	"mp-owamp": {
+		"title": "OWAMP MP",
+		"defaults": [ "owamp measurement point" ],
+		"custom": {
+			"title": "Access URLs",
+			"type": "mp"
+		},
+		"action": "Query"
 	}
 };
 
@@ -354,7 +372,7 @@ function getCommandLine(service, formats)
 	var locators = getAddresses(service);
 	var addresses = [];
 	for (var i = 0 ; i < locators.length ; i++)
-		addresses.push(getHostFromURL(locators[i]));
+		addresses.push(getHostFromURI(locators[i]));
 	addresses.sort(function(a, b) { return compareHostnames(a, b); });
 	var toolkitVersion = "";
 	if ((service.host) && (hasField(service.host, "pshost-toolkitversion")))
@@ -416,7 +434,7 @@ function getHostnames(record)
 	if (hasField(record, type + "-hostname"))
 		hostnames.push(record[type + "-hostname"]);
 	for (var i = 0 ; i < addresses.length ; i++)
-		hostnames.push(getHostnameFromURL(addresses[i]));
+		hostnames.push(getHostnameFromURI(addresses[i]));
 	hostnames = hostnames.sort(function(a, b) { return compareHostnames(a, b); }).unique();
 	return hostnames;
 }
@@ -428,10 +446,9 @@ function getLatLng(record)
 	{
 		var lat = parseFloat(record["location-latitude"][0]);
 		var lng = parseFloat(record["location-longitude"][0]);
-		latlng = new google.maps.LatLng(lat, lng);
-		if (!latlng.lat() || !latlng.lng())
-			latlng = null;
-		if (record.host)
+		if (!isNaN(lat) && !isNaN(lng))
+			latlng = new google.maps.LatLng(lat, lng);
+		if (!latlng && record.host)
 			latlng = getLatLng(record.host);
 	}
 	return latlng;
@@ -444,7 +461,8 @@ function getLatLngString(record)
 	{
 		var lat = (parseFloat(record["location-latitude"][0])).toFixed(4);
 		var lng = (parseFloat(record["location-longitude"][0])).toFixed(4);
-		latlngString += "(" + lat + ", " + lng + ")";
+		if (!isNaN(lat) && !isNaN(lng))
+			latlngString += "(" + lat + ", " + lng + ")";
 	}
 	return latlngString;
 }

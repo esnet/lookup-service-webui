@@ -11,5 +11,8 @@
 # Python egg metadata, regenerated from source files by setuptools.
 /*.egg-info
 
+# Django database.
+db.sqlite3
+
 # OSX folder attributes.
 .DS_Store
