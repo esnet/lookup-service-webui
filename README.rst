@@ -1,8 +1,8 @@
 ==================
-Services Directory
+Lookup Service WebUI
 ==================
 
-Services Directory (aka. Lookup Service Web UI) is a Django based web application that presents data from the Simple Lookup Service (sLS) visually in a service oriented fashion.
+Lookup Service WebUI (aka. Services Directory) is a Django based web application that presents data from the Simple Lookup Service (sLS) visually in a service oriented fashion.
 
 To get started simply perform the following steps after cloning the project:
 

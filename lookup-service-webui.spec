@@ -1,5 +1,5 @@
 %define _unpackaged_files_terminate_build 1
-%define install_base /opt/lookup-service/django/services-directory
+%define install_base /opt/lookup-service/django/lookup-service-webui
 
 %define apacheconf apache-lswebui.conf
 
@@ -7,7 +7,7 @@
 
 %define relnum 1
 
-Name:			Services Directory
+Name:			Lookup Service WebUI
 Version:		1.0
 Release:		%{relnum}.%{dist}
 Summary:		Lookup Service WebUI
@@ -28,7 +28,7 @@ Requires:		sqlite
 Requires:		sqlite-devel
 
 %description
-Services Directory (aka. Lookup Service Web UI) is a Django based web
+Lookup Service WebUI (aka. Services Directory) is a Django based web
 application that presents data from the Simple Lookup Service (sLS) visually
 in a service oriented fashion.
 

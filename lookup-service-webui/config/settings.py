@@ -18,7 +18,7 @@ DEBUG = False
 TEMPLATE_DEBUG = DEBUG
 
 # Make this unique, and don't share it with anybody.
-SECRET_KEY = 'qav4me)d)n1h2nig-!eb16m6&zzjepvzsm@zch7$eu@8ky#77#'
+SECRET_KEY = 'ez(3ts5_e&b!@+pr$+zv6^un1j8gpw-9juu$-+a#nu7sbg_9xt'
 
 ADMINS = (
     # ('Your Name', 'your_email@example.com'),
@@ -46,7 +46,7 @@ INSTALLED_APPS = (
 )
 
 MIDDLEWARE_CLASSES = (
-    'django.middleware.cache.UpdateCacheMiddleware',
+    #'django.middleware.cache.UpdateCacheMiddleware',
     # 'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     # 'django.middleware.csrf.CsrfViewMiddleware',
@@ -54,7 +54,7 @@ MIDDLEWARE_CLASSES = (
     # 'django.contrib.messages.middleware.MessageMiddleware',
     # Uncomment the next line for simple clickjacking protection:
     # 'django.middleware.clickjacking.XFrameOptionsMiddleware',
-    'django.middleware.cache.FetchFromCacheMiddleware',
+    #'django.middleware.cache.FetchFromCacheMiddleware',
 )
 
 # List of callables that know how to import templates from various sources.
@@ -94,7 +94,7 @@ DATABASES = {
 CACHES = {
     'default': {
         'BACKEND': 'django.core.cache.backends.memcached.MemcachedCache',
-        'LOCATION': '127.0.0.1:11211',
+        'LOCATION': 'unix:/tmp/memcached.sock',
     }
 }
 CACHE_MIDDLEWARE_KEY_PREFIX = ''
@@ -134,11 +134,11 @@ USE_TZ = True
 # Don't put anything in this directory yourself; store your static files
 # in apps' "static/" subdirectories and in STATICFILES_DIRS.
 # Example: "/var/www/example.com/static/"
-STATIC_ROOT = '/var/www/html/static/ServicesDirectory/'
+STATIC_ROOT = '/Applications/MAMP/htdocs/static'
 
 # URL prefix for static files.
 # Example: "http://example.com/static/", "http://static.example.com/"
-STATIC_URL = '/static/ServicesDirectory/'
+STATIC_URL = 'http://localhost:8888/static/'
 
 # Additional locations of static files
 STATICFILES_DIRS = (
