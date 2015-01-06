@@ -17,8 +17,8 @@ setup(
     data_files=[
         ("", ["LICENSE"]),
         ("", ["README.rst"]),
-        ("apache", ["apache-lswebui.conf"]),
-        ("cron", ["cron-lswebui-cache_update"])
+        ("apache", ["apache/apache-lswebui.conf"]),
+        ("cron", ["cron/cron-lswebui-cache_update"])
     ],
     install_requires=[
         "Django==1.6.7",
