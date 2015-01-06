@@ -7,11 +7,11 @@ setup(
     name="lookup_service_webui",
     version="1.0",
     description="A Web UI for the Simple Lookup Service",
-    long_description=open("README").read(),
+    long_description=open("README.rst").read(),
     author="Andrew Sides",
     author_email="asides@es.net",
     url="https://github.com/esnet/lookup-service-webui",
-    license="BSD",
+    license="Distributable, see LICENSE",
     packages=find_packages(),
     include_package_data=True,
     install_requires=[

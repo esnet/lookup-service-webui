@@ -1,7 +1,9 @@
-include README
+include README.rst
 include LICENSE
 recursive-include config *
 recursive-include cron *
+recursive-include lib *
+recursive-include old *
 recursive-include servicesDirectory *
 recursive-include src *
 recursive-exclude * __pycache__
