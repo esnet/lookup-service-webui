@@ -11,9 +11,15 @@ setup(
     author="Andrew Sides",
     author_email="asides@es.net",
     url="https://github.com/esnet/lookup-service-webui",
-    license="Distributable, see LICENSE",
+    license=open("LICENSE").read(),
     packages=find_packages(),
     include_package_data=True,
+    data_files=[
+        ("", ["LICENSE"]),
+        ("", ["README.rst"]),
+        ("apache", ["apache-lswebui.conf"]),
+        ("cron", ["cron-lswebui-cache_update"])
+    ],
     install_requires=[
         "Django==1.6.7",
         "IPy",
