@@ -16,6 +16,7 @@
 		#left-pane { padding-bottom: 10px; }
 		#error, #loading, #noscript { top: 35%; }
 		#right-pane { padding-bottom: 10px; }
+		#raw-output { word-break: break-all; }
 		#search { margin-top: 5px; width: 95% }
 		.map-canvas { height: 600px; }
 		.map-canvas img { max-width: none; }
@@ -128,10 +129,20 @@
 						</div>
 						<div class="accordion-body collapse" id="collapse-developer">
 							<div class="content">
-								<div><strong>Record Statistics</strong></div>
-								<div><strong>Raw Output</strong></div>
-								<textarea class="fill-horizontal" id="json"></textarea>
-								<button type="button" class="btn btn-small" id="search-reset">Generate Json</button>
+								<div><strong>Lookup Service Statistics</strong></div>
+								<div class="info"><table class="table table-bordered table-condensed" id="stats-table">
+									<thead><tr>
+										<th id="stats-source-header"></th>
+										<th id="stats-services-header">Services</th>
+										<th id="stats-hosts-header">Hosts</th>
+										<th id="stats-interfaces-header">Interfaces</th>
+										<th id="stats-persons-header">Persons</th>
+									</tr></thead>
+									<tbody></tbody>
+								</table></div>
+								<div><strong>Raw Record Output</strong></div>
+								<div><textarea class="fill-horizontal info" readonly rows="3" id="raw-output"></textarea></div>
+								<button type="button" class="btn btn-small" id="raw-output-update">Generate JSON</button>
 							</div>
 						</div>
 					</div>
@@ -147,22 +158,23 @@
 						</div>
 						<div class="accordion-body collapse in" id="collapse-service-info">
 							<div class="content">
-								<table class="table table-bordered">
-									<tr>
+								<table class="table table-bordered" id="service-table">
+									<thead><tr>
 										<th id="service-name-header">Service Name</th>
 										<th id="service-locator-header">Addresses</th>
 										<th id="service-location-header">Geographic Location</th>
 										<th id="service-communities-header">Communities</th>
 										<th id="service-version-header">Version</th>
 										<th id="service-custom-header">Custom</th>
-									</tr><tr>
+									</tr></thead>
+									<tbody><tr>
 										<td><div class="table-info" id="service-name"></div></td>
 										<td><div class="table-info" id="service-locator"></div></td>
 										<td><div class="table-info" id="service-location"></div></td>
 										<td><div class="table-info" id="service-communities"></div></td>
 										<td><div class="table-info" id="service-version"></div></td>
 										<td><div class="table-info" id="service-custom"></div></td>
-									</tr>
+									</tr></tbody>
 								</table>
 							</div>
 						</div>
@@ -175,20 +187,21 @@
 						</div>
 						<div class="accordion-body collapse in" id="collapse-host-info">
 							<div class="content">
-								<table class="table table-bordered">
-									<tr>
+								<table class="table table-bordered" id="host-table">
+									<thead><tr>
 										<th id="host-name-header">Host Name</th>
 										<th id="host-hardware-header">Hardware</th>
 										<th id="host-os-header">System Info</th>
 										<th id="host-version-header">Toolkit Version</th>
 										<th id="host-communities-header">Communities</th>
-									</tr><tr>
+									</tr></thead>
+									<tbody><tr>
 										<td><div class="table-info" id="host-name"></div></td>
 										<td><div class="table-info" id="host-hardware"></div></td>
 										<td><div class="table-info" id="host-os"></div></td>
 										<td><div class="table-info" id="host-version"></div></td>
 										<td><div class="table-info" id="host-communities"></div></td>
-									</tr>
+									</tr></tbody>
 								</table>
 							</div>
 						</div>
@@ -307,6 +320,7 @@
 {% block assets_post %}
 	<script type="text/javascript" src="{% static "js/jquery.ui.min.js" %}"></script>
 	<script type="text/javascript" src="{% static "js/jquery.fancytree.min.js" %}"></script>
+	<script type="text/javascript" src="{% static "js/jquery.json.min.js" %}"></script>
 	<script type="text/javascript" src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDM9EqM1k7MiJnslQpropqmvUbwXPhEI1U&sensor=false"></script>
 	<script type="text/javascript" src="{% static "js/jquery.ui.map.min.js" %}"></script>
 	<script type="text/javascript" src="{% static "js/jquery.uri.min.js" %}"></script>

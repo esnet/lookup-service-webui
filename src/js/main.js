@@ -80,6 +80,13 @@ $("#communities-reset").click(function(event) {
 	}
 });
 
+$("#raw-output-update").click(function(event) {
+	if (inputLocks.length === 0)
+	{
+		rawOutputUpdate();
+	}
+});
+
 $("#search-update").click(function(event) {
 	if (inputLocks.length === 0)
 	{
@@ -183,12 +190,14 @@ function initialize(records)
 		updateMap();
 		updateTree();
 		updateStatus();
+		showStats();
 		hashChange();
 		hideLoading();
 		inputLocks = [];
 	}
 	catch (error)
 	{
+		console.log(error)
 		showError();
 	}
 }
@@ -417,6 +426,11 @@ function hashChange()
 	inputLocks.splice(lock, 1);
 }
 
+function rawOutputUpdate()
+{
+	showRawOutput(activeService);
+}
+
 function infoWindowActivate(service)
 {
 	showServiceInfo(service);
@@ -491,7 +505,7 @@ function searchReset()
 }
 
 ////////////////////////////////////////
-// GUI Display Functions
+// Content Display Functions
 ////////////////////////////////////////
 
 function showServiceInfo(service)
@@ -621,6 +635,75 @@ function clearHostInfo()
 	$("#host-communities").empty();
 }
 
+function showStats()
+{
+	var table = $("#stats-table tbody");
+	var row = null;
+	var totalServices = 0;
+	var totalHosts = 0;
+	var totalInterfaces = 0;
+	var totalPersons = 0;
+	for (var lsHost in recordMap.records)
+	{
+		var types = recordMap.records[lsHost];
+		var services = 0;
+		var hosts = 0;
+		var interfaces = 0;
+		var persons = 0;
+		if (types["service"])
+			services = types["service"].length;
+		if (types["host"])
+			hosts = types["host"].length;
+		if (types["interface"])
+			interfaces = types["interface"].length;
+		if (types["person"])
+			persons = types["person"].length;
+		totalServices += services;
+		totalHosts += hosts;
+		totalInterfaces += interfaces;
+		totalPersons += persons;
+		row = $("<tr>").appendTo(table);
+		$("<td>").text(getHostnameFromURI(lsHost)).appendTo(row);
+		$("<td>").text(services).appendTo(row);
+		$("<td>").text(hosts).appendTo(row);
+		$("<td>").text(interfaces).appendTo(row);
+		$("<td>").text(persons).appendTo(row);
+	}
+	row = $("<tr>").appendTo(table);
+	$("<td>").append($("<strong>").text("Total")).appendTo(row);
+	$("<td>").text(totalServices).appendTo(row);
+	$("<td>").text(totalHosts).appendTo(row);
+	$("<td>").text(totalInterfaces).appendTo(row);
+	$("<td>").text(totalPersons).appendTo(row);
+}
+
+function showRawOutput(service)
+{
+	var rawMap = {};
+	if (service)
+	{
+		records = getLinkedRecords(service);
+		records.push(service);
+		ignoredFields = ["administrators", "host", "hosts", "interfaces", "services"];
+		for (var i = 0 ; i < records.length ; i++)
+		{
+			var record = records[i];
+			var rawRecord = {};
+			for (var key in record)
+			{
+				if ($.inArray(key, ignoredFields) == -1)
+					rawRecord[key] = record[key];
+			}
+			var type = record["type"][0];
+			if (rawMap[type])
+				rawMap[type].push(rawRecord);
+			else
+				rawMap[type] = [ rawRecord ];
+		}
+	}
+	$("#raw-output").val($.toJSON(rawMap));
+}
+
 function showInfoWindow(marker)
 {
 	var sections = [];
@@ -702,7 +785,7 @@ function showInfoWindow(marker)
 }
 
 ////////////////////////////////////////
-// GUI Modal Functions
+// Content Modal Functions
 ////////////////////////////////////////
 
 function showError()
@@ -730,7 +813,7 @@ function hideLoading()
 }
 
 ////////////////////////////////////////
-// GUI Update Functions
+// Content Update Functions
 ////////////////////////////////////////
 
 function updateCommunities()
