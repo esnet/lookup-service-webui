@@ -65,15 +65,17 @@ find %{buildroot} -type f -exec sed -i"" "s|%{buildroot}||g" {} \;
 rm -rf %{buildroot}
 
 %post
-ln -sf /etc/httpd/conf.d/%{apacheconf} apache/%{apacheconf}
+cd %{install_base}
+
+ln -sf /etc/httpd/conf.d/%{apacheconf} %apache/%{apacheconf}
 ln -sf /etc/cron.d/%{crontab} cron/%{crontab}
 
-source %{install_base}/bin/activate
+source bin/activate
 
-PY_PATH=$(python -c "from distutils.sysconfig import get_python_lib print distutils.sysconfig.get_python_lib()")
+PY_PATH=$(python -c "from distutils.sysconfig import get_python_lib; print get_python_lib()")
 SECRET_KEY=$(python -c "import random, re, string; print re.escape(\"\".join([random.SystemRandom().choice(string.digits + string.letters + string.punctuation) for i in range(50)]))")
 
-sed -i"" "s|^SECRET_KEY = .*$|SECRET_KEY = \"$SECRET_KEY\"|" %{install_base}/%{settings}
+sed -i"" "s|^SECRET_KEY = .*$|SECRET_KEY = \"$SECRET_KEY\"|" %{settings}
 sed -i"" "s|^WSGIPythonPath.*$|WSGIPythonPath %{install_base}:$PY_PATH\\
 WSGIPythonHome %{install_base}|" apache/%{apacheconf}
 sed -i"" "s|^WSGIDaemonProcess.*$|WSGIDaemonProcess lswebui python-path=%{install_base}:$PY_PATH processes=2 threads=8|" apache/%{apacheconf}
