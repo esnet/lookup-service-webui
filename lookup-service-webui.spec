@@ -59,15 +59,15 @@ cp -Ra $MOD_PATH/* .
 install -D -m 0644 apache/%{apacheconf} %{buildroot}/etc/httpd/conf.d/%{apacheconf}
 install -D -m 0644 cron/%{crontab} %{buildroot}/etc/cron.d/%{crontab}
 
-ln -sf %{buildroot}/etc/httpd/conf.d/%{apacheconf} apache/%{apacheconf}
-ln -sf %{buildroot}/etc/cron.d/%{crontab} cron/%{crontab}
-
 find %{buildroot} -type f -exec sed -i"" "s|%{buildroot}||g" {} \;
 
 %clean
 rm -rf %{buildroot}
 
 %post
+ln -sf /etc/httpd/conf.d/%{apacheconf} apache/%{apacheconf}
+ln -sf /etc/cron.d/%{crontab} cron/%{crontab}
+
 source %{install_base}/bin/activate
 
 PY_PATH=$(python -c "from distutils.sysconfig import get_python_lib print distutils.sysconfig.get_python_lib()")
