@@ -4,8 +4,7 @@ include lookup-service-webui.spec
 recursive-include apache *
 recursive-include cron *
 recursive-include lib *
-recursive-include lookup-service-webui *
-recursive-include old *
+recursive-include lswebui *
 recursive-include src *
 recursive-exclude * __pycache__
 recursive-exclude * *.py[co]

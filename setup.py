@@ -15,10 +15,10 @@ setup(
     packages=find_packages(),
     include_package_data=True,
     data_files=[
-        ("", ["LICENSE"]),
-        ("", ["README.rst"]),
-        ("apache", ["apache/apache-lswebui.conf"]),
-        ("cron", ["cron/cron-lswebui-cache_update"])
+        ("lswebui", ["LICENSE"]),
+        ("lswebui", ["README.rst"]),
+        ("lswebui/apache", ["apache/apache-lswebui.conf"]),
+        ("lswebui/cron", ["cron/cron-lswebui-cache_update"])
     ],
     install_requires=[
         "Django==1.6.7",

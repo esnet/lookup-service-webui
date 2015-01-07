@@ -49,7 +49,7 @@ source %{buildroot}/%{install_base}/bin/activate
 ./setup.py install
 
 cd %{buildroot}/%{install_base}
-ln -s $(python -c "import os, lookup_service_webui; print os.path.dirname(lookup_service_webui.__file__)")
+cp -Ra $(python -c "import os.path; import lookup_service_webui; print os.path.dirname(lookup_service_webui.__file__))"/* .
 
 %clean
 rm -rf %{buildroot}
