@@ -59,6 +59,9 @@ cp -Ra $MOD_PATH/* .
 install -D -m 0644 apache/%{apacheconf} %{buildroot}/etc/httpd/conf.d/%{apacheconf}
 install -D -m 0644 cron/%{crontab} %{buildroot}/etc/cron.d/%{crontab}
 
+ln -sf %{buildroot}/etc/httpd/conf.d/%{apacheconf} apache/%{apacheconf}
+ln -sf %{buildroot}/etc/cron.d/%{crontab} cron/%{crontab}
+
 find %{buildroot} -type f -exec sed -i"" "s|%{buildroot}||g" {} \;
 
 %clean
