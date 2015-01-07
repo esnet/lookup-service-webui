@@ -7,19 +7,21 @@
 
 %define relnum 1
 
-Name:			Lookup Service WebUI
+Name:			lookup-service-webui
 Version:		1.0
-Release:		%{relnum}.%{dist}
+Release:		%{relnum}%{dist}
 Summary:		Lookup Service WebUI
 License:		Distributable, see LICENSE
 Group:			Applications/Internet
 URL:			http://github.com/esnet/lookup-service-webui
-Source0:		services-directory-%{version}.%{relnum}.tar.gz
+Source0:		%{name}-%{version}.tar.gz
 BuildRoot:		%{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
-BuildArch:		noarch
+BuildRequires:	python
+BuildRequires:	python-pip
+BuildRequires:	python-setuptools
+BuildRequires:	python-virtualenv
 Requires:		httpd
 Requires:		python
-Requires:		python-pip
 Requires:		python-setuptools
 Requires:		python-virtualenv
 Requires:		memcached
@@ -35,7 +37,7 @@ in a service oriented fashion.
 %pre
 
 %prep
-%setup -q -n %{name}-%{version}.%{relnum}
+%setup -q -n %{name}-%{version}
 
 %build
 
@@ -81,4 +83,4 @@ service httpd reload || :
 
 %changelog
 * Mon Jan 6 2015 Andrew Sides <asides@es.net> - 1.0-1
-- Initial Services Directory specfile
+- Initial lookup-service-webui specfile
