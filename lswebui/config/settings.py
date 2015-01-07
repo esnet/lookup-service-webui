@@ -18,7 +18,7 @@ DEBUG = False
 TEMPLATE_DEBUG = DEBUG
 
 # Make this unique, and don't share it with anybody.
-SECRET_KEY = 'ez(3ts5_e&b!@+pr$+zv6^un1j8gpw-9juu$-+a#nu7sbg_9xt'
+SECRET_KEY = 'a'
 
 ADMINS = (
     # ('Your Name', 'your_email@example.com'),
