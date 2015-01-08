@@ -11,7 +11,6 @@ To set up a developer environment::
 $ virtualenv venv
 $ source venv/bin/activate
 $ pip install -r requirements.txt
-$ python manage.py syncdb
 
 To run a test server::
 

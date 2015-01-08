@@ -1,9 +1,11 @@
 %define _unpackaged_files_terminate_build 1
 %define install_base /opt/lookup-service/django/lswebui
 
+%define settings config/settings.py
+%define static	/var/www/html/static/lswebui
+
 %define apacheconf apache-lswebui.conf
 %define crontab cron-lswebui-cache_update
-%define settings config/settings.py
 
 %define relnum 1
 
@@ -28,6 +30,7 @@ Requires:		memcached
 Requires:		mod_wsgi
 Requires:		sqlite
 Requires:		sqlite-devel
+Requires:		wget
 
 %description
 Lookup Service WebUI (aka. Services Directory) is a Django based web
@@ -52,14 +55,16 @@ python setup.py install
 
 cd %{buildroot}/%{install_base}
 
-MOD_PATH=$(python -c "import lswebui; print lswebui.__path__[0]")
+MOD_PATH=$(python -c 'import lswebui; print lswebui.__path__[0]')
 
 cp -Ra $MOD_PATH/* .
 
 install -D -m 0644 apache/%{apacheconf} %{buildroot}/etc/httpd/conf.d/%{apacheconf}
 install -D -m 0644 cron/%{crontab} %{buildroot}/etc/cron.d/%{crontab}
 
-find %{buildroot} -type f -exec sed -i"" "s|%{buildroot}||g" {} \;
+python manage.py collectstatic --noinput
+
+find %{buildroot} -type f -exec sed -i'' 's|%{buildroot}||g' {} \;
 
 %clean
 rm -rf %{buildroot}
@@ -67,20 +72,24 @@ rm -rf %{buildroot}
 %post
 cd %{install_base}
 
+source bin/activate
+
+PY_PATH=$(python -c 'from distutils.sysconfig import get_python_lib; print get_python_lib()')
+SECRET_KEY=$(python -c 'import random, re; print re.escape("".join([random.SystemRandom().choice("abcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*(-_=+)") for i in range(50)]))')
+
+sed -i'' 's|^SECRET_KEY = .*$|SECRET_KEY = "$SECRET_KEY"|' %{settings}
+sed -i'' 's|^WSGIPythonPath.*$|WSGIPythonPath %{install_base}:$PY_PATH\\
+WSGIPythonHome %{install_base}|' /etc/httpd/conf.d/%{apacheconf}
+sed -i'' 's|^WSGIDaemonProcess.*$|WSGIDaemonProcess lswebui python-path=%{install_base}:$PY_PATH processes=2 threads=8|' /etc/httpd/conf.d/%{apacheconf}
+
 ln -sf /etc/httpd/conf.d/%{apacheconf} apache/%{apacheconf}
 ln -sf /etc/cron.d/%{crontab} cron/%{crontab}
 
-source bin/activate
-
-PY_PATH=$(python -c "from distutils.sysconfig import get_python_lib; print get_python_lib()")
-SECRET_KEY=$(python -c "import random, re, string; print re.escape(\"\".join([random.SystemRandom().choice(string.digits + string.letters + string.punctuation) for i in range(50)]))")
-
-sed -i"" "s|^SECRET_KEY = .*$|SECRET_KEY = \"$SECRET_KEY\"|" %{settings}
-sed -i"" "s|^WSGIPythonPath.*$|WSGIPythonPath %{install_base}:$PY_PATH\\
-WSGIPythonHome %{install_base}|" apache/%{apacheconf}
-sed -i"" "s|^WSGIDaemonProcess.*$|WSGIDaemonProcess lswebui python-path=%{install_base}:$PY_PATH processes=2 threads=8|" apache/%{apacheconf}
+chkconfig httpd on
+chkconfig memcached on
 
 service httpd restart || :
+service memcached restart || :
 
 %files
 %defattr(-,root,root,-)
@@ -90,6 +99,7 @@ service httpd restart || :
 %config(noreplace) /etc/cron.d/%{crontab}
 %config(noreplace) %{install_base}/config/settings.py
 %{install_base}/*
+%{static}/*
 
 %changelog
 * Mon Jan 6 2015 Andrew Sides <asides@es.net> - 1.0-1
