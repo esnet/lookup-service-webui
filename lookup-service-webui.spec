@@ -64,7 +64,7 @@ install -D -m 0644 cron/%{crontab} %{buildroot}/etc/cron.d/%{crontab}
 
 mkdir -p %{buildroot}/%{static}
 
-find %{buildroot} -type f -exec sed -i'' 's|%{buildroot}||g' {} \;
+find %{buildroot} -type f -exec sed -i"" "s|%{buildroot}||g" {} \;
 
 %clean
 rm -rf %{buildroot}
@@ -77,10 +77,10 @@ source bin/activate
 PY_PATH=$(python -c 'from distutils.sysconfig import get_python_lib; print get_python_lib()')
 SECRET_KEY=$(python -c 'import random, re; print re.escape("".join([random.SystemRandom().choice("abcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*(-_=+)") for i in range(50)]))')
 
-sed -i'' 's|^SECRET_KEY = .*$|SECRET_KEY = "$SECRET_KEY"|' %{settings}
-sed -i'' 's|^WSGIPythonPath.*$|WSGIPythonPath %{install_base}:$PY_PATH\\
-WSGIPythonHome %{install_base}|' /etc/httpd/conf.d/%{apacheconf}
-sed -i'' 's|^WSGIDaemonProcess.*$|WSGIDaemonProcess lswebui python-path=%{install_base}:$PY_PATH processes=2 threads=8|' /etc/httpd/conf.d/%{apacheconf}
+sed -i"" "s|^SECRET_KEY = .*$|SECRET_KEY = \"$SECRET_KEY\"|" %{settings}
+sed -i"" "s|^WSGIPythonPath.*$|WSGIPythonPath %{install_base}:$PY_PATH\\
+WSGIPythonHome %{install_base}|" /etc/httpd/conf.d/%{apacheconf}
+sed -i"" "s|^WSGIDaemonProcess.*$|WSGIDaemonProcess lswebui python-path=%{install_base}:$PY_PATH processes=2 threads=8|" /etc/httpd/conf.d/%{apacheconf}
 
 ln -sf /etc/httpd/conf.d/%{apacheconf} apache/%{apacheconf}
 ln -sf /etc/cron.d/%{crontab} cron/%{crontab}
@@ -101,7 +101,7 @@ service memcached restart || :
 %config(noreplace) /etc/cron.d/%{crontab}
 %config(noreplace) %{install_base}/config/settings.py
 %{install_base}/*
-%{static}/*
+%{static}/
 
 %changelog
 * Mon Jan 6 2015 Andrew Sides <asides@es.net> - 1.0-1
