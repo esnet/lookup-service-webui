@@ -62,7 +62,7 @@ cp -Ra $MOD_PATH/* .
 install -D -m 0644 apache/%{apacheconf} %{buildroot}/etc/httpd/conf.d/%{apacheconf}
 install -D -m 0644 cron/%{crontab} %{buildroot}/etc/cron.d/%{crontab}
 
-python manage.py collectstatic --noinput
+mkdir -p %{buildroot}/%{static}
 
 find %{buildroot} -type f -exec sed -i'' 's|%{buildroot}||g' {} \;
 
@@ -84,6 +84,8 @@ sed -i'' 's|^WSGIDaemonProcess.*$|WSGIDaemonProcess lswebui python-path=%{instal
 
 ln -sf /etc/httpd/conf.d/%{apacheconf} apache/%{apacheconf}
 ln -sf /etc/cron.d/%{crontab} cron/%{crontab}
+
+python manage.py collectstatic --noinput
 
 chkconfig httpd on
 chkconfig memcached on
