@@ -67,7 +67,7 @@ rm -rf %{buildroot}
 %post
 cd %{install_base}
 
-ln -sf /etc/httpd/conf.d/%{apacheconf} %apache/%{apacheconf}
+ln -sf /etc/httpd/conf.d/%{apacheconf} apache/%{apacheconf}
 ln -sf /etc/cron.d/%{crontab} cron/%{crontab}
 
 source bin/activate
