@@ -111,7 +111,7 @@ CACHES = {
 CACHE_MIDDLEWARE_KEY_PREFIX = ''
 # This value is how long to cache a specific PAGE for now that we can 
 # successfully cache larger objects.
-CACHE_MIDDLEWARE_SECONDS = 1800
+CACHE_MIDDLEWARE_SECONDS = 900
 CACHE_MIDDLEWARE_ALIAS = 'default'
 
 # Internationalization
