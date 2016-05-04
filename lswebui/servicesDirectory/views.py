@@ -33,11 +33,31 @@ def records(request):
     
     geocode_records = query.pop("geocode", ["false"])[0].lower() in ("yes", "true",)
     remap_records = query.pop("remap", ["false"])[0].lower() in ("yes", "true",)
+
+    # Hit the cache from previously generated data.
     
     if config.UI_CACHE_REQUESTS and cached_records:
         records = models.cache_get_records(cache_key)
+
+    # Optional (experimental) check for what appears to be obvious under-reporting 
+    # in the cache. If it looks dubious, then force a reload of lookup service info.
+    # Enable/disable in the config module.
+
+    under_threshold = False
+
+    if records and config.UNDER_REPORT_CHECK:
+        t = dict()
+        for i in records:
+            if not t.has_key(i.get('type')[0]): t[i.get('type')[0]] = 0
+            t[i.get('type')[0]] += 1
+        if t.get('host') < config.UNDER_REPORT_THRESHOLD:
+            under_threshold = True
+            cached_records = False
+
+    # Generate data again if cache empty or if the test forces 
+    # reload.
         
-    if records is None:
+    if (records is None) or (under_threshold is True):
         logger.info("Not using UI cache for %s" % cache_key)
         records = models.query_ls(query=query, cached_records=cached_records)
         if geocode_records:

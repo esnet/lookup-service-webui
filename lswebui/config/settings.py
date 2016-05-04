@@ -93,12 +93,25 @@ DATABASES = {
 # The cache backends to use.
 CACHES = {
     'default': {
-        'BACKEND': 'django.core.cache.backends.memcached.MemcachedCache',
+        # 'BACKEND': 'django.core.cache.backends.memcached.MemcachedCache',
+        # Use this custom class so larger objects can be cached.
+        'BACKEND': 'servicesDirectory.cache.LargeMemcachedCache',
         'LOCATION': '127.0.0.1:11211',
+        # The timeout of the discrete cache entires are being defined 
+        # servicesDirectory.config.LS_CACHE_TIMEOUT (3600).
+        'OPTIONS': {
+            # set to an arbitrarily large value since the caching
+            # makes lots of entries and we don't want too many 
+            # entries to start evicting stuff. single evicted entries
+            # can interfere with returning a whole series of objects.
+            'MAX_ENTRIES': 30000,
+        }
     }
 }
 CACHE_MIDDLEWARE_KEY_PREFIX = ''
-CACHE_MIDDLEWARE_SECONDS = 1800
+# This value is how long to cache a specific PAGE for now that we can 
+# successfully cache larger objects.
+CACHE_MIDDLEWARE_SECONDS = 900
 CACHE_MIDDLEWARE_ALIAS = 'default'
 
 # Internationalization

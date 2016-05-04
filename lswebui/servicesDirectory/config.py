@@ -29,3 +29,8 @@ RDNS = True
 RDNS_CACHE_QUERIES = True
 # Cached reverse DNS query timeout in seconds
 RDNS_CACHE_TIMEOUT = 86400
+
+# Enable testing the cache for "under-reporting" bug where 
+# the cache contains what appears to be a obvious paucity of host info.
+UNDER_REPORT_CHECK = True
+UNDER_REPORT_THRESHOLD = 750
