@@ -5,7 +5,7 @@ from setuptools import find_packages
 
 setup(
     name="lookup-service-webui",
-    version="1.0",
+    version="1.1",
     description="A Web UI for the Simple Lookup Service",
     long_description=open("README.rst").read(),
     author="Andrew Sides",

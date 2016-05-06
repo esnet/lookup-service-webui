@@ -10,7 +10,7 @@
 %define relnum 1
 
 Name:			lookup-service-webui
-Version:		1.0
+Version:		1.1
 Release:		%{relnum}%{dist}
 Summary:		Lookup Service WebUI
 License:		Distributable, see LICENSE
