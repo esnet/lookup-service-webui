@@ -29,7 +29,8 @@ setup(
         "pygeocoder",
         "python-memcached",
         "requests",
-        "wsgiref"
+        "wsgiref",
+        "simplejson"
     ],
     zip_safe=False,
     classifiers=[

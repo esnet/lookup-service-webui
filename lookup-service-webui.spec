@@ -81,7 +81,7 @@ SECRET_KEY=$(python -c 'import random, re; print re.escape("".join([random.Syste
 sed -i"" "s|^SECRET_KEY = .*$|SECRET_KEY = \"$SECRET_KEY\"|" %{settings}
 sed -i"" "s|^WSGIPythonPath.*$|WSGIPythonPath %{install_base}:$PY_PATH\\
 WSGIPythonHome %{install_base}|" /etc/httpd/conf.d/%{apacheconf}
-sed -i"" "s|^WSGIDaemonProcess.*$|WSGIDaemonProcess lswebui python-path=%{install_base}:$PY_PATH processes=2 threads=8|" /etc/httpd/conf.d/%{apacheconf}
+sed -i"" "s|^WSGIDaemonProcess.*$|WSGIDaemonProcess lswebui python-path=%{install_base}:$PY_PATH processes=10 threads=5|" /etc/httpd/conf.d/%{apacheconf}
 
 ln -sf /etc/httpd/conf.d/%{apacheconf} apache/%{apacheconf}
 ln -sf /etc/cron.d/%{crontab} cron/%{crontab}
