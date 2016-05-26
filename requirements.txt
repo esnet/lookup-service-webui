@@ -7,3 +7,4 @@ pygeocoder==1.2.5
 python-memcached==1.53
 requests==2.5.1
 wsgiref==0.1.2
+simplejson

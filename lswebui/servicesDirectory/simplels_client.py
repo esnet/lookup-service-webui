@@ -1,13 +1,16 @@
 from operator import itemgetter
 import urllib
+import logging
 from urlparse import parse_qs
 
 import requests
 
+logger = logging.getLogger(__name__)
+
 _concurrency_enabled=False
 try:
     import concurrent.futures
-    _MAX_CONCURRENT_REQUESTS = 4
+    _MAX_CONCURRENT_REQUESTS = 10
     _concurrency_enabled = True
 except ImportError:
     pass
@@ -40,9 +43,12 @@ def query(query="", hosts=_ls_hosts):
                 if response is None:
                     continue
                 ls_host = response.url.split("lookup/records")[0]
-                for record in response.json():
-                    record["ls-host"] = ls_host
-                    records.append(record)
+                try:
+                    for record in response.json():
+                        record["ls-host"] = ls_host
+                        records.append(record)
+                except:
+                    logger.error("Error contacting %s" % ls_host)
     else:
         for url in urls:
             response = get_url(url)

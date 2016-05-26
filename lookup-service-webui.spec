@@ -10,7 +10,7 @@
 %define relnum 1
 
 Name:			lookup-service-webui
-Version:		1.1
+Version:		1.2
 Release:		%{relnum}%{dist}
 Summary:		Lookup Service WebUI
 License:		Distributable, see LICENSE
@@ -22,11 +22,12 @@ BuildRequires:	python
 BuildRequires:	python-pip
 BuildRequires:	python-setuptools
 BuildRequires:	python-virtualenv
+#need gcc to get c json speed-ups
+BuildRequires:	gcc
 Requires:		httpd
 Requires:		python
 Requires:		python-setuptools
 Requires:		python-virtualenv
-Requires:		memcached
 Requires:		mod_wsgi
 Requires:		sqlite
 Requires:		sqlite-devel
@@ -87,11 +88,8 @@ ln -sf /etc/cron.d/%{crontab} cron/%{crontab}
 
 python manage.py collectstatic --noinput
 
-chkconfig httpd on
-chkconfig memcached on
-
-service httpd restart || :
-service memcached restart || :
+touch /var/log/lswebui.log
+chown apache:apache /var/log/lswebui.log
 
 %files
 %defattr(-,root,root,-)

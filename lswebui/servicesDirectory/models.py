@@ -120,40 +120,40 @@ def cache_get_records(cache_key):
 # Record Filtering
 ##############################
 def filter_default(records):
-    for record in records[:]:
+    for (ri, record) in enumerate(records):
         record_type = record["type"][0]
         if record_type == "host":
             pass
         elif record_type == "interface":
             interface_name = record.get("interface-name", [ "" ])[0]
             if interface_name.startswith("MA:"):
-                records.remove(record)
+                del records[ri]
                 continue
         elif record_type == "person":
             pass
         elif record_type == "service":
             service_type = record.get("service-type", [ "" ])[0]
             if service_type == "phoebus":
-                records.remove(record)
+                del records[ri]
                 continue
             service_locators = record.get("service-locators", [])
             if service_locators:
                 private_addresses = False
-                for locator in service_locators:
+                for (li, locator) in enumerate(service_locators):
                     hostname = get_hostname_from_url(locator)
                     try:
                         ip_form = IP(address)
                         if ip_form.iptype() == "PRIVATE":
-                            record["service-locators"].remove(locator)
+                            del record["service-locators"][li]
                             private_addresses = True
                     except:
                         pass
                 if private_addresses and not record["service-locators"]:
-                    records.remove(record)
+                    del records[ri]
             record.pop("ma-tests", None)
             record.pop("psservice-eventtypes", None)
         else:
-            records.remove(record)
+            del records[ri]
             continue
         record.pop("expires", None)
         record.pop("state", None)

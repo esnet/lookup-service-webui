@@ -1,5 +1,6 @@
-import json
+import simplejson as json
 import logging
+#import cProfile
 
 from django.http import HttpResponse
 from django.middleware.gzip import GZipMiddleware
@@ -18,6 +19,10 @@ def query(request):
     return HttpResponse("There doesn't seem to be anything here yet...", content_type="text/plain")
 
 def records(request):
+    #UNCOMMENT TO PROFILE - 1 of 2
+    #pr = cProfile.Profile()
+    #pr.enable()
+    
     query = request.GET.copy()
     records = None
     
@@ -25,12 +30,11 @@ def records(request):
     record_format = query.pop("format", ["json"])[0].lower()
     record_sort = query.pop("sort", ["none"])[0].lower()
     
+    #Remove deprecated options
     cached_records = query.pop("cached", ["true"])[0].lower() in ("yes", "true",)
     compress_records = query.pop("compress", ["true"])[0].lower() in ("yes", "true",)
     pretty_records = query.pop("pretty", ["false"])[0].lower() in ("yes", "true",)
-    
     cache_key = "UI_REQUEST(%s)" % hash_to_query(query)
-    
     geocode_records = query.pop("geocode", ["false"])[0].lower() in ("yes", "true",)
     remap_records = query.pop("remap", ["false"])[0].lower() in ("yes", "true",)
 
@@ -58,16 +62,16 @@ def records(request):
     # reload.
         
     if (records is None) or (under_threshold is True):
-        logger.info("Not using UI cache for %s" % cache_key)
+        #logger.info("Not using UI cache for %s" % cache_key)
         records = models.query_ls(query=query, cached_records=cached_records)
-        if geocode_records:
-            records = models.geocode_records(records)
-        if remap_records:
-            records = models.remap_records(records)
+        #if geocode_records:
+        #    records = models.geocode_records(records)
+        #if remap_records:
+        #    records = models.remap_records(records)
         if config.UI_CACHE_REQUESTS:
             models.cache_set_records(cache_key, records, config.UI_CACHE_TIMEOUT)
-    else:
-        logger.info("Using UI cache for %s" % cache_key)
+    #else:
+    #    logger.info("Using UI cache for %s" % cache_key)
     
     if record_filter in ("default",):
         records = models.filter_default(records)
@@ -87,8 +91,9 @@ def records(request):
         else:
             content = json.dumps(records)
         response = HttpResponse(content, content_type="application/json")
-    if compress_records:
-        gzip = GZipMiddleware()
-        return gzip.process_response(request, response)
-    else:
-        return response
+    
+    #UNCOMMENT TO PROFILE - 2 of 2
+    #pr.disable()
+    #pr.print_stats()
+
+    return response
