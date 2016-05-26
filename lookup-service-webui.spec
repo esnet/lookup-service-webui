@@ -24,6 +24,8 @@ BuildRequires:	python-setuptools
 BuildRequires:	python-virtualenv
 #need gcc to get c json speed-ups
 BuildRequires:	gcc
+#ditto for cpio and json speed-ups
+BuildRequires:  cpio
 Requires:		httpd
 Requires:		python
 Requires:		python-setuptools
