@@ -1,1 +1,2 @@
-0,30 * * * * root wget -T 1800 -o /tmp/lswebui-cache_update.log -O /tmp/lswebui-cache_update.out "http://localhost/ServicesDirectory/records?filter=default&geocode=false&remap=true&cached=false"
+# off by default because somewhat inconsistent in its effectiveness since browsers set different headers than curl and wget
+#20 */2 * * * root rm -rf /var/cache/httpd/proxy/* && wget -T 300 -o /tmp/lswebui-cache_update.log -O /tmp/lswebui-cache_update.out "http://localhost/ServicesDirectory/records?filter=default&geocode=true&remap=true"
