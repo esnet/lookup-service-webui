@@ -94,7 +94,7 @@ touch /var/log/lswebui.log
 chown apache:apache /var/log/lswebui.log
 
 mkdir -p /var/cache/httpd/proxy
-chown -R apache:apache /var/cache/httpd/proxy
+chown -R apache:apache /var/cache/httpd
 
 %files
 %defattr(-,root,root,-)
