@@ -3,6 +3,23 @@
 ////////////////////////////////////////
 
 var serviceMap = {
+	"pScheduler": {
+		"title": "pScheduler Server",
+		"defaults": [ "pScheduler server" ],
+		"custom": {
+			"title": "Example Command-Line",
+			"type": "cli",
+			"formats": {
+				"iperf3": "pscheduler task throughput --dest \"<address>\"",
+				"traceroute": "pscheduler task trace --dest \"<address>\"",
+				"ping": "pscheduler task rtt --dest \"<address>\"",
+				"owamp": "pscheduler task latency --dest \"<address>\"",
+				"iperf": "pscheduler --tool iperf throughput --dest \"<address>\"",
+				"nuttcp": "pscheduler --tool nuttcp throughput --dest \"<address>\"",
+			}
+		},
+		"action": "Test"
+	},
 	"bwctl": {
 		"title": "BWCTL Server",
 		"defaults": [ "bwctl server" ],
