@@ -7,11 +7,9 @@ export default class GroupCommunities extends React.PureComponent {
 
     constructor(props) {
         super(props);
-        this.state = {
-
-        }
     }
 
+    // filling in dropdown for communities
     getCommunities(props) {
         const communities = props.communities;
         const listCommunities = communities.map((community) =>
@@ -30,6 +28,7 @@ export default class GroupCommunities extends React.PureComponent {
         );
       }
 
+    // rendering communities dropdown
     render() {
         return (
             <Dropdown className="dropdownDiv">

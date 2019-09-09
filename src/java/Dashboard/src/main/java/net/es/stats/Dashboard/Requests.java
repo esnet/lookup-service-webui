@@ -148,7 +148,6 @@ public class Requests {
 
       for (SearchHit interfaceHit : interfaceHits) {
         Map<String, Object> interfaceMap = interfaceHit.getSourceAsMap();
-        System.out.println(interfaceMap);
         interfaceHardware = "NIC #" + interfaceCount + " Speed: " + "\n";
         // Todo speed?
         interfaceHardware +=
@@ -165,13 +164,12 @@ public class Requests {
 
       StringBuilder systemInfo = new StringBuilder();
       String osName = tryGet(sourceMap, "host-os-name");
-      String osKernel = tryGet(sourceMap, "host-os-kernal");
+      String osKernel = tryGet(sourceMap, "host-os-kernel");
       systemInfo.append("Operating System: ");
       systemInfo.append(osName);
       systemInfo.append("\n");
       systemInfo.append("Kernal: ");
       systemInfo.append(osKernel);
-      // todo contact
 
       String toolkitVersion = tryGet(sourceMap, "pshost-toolkitversion");
       String communities = tryGet(sourceMap, "group-communities");
@@ -218,18 +216,15 @@ public class Requests {
       SearchHit[] searchHits = searchResponse.getHits().getHits();
       for (SearchHit searchHit : searchHits) {
         Map<String, Object> searchMap = searchHit.getSourceAsMap();
-//        System.out.println(searchMap);
         Map<String, String> serviceMap = new HashMap<>();
         String serviceType = tryGet(searchMap, "service-type");
         if (type.equalsIgnoreCase("all") || type.equalsIgnoreCase(serviceType)) {
           String name = tryGet(searchMap, "service-name");
-          String address = ""; // todo address
           String communities = tryGet(searchMap, "group-communities");
           String version = tryGet(searchMap, "service-version");
           String locationState = tryGet(searchMap, "location-state");
           String locationCity = tryGet(searchMap, "location-city");
           serviceMap.put("name", name);
-          serviceMap.put("address", address);
           serviceMap.put("communities", communities);
           serviceMap.put("version", version);
           serviceMap.put("type", serviceType);
@@ -274,13 +269,18 @@ public class Requests {
     return mapSet;
   }
 
+  /**
+   * Returns the type of services offered by a given host
+   * @param hosts host for which services need to be found
+   * @return List of services offered by a given host
+   * @throws IOException if error getting results from database
+   */
   @GetMapping("/getTypeOfServiceHost")
   public Set<String> getTypesofServiceHost(@RequestParam String hosts) throws IOException {
     RestHighLevelClient client = initClient();
 
     Set<String> mapSet = new HashSet<>();
     for (String host : hosts.split(",")) {
-      //      System.out.println(host);
       SearchResponse searchResponse = searchServiceResponse(client, host);
       SearchHit[] searchHits = searchResponse.getHits().getHits();
       for (SearchHit searchHit : searchHits) {
@@ -294,23 +294,13 @@ public class Requests {
     return mapSet;
   }
 
-  private SearchResponse getHostServiceTypeResponse(RestHighLevelClient client, String host)
-      throws IOException {
-    SearchRequest searchRequest = new SearchRequest("lookup");
-    SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder();
-    BoolQueryBuilder query = QueryBuilders.boolQuery();
-    query.must(termQuery("service-host.keyword", host));
-    query.must(termQuery("type.keyword", "service"));
-    //    String[] includeFields = new String[] {"service-type"};
-    //    String[] excludeFields = new String[0];
-    searchSourceBuilder.fetchSource();
-    searchSourceBuilder.query(query);
-    searchSourceBuilder.from(0);
-    searchSourceBuilder.size(10000);
-    searchRequest.source(searchSourceBuilder);
-    return client.search(searchRequest, RequestOptions.DEFAULT);
-  }
-
+  /**
+   * Gets the location of all hosts from database
+   * @param client database client from which to get hosts from
+   * @return Search response of query to get location of hosts with fields
+   *         location-longitude, location-latitude, host-name, uri
+   * @throws IOException if unable to get results from database
+   */
   private SearchResponse getLocationResponse(RestHighLevelClient client) throws IOException {
     SearchRequest searchRequest = new SearchRequest("lookup");
     SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder();
@@ -327,6 +317,12 @@ public class Requests {
     return client.search(searchRequest, RequestOptions.DEFAULT);
   }
 
+  /**
+   * Returns all documents from the database (0-10000)
+   * @param client database client from which documents need to be returned
+   * @return Search response of query getting all results from database
+   * @throws IOException if unable to query database
+   */
   private SearchResponse searchResponse(RestHighLevelClient client) throws IOException {
     SearchRequest searchRequest = new SearchRequest("lookup");
     SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder();
@@ -338,16 +334,18 @@ public class Requests {
     return client.search(searchRequest, RequestOptions.DEFAULT);
   }
 
-  private SearchResponse searchTermResponse(RestHighLevelClient client, String term)
-      throws IOException {
-    SearchRequest searchRequest = new SearchRequest("lookup");
-    SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder();
-    searchSourceBuilder.size(10000);
-    searchSourceBuilder.query(termQuery("group-communities.keyword", term));
-    searchRequest.source(searchSourceBuilder);
-    return client.search(searchRequest, RequestOptions.DEFAULT);
-  }
-
+  /**
+   * Returns results of doing a search using the fields
+   *         key, groupCommunity, value of a key
+   * if key is specified, searchTerm can't be empty
+   * @param client database client to be searched
+   * @param key key in the key-value store of the database
+   * @param groupCommunity value of the group community key
+   * @param searchTerm value of the key being searched
+   * @param limit number of results to be returned
+   * @return results of querying the database
+   * @throws IOException if unable to query the database
+   */
   private SearchResponse searchHostResponse(
       RestHighLevelClient client, String key, String groupCommunity, String searchTerm, int limit)
       throws IOException {
@@ -368,6 +366,14 @@ public class Requests {
     return client.search(searchRequest, RequestOptions.DEFAULT);
   }
 
+  /**
+   * Returns the documents that contain the given pSchedulers for the given interfaces
+   * @param client database client to be queried
+   * @param pSchedulers pScheduler-tests that must be available
+   * @param interfaces interfaces to find the pScheduler tests in
+   * @return search response of the query
+   * @throws IOException if unable to query the database
+   */
   private SearchResponse searchInterfaceResponse(
       RestHighLevelClient client, String[] pSchedulers, String[] interfaces) throws IOException {
     BoolQueryBuilder query = QueryBuilders.boolQuery();
@@ -392,6 +398,13 @@ public class Requests {
     return client.search(searchRequest, RequestOptions.DEFAULT);
   }
 
+  /**
+   * Returns all services for a given host URI
+   * @param client database client to be queried
+   * @param host URI of host for which clients are to be found
+   * @return search response of the query
+   * @throws IOException if unable to query database
+   */
   private SearchResponse searchServiceResponse(RestHighLevelClient client, String host)
       throws IOException {
     BoolQueryBuilder query = QueryBuilders.boolQuery();
@@ -405,6 +418,13 @@ public class Requests {
     return client.search(searchRequest, RequestOptions.DEFAULT);
   }
 
+  /**
+   * Gets value of a given key from a map
+   * @param map map from which value needs to be extracted
+   * @param toGet key for which value needs to be gotten
+   * @return String for value of key
+   *         empty String if value doesn't exist in map
+   */
   private String tryGet(Map<String, Object> map, String toGet) {
     try {
       return map.get(toGet).toString().replace("[", "").replace("]", "");
@@ -413,6 +433,10 @@ public class Requests {
     }
   }
 
+  /**
+   * initializing the client
+   * @return returns rest high level client for elasticSearch
+   */
   private RestHighLevelClient initClient() {
     return new RestHighLevelClient(
         RestClient.builder(

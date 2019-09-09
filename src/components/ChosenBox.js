@@ -3,14 +3,7 @@ import React from "react";
 
 export default class ChosenBox extends React.Component {
 
-  constructor(props) {
-    super();
-    this.state = {
-      
-    }
-    
-  }
-
+  // renders selected items box
   render() {
     return (
       <div>
