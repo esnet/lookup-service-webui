@@ -1,0 +1,201 @@
+.navImage{
+  height: 50px;
+  margin: 10px;
+}
+
+.head{
+  /* background-color: #0099ff !important; */
+  background-color: #1D1E2C !important;
+  height:100%;
+  width:100%;
+  text-align: center !important;
+  /* border: 1px solid grey; */
+  /* margin-left: 15px; */
+}
+
+.grid-container {
+  display: grid;
+  grid-template-columns: 30% 40% 30%;
+}
+
+.grid-item {
+  text-align: center;
+}
+
+.grid-item#textbox {
+  background-color:rgb(122, 42, 104);
+  border-radius: 10px;
+  color: white;
+}
+
+.grid-item#textBox2 {
+  background-color:rgb(122, 42, 104);
+  border-radius: 10px;
+  color: white;
+}
+
+button#communitiesdropDown{
+  background-color:#59656F;
+
+}
+
+button#dropdown-basic{
+  background-color:#59656F;
+}
+
+
+.searchBar{
+  border-radius: 5px;
+  border: 0; 
+  height: 40px;
+  width: 25%;
+  text-align: center;
+  margin: 10px;
+  border: 1px solid grey;  
+  display: inline-block;
+}
+
+/* Information tabs */
+.col-sm-2 {
+    margin: 10px;
+}
+
+/* Autofill css settings */
+.LBGII#search-input{
+  border-radius: 5px !important;
+  border: 0 !important; 
+  height: 40px !important;
+  /* width: 100% !important; */
+  min-width: 155px;
+  text-align: center !important;
+  margin: 0%;
+  background-color:rgb(255,255,255) !important;
+  opacity:1 !important;
+  display: inline-block;
+  font-size: 1rem;
+    font-weight: 200;
+    line-height: 1.5;
+}
+.sc-bdVaJa.bPcRQP {
+  display: inline-block;
+  width: 25%;
+  border-radius: 5px !important;
+  margin: 10px !important;
+  border: 1px solid grey;
+}
+
+.cqaNcS {
+  padding: 0px !important;
+}
+
+li.sc-bxivhb.iRISHI {
+  border-radius: 5px !important;
+}
+
+ul.sc-htpNat.cqaNcS{
+  max-height: 200px;
+}
+/* End autofill css settings */
+
+
+.dropdownDiv{
+  display: inline-block;
+  margin: 10px;
+}
+
+.schedulerCheckBox{
+  margin:10px;
+  width: 25px;
+  background-color: #eee;
+}
+
+
+
+.inlineButtons {
+  display: inline-block;
+  margin: 10px;
+}
+
+.inlineSearch{
+  position : relative;
+}
+
+.clearButton {
+  display: inline-block;
+  margin: 10px;
+}
+
+.scrollBox{
+  height: auto;
+  max-height: 200px;
+  overflow-x: hidden;
+}
+
+.map{
+  height:100%;
+  width:100%;
+  text-align: center !important;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.prevNextButton{
+  text-align: right;
+}
+
+.prevButton{
+  border-radius: 0px !important;
+}
+
+.nextButton{
+  border-radius: 0px !important;
+}
+
+.textDiv{
+  display: inline-block;
+}
+
+
+
+.howToBox{
+  text-align:left !important;
+  margin-left: 10px;
+  
+}
+
+.queryResults{
+  display: inline;
+  margin-right: 30px
+}
+
+/* Sidebar css */
+
+.flex-column.nav.nav-pills {
+  border: 1px solid grey;
+  border-radius: 7px;
+  text-align: center;
+  margin-left: 30px;
+}
+
+div#serviceTab {
+  border-top: 1px solid grey;
+  border-bottom: 1px solid grey;
+}
+
+a#informationTabs-tab-first {
+  border-radius: 0px;
+  
+}
+
+a#informationTabs-tab-second {
+  border-radius: 0px;
+}
+
+a#informationTabs-tab-third {
+  border-radius: 0px;
+}
+
+.nav-pills .nav-link.active, .nav-pills .show > .nav-link {
+    color: #fff;
+    background-color: rgb(122, 42, 104) !important;
+}
