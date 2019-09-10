@@ -142,19 +142,30 @@ public class Requests {
       }
 
       int interfaceCount = 1;
-      String interfaceHardware = "";
-      String pschedulerTests = "";
-      String interfaceAddresses = "";
+      StringBuilder interfaceHardware = new StringBuilder();
+      StringBuilder pschedulerTests = new StringBuilder();
+      StringBuilder interfaceAddresses = new StringBuilder();
 
       for (SearchHit interfaceHit : interfaceHits) {
         Map<String, Object> interfaceMap = interfaceHit.getSourceAsMap();
-        interfaceHardware = "NIC #" + interfaceCount + " Speed: " + "\n";
-        // Todo speed?
-        interfaceHardware +=
-            "NIC #" + interfaceCount + " MTU: " + interfaceMap.get("interface-mtu");
-        pschedulerTests = tryGet(interfaceMap, "pscheduler-tests");
-        interfaceCount++;
-        interfaceAddresses = tryGet(interfaceMap, "interface-addresses");
+//        System.out.println(interfaceMap);
+        String speed = tryGet(interfaceMap, "interface-capacity");
+        if (!speed.equals("0") && !speed.equals("unknown") && !speed.equals("")) {
+          interfaceHardware
+              .append("NIC #")
+              .append(interfaceCount)
+              .append(" Speed: ")
+              .append(speed).append("bits/s\n");
+          // Todo speed?
+          interfaceHardware
+              .append("NIC #")
+              .append(interfaceCount)
+              .append(" MTU: ")
+              .append(interfaceMap.get("interface-mtu\n"));
+          pschedulerTests.append(tryGet(interfaceMap, "pscheduler-tests"));
+          interfaceCount++;
+          interfaceAddresses.append(tryGet(interfaceMap, "interface-addresses"));
+        }
       }
 
       hardware.append(processor);
@@ -182,12 +193,12 @@ public class Requests {
       hostMap.put("System Info", systemInfo.toString());
       hostMap.put("Toolkit Version", toolkitVersion);
       hostMap.put("Communities", communities);
-      hostMap.put("pSchedulers", pschedulerTests);
+      hostMap.put("pSchedulers", pschedulerTests.toString());
       hostMap.put("URI", uri);
       hostMap.put("JSON", sourceMap.toString());
       hostMap.put("latitude", latitude);
       hostMap.put("longitude", longitude);
-      hostMap.put("interfaceAddress", interfaceAddresses);
+      hostMap.put("interfaceAddress", interfaceAddresses.toString());
       setMap.add(hostMap);
     }
     client.close();
