@@ -109,6 +109,10 @@ ul.sc-htpNat.cqaNcS{
   background-color: #eee;
 }
 
+.hostCells{
+  white-space: pre-wrap;
+  width:50%;
+}
 
 
 .inlineButtons {

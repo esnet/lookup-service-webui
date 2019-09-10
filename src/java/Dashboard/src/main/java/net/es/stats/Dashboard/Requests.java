@@ -128,7 +128,10 @@ public class Requests {
       String interfaces = tryGet(sourceMap, "host-net-interface");
       String hostName = tryGet(sourceMap, "host-name");
       StringBuilder hardware = new StringBuilder();
-      String processor = "\n"; // todo processor?
+      String processor =
+          "Processor: "
+              + tryGet(sourceMap, "host-hardware-processorspeed")
+              + ("(" + tryGet(sourceMap, "host-hardware-processorcore") + " cores)\n");
       String memory = tryGet(sourceMap, "host-hardware-memory");
 
       // Get interfaces of a given host
@@ -145,23 +148,23 @@ public class Requests {
       StringBuilder interfaceHardware = new StringBuilder();
       StringBuilder pschedulerTests = new StringBuilder();
       StringBuilder interfaceAddresses = new StringBuilder();
-
+      System.out.println(sourceMap);
       for (SearchHit interfaceHit : interfaceHits) {
         Map<String, Object> interfaceMap = interfaceHit.getSourceAsMap();
-//        System.out.println(interfaceMap);
         String speed = tryGet(interfaceMap, "interface-capacity");
         if (!speed.equals("0") && !speed.equals("unknown") && !speed.equals("")) {
-          interfaceHardware
-              .append("NIC #")
-              .append(interfaceCount)
-              .append(" Speed: ")
-              .append(speed).append("bits/s\n");
-          // Todo speed?
+          if (speed.length() >= 9) {
+            speed = "" + speed.length() / 9 * 10 + "Gbit/s\n";
+          } else {
+            speed = speed + "bits/s\n";
+          }
+          interfaceHardware.append("NIC #").append(interfaceCount).append(" Speed: ").append(speed);
           interfaceHardware
               .append("NIC #")
               .append(interfaceCount)
               .append(" MTU: ")
-              .append(interfaceMap.get("interface-mtu\n"));
+              .append(tryGet(interfaceMap, "interface-mtu"))
+              .append("\n");
           pschedulerTests.append(tryGet(interfaceMap, "pscheduler-tests"));
           interfaceCount++;
           interfaceAddresses.append(tryGet(interfaceMap, "interface-addresses"));
@@ -170,7 +173,7 @@ public class Requests {
 
       hardware.append(processor);
       hardware.append("Memory: ");
-      hardware.append(memory);
+      hardware.append(memory).append("\n");
       hardware.append(interfaceHardware);
 
       StringBuilder systemInfo = new StringBuilder();
@@ -282,6 +285,7 @@ public class Requests {
 
   /**
    * Returns the type of services offered by a given host
+   *
    * @param hosts host for which services need to be found
    * @return List of services offered by a given host
    * @throws IOException if error getting results from database
@@ -307,9 +311,10 @@ public class Requests {
 
   /**
    * Gets the location of all hosts from database
+   *
    * @param client database client from which to get hosts from
-   * @return Search response of query to get location of hosts with fields
-   *         location-longitude, location-latitude, host-name, uri
+   * @return Search response of query to get location of hosts with fields location-longitude,
+   *     location-latitude, host-name, uri
    * @throws IOException if unable to get results from database
    */
   private SearchResponse getLocationResponse(RestHighLevelClient client) throws IOException {
@@ -330,6 +335,7 @@ public class Requests {
 
   /**
    * Returns all documents from the database (0-10000)
+   *
    * @param client database client from which documents need to be returned
    * @return Search response of query getting all results from database
    * @throws IOException if unable to query database
@@ -346,9 +352,9 @@ public class Requests {
   }
 
   /**
-   * Returns results of doing a search using the fields
-   *         key, groupCommunity, value of a key
-   * if key is specified, searchTerm can't be empty
+   * Returns results of doing a search using the fields key, groupCommunity, value of a key if key
+   * is specified, searchTerm can't be empty
+   *
    * @param client database client to be searched
    * @param key key in the key-value store of the database
    * @param groupCommunity value of the group community key
@@ -379,6 +385,7 @@ public class Requests {
 
   /**
    * Returns the documents that contain the given pSchedulers for the given interfaces
+   *
    * @param client database client to be queried
    * @param pSchedulers pScheduler-tests that must be available
    * @param interfaces interfaces to find the pScheduler tests in
@@ -411,6 +418,7 @@ public class Requests {
 
   /**
    * Returns all services for a given host URI
+   *
    * @param client database client to be queried
    * @param host URI of host for which clients are to be found
    * @return search response of the query
@@ -431,10 +439,10 @@ public class Requests {
 
   /**
    * Gets value of a given key from a map
+   *
    * @param map map from which value needs to be extracted
    * @param toGet key for which value needs to be gotten
-   * @return String for value of key
-   *         empty String if value doesn't exist in map
+   * @return String for value of key empty String if value doesn't exist in map
    */
   private String tryGet(Map<String, Object> map, String toGet) {
     try {
@@ -446,6 +454,7 @@ public class Requests {
 
   /**
    * initializing the client
+   *
    * @return returns rest high level client for elasticSearch
    */
   private RestHighLevelClient initClient() {
