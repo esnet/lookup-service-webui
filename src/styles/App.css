@@ -111,7 +111,14 @@ ul.sc-htpNat.cqaNcS{
 
 .hostCells{
   white-space: pre-wrap;
-  width:50%;
+}
+
+.hostScroll{
+  display: block !important;
+  max-height: 200px;    
+  width : 200px;  
+  overflow-y: auto;    
+  overflow-x: hidden;  
 }
 
 
