@@ -5,12 +5,12 @@ import dot from "../image/dot.png"
 import { googleMapsApiKey } from "./config/mapConfig"
 
 const Map = withScriptjs(withGoogleMap((props) => {
-  console.log(props.all)
   const markers = (props.hostResults.length === 0 ? props.all.map(coord => <Mark
     key={Math.random()}
     location={{ lat: parseFloat(coord.latitude), lng: parseFloat(coord.longitude) }}
     host={coord["Host Name"]}
     hostUri={coord["URI"]}
+    address={coord["address"]}
     callback={props.chooseHostCallback}
     icon={dot}
   />)

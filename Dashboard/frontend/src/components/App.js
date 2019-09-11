@@ -146,9 +146,9 @@ class App extends Component {
   }
 
   // on click of host using map
-  chooseHostFromMap(hostName, type, location) {
+  chooseHostFromMap(hostName, type, location, address) {
     this.setState({ serviceVisibility: false });
-    this.setState({ chosenHost: hostName, chosenLat: location.lat, chosenLong: location.lng }, function () { this.searchService(type) })
+    this.setState({ chosenHost: hostName, chosenLat: location.lat, chosenLong: location.lng, serviceAddress: address }, function () { this.searchService(type) })
   }
 
   // search service on choosing a host
