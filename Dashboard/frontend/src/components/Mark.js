@@ -41,22 +41,13 @@ export default class Mark extends React.Component {
     return serverTable;
   }
 
-  chooseHost(hostName, server) {
-    fetch(serverURL + '/searchService?hosts=' + hostName + "&type=" + server, { headers: { 'Access-Control-Allow-Origin': hostURL } })
-      .then(res => res.json())
-      .then((data) => {
-        this.setState({ serviceResults: data })
-      })
-      .catch(console.log)
-    document.getElementById("informationTabs-tab-second").click();
-  }
-
   render() {
     return (
       <Marker
         position={this.props.location}
         icon={dot}
         onClick={this.onToggle}
+        callback={this.props.callback}
       >
         {this.state.isOpen &&
           <InfoWindow onCloseClick={this.onToggle}>

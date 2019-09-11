@@ -23,7 +23,7 @@ import static org.elasticsearch.index.query.QueryBuilders.*;
 
 @RestController
 public class Requests {
-//todo size thing
+  // todo size thing
 
   /**
    * Get list of group communities for initially loading the dropdown
@@ -154,7 +154,7 @@ public class Requests {
         String speed = tryGet(interfaceMap, "interface-capacity");
         if (!speed.equals("0") && !speed.equals("unknown") && !speed.equals("")) {
           if (speed.length() >= 9) {
-            speed = "" + speed.length() / 9 * 10 + "Gbit/s\n"; //todo
+            speed = "" + speed.length() / 9 * 10 + "Gbit/s\n"; // todo
           } else {
             speed = speed + "bits/s\n";
           }
@@ -457,9 +457,14 @@ public class Requests {
    *
    * @return returns rest high level client for elasticSearch
    */
-  private RestHighLevelClient initClient() {
+  private RestHighLevelClient initClient() throws IOException {
+    GetConfigurationProperties props = new GetConfigurationProperties();
+    Map<String, String> propertyMap = props.getPropValues();
     return new RestHighLevelClient(
         RestClient.builder(
-            new HttpHost("localhost", 9200, "http"), new HttpHost("localhost", 9201, "http")));
+            new HttpHost(
+                propertyMap.get("host"), Integer.parseInt(propertyMap.get("port1")), "http"),
+            new HttpHost(
+                propertyMap.get("host"), Integer.parseInt(propertyMap.get("port2")), "http")));
   }
 }

@@ -5,7 +5,6 @@ import dot from "../image/dot.png"
 import { googleMapsApiKey } from "./config/mapConfig"
 
 const Map = withScriptjs(withGoogleMap((props) => {
-
   const markers = (props.hostResults.length === 0 ? props.all.map(coord => <Mark
     key={Math.random()}
     location={{ lat: parseFloat(coord.latitude), lng: parseFloat(coord.longitude) }}
@@ -44,7 +43,7 @@ export default class Mapper extends React.PureComponent {
         long={this.props.long}
         all={this.props.all}
         hostResults={this.props.hostResults}
-        chooseHostCallback={this.chooseHostCallback}
+        chooseHostCallback={this.props.chooseHostCallback}
         googleMapURL={"https://maps.googleapis.com/maps/api/js?key=" + { googleMapsApiKey }.googleMapsApiKey + "&v=3.exp&libraries=geometry,drawing,places"}
         loadingElement={<div style={{ height: `100%` }} />}
         containerElement={<div style={{ height: `600px`, width: `100%` }} />}
