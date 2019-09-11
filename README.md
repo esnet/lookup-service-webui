@@ -23,7 +23,9 @@ Complete redesign for the current LookupService Direcotry UI as well as back-end
 ## Building and Running
 
 i. mvn clean install
+
 ii. mvn spring-boot:run
+
 iii. Runs on localhost:8080
 
 ## Deploy
