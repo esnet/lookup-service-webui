@@ -10,7 +10,7 @@ import { serverURL, hostURL } from "./config/config"
 
 export default class Mark extends React.Component {
 
-  constructor(props) {
+  constructor() {
     super();
     this.state = {
       isOpen: false,
@@ -26,6 +26,7 @@ export default class Mark extends React.Component {
   }
 
   getServiceType(hostName) {
+    console.log(this.props.hostResults)
     if (this.state.server.length === 0) {
       fetch(serverURL + '/getTypeOfServiceHost?hosts=' + this.props.hostUri, { headers: { 'Access-Control-Allow-Origin': hostURL } })
         .then(res => res.json())
@@ -36,7 +37,7 @@ export default class Mark extends React.Component {
     }
     const serverTable = hostName.hostName.map((server) =>
       <tr key={Math.random()}>
-        <td onClick={() => { this.props.callback(this.props.hostUri, server) }}>{server}</td>
+        <td onClick={() => { this.props.callback(this.props.hostUri, server, this.props.location) }}>{server}</td>
       </tr>);
     return serverTable;
   }
@@ -48,6 +49,7 @@ export default class Mark extends React.Component {
         icon={dot}
         onClick={this.onToggle}
         callback={this.props.callback}
+        hostResults={this.props.hostResults}
       >
         {this.state.isOpen &&
           <InfoWindow onCloseClick={this.onToggle}>
@@ -62,7 +64,7 @@ export default class Mark extends React.Component {
                   </tr>
                 </thead>
                 <tbody>
-                  <this.getServiceType hostName={this.state.server} ></this.getServiceType>
+                  <this.getServiceType hostName={this.state.server}></this.getServiceType>
                 </tbody>
               </Table>
             </div>

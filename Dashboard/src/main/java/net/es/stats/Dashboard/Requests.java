@@ -126,7 +126,7 @@ public class Requests {
     for (SearchHit hit : searchHits) {
       Map<String, Object> sourceMap = hit.getSourceAsMap();
       String uri = tryGet(sourceMap, "uri");
-      String interfaces = tryGet(sourceMap, "host-net-interface");
+      String interfaces = tryGet(sourceMap, "host-net-interfaces");
       String hostName = tryGet(sourceMap, "host-name");
       StringBuilder hardware = new StringBuilder();
       String processor =
@@ -277,6 +277,25 @@ public class Requests {
       outputMap.put("longitude", longitude);
       outputMap.put("Host Name", hostName);
       outputMap.put("URI", uri);
+      String interfaces = tryGet(searchMap, "host-net-interfaces");
+      // Get interfaces of a given host
+      SearchResponse interfaceSearchResponse =
+          searchInterfaceResponse(client, new String[0], interfaces.split(","));
+      SearchHit[] interfaceHits = interfaceSearchResponse.getHits().getHits();
+
+      // next iteration on empty interface
+      if (interfaceHits.length == 0) {
+        continue;
+      }
+
+      StringBuilder interfaceAddresses = new StringBuilder();
+      for (SearchHit interfaceHit : interfaceHits) {
+        Map<String, Object> interfaceMap = interfaceHit.getSourceAsMap();
+        interfaceAddresses.append(tryGet(interfaceMap, "interface-addresses"));
+      }
+      outputMap.put("address", interfaceAddresses.toString());
+      interfaceAddresses.setLength(0);
+
       mapSet.add(outputMap);
     }
     client.close();
@@ -323,7 +342,9 @@ public class Requests {
     BoolQueryBuilder query = QueryBuilders.boolQuery();
     query.must(termQuery("type.keyword", "host"));
     String[] includeFields =
-        new String[] {"location-longitude", "location-latitude", "host-name", "uri"};
+        new String[] {
+          "location-longitude", "location-latitude", "host-name", "uri", "host-net-interfaces"
+        };
     String[] excludeFields = new String[0];
     searchSourceBuilder.fetchSource(includeFields, excludeFields);
     searchSourceBuilder.query(query);
