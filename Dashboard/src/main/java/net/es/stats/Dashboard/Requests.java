@@ -1,15 +1,16 @@
 package net.es.stats.Dashboard;
 
 import org.apache.http.HttpHost;
-import org.elasticsearch.action.search.SearchRequest;
-import org.elasticsearch.action.search.SearchResponse;
+import org.elasticsearch.action.search.*;
 import org.elasticsearch.client.RestClient;
 
 import org.elasticsearch.client.RequestOptions;
 
 import org.elasticsearch.client.RestHighLevelClient;
+import org.elasticsearch.common.unit.TimeValue;
 import org.elasticsearch.index.query.BoolQueryBuilder;
 import org.elasticsearch.index.query.QueryBuilders;
+import org.elasticsearch.search.Scroll;
 import org.elasticsearch.search.SearchHit;
 import org.elasticsearch.search.builder.SearchSourceBuilder;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -23,7 +24,6 @@ import static org.elasticsearch.index.query.QueryBuilders.*;
 
 @RestController
 public class Requests {
-  // todo size thing
 
   /**
    * Get list of group communities for initially loading the dropdown
@@ -35,8 +35,7 @@ public class Requests {
   public Set<String> getGroupCommunities() throws IOException {
     RestHighLevelClient client = initClient();
 
-    SearchResponse searchResponse = searchResponse(client);
-    SearchHit[] searchHits = searchResponse.getHits().getHits();
+    List<SearchHit> searchHits = searchResponse(client);
     Set<String> communities = new TreeSet<>();
     for (SearchHit hit : searchHits) {
       String community;
@@ -61,8 +60,7 @@ public class Requests {
   @GetMapping("/pSchedulerTests")
   public Set<String> getPSchedulerTests() throws IOException {
     RestHighLevelClient client = initClient();
-    SearchResponse searchResponse = searchResponse(client);
-    SearchHit[] searchHits = searchResponse.getHits().getHits();
+    List<SearchHit> searchHits = searchResponse(client);
     Set<String> schedulers = new TreeSet<>();
     for (SearchHit hit : searchHits) {
       String scheduler;
@@ -87,8 +85,7 @@ public class Requests {
   @GetMapping("/getAllKeys")
   public Set<Object> getKeys() throws IOException {
     RestHighLevelClient client = initClient();
-    SearchResponse searchResponse = searchResponse(client);
-    SearchHit[] searchHits = searchResponse.getHits().getHits();
+    List<SearchHit> searchHits = searchResponse(client);
     Set<Object> keys = new TreeSet<>();
     for (SearchHit hit : searchHits) {
       keys.addAll(hit.getSourceAsMap().keySet());
@@ -361,15 +358,33 @@ public class Requests {
    * @return Search response of query getting all results from database
    * @throws IOException if unable to query database
    */
-  private SearchResponse searchResponse(RestHighLevelClient client) throws IOException {
+  private List<SearchHit> searchResponse(RestHighLevelClient client) throws IOException {
+    final Scroll scroll = new Scroll(TimeValue.timeValueMinutes(1L));
     SearchRequest searchRequest = new SearchRequest("lookup");
+    searchRequest.scroll(scroll);
+
     SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder();
-    searchSourceBuilder.query(QueryBuilders.matchAllQuery());
-    searchSourceBuilder.from(0);
-    searchSourceBuilder.size(10000);
 
     searchRequest.source(searchSourceBuilder);
-    return client.search(searchRequest, RequestOptions.DEFAULT);
+    SearchResponse searchResponse = client.search(searchRequest, RequestOptions.DEFAULT);
+    String scrollId = searchResponse.getScrollId();
+    SearchHit[] searchHits = searchResponse.getHits().getHits();
+    ArrayList<SearchHit> hitsArray = new ArrayList<>();
+
+    while (searchHits != null && searchHits.length > 0) {
+      SearchScrollRequest scrollRequest = new SearchScrollRequest(scrollId);
+      scrollRequest.scroll(scroll);
+      searchResponse = client.scroll(scrollRequest, RequestOptions.DEFAULT);
+      scrollId = searchResponse.getScrollId();
+      searchHits = searchResponse.getHits().getHits();
+      hitsArray.addAll(new ArrayList<>(Arrays.asList(searchHits)));
+    }
+
+    ClearScrollRequest clearScrollRequest = new ClearScrollRequest();
+    clearScrollRequest.addScrollId(scrollId);
+    client.clearScroll(clearScrollRequest, RequestOptions.DEFAULT);
+
+    return hitsArray;
   }
 
   /**
