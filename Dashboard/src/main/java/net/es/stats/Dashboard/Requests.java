@@ -334,7 +334,9 @@ public class Requests {
    * @throws IOException if unable to get results from database
    */
   private SearchResponse getLocationResponse(RestHighLevelClient client) throws IOException {
-    SearchRequest searchRequest = new SearchRequest("lookup");
+    GetConfigurationProperties props = new GetConfigurationProperties();
+    Map<String, String> propertyMap = props.getPropValues();
+    SearchRequest searchRequest = new SearchRequest(propertyMap.get("IndexName"));
     SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder();
     BoolQueryBuilder query = QueryBuilders.boolQuery();
     query.must(termQuery("type.keyword", "host"));
@@ -360,7 +362,9 @@ public class Requests {
    */
   private List<SearchHit> searchResponse(RestHighLevelClient client) throws IOException {
     final Scroll scroll = new Scroll(TimeValue.timeValueMinutes(1L));
-    SearchRequest searchRequest = new SearchRequest("lookup");
+    GetConfigurationProperties props = new GetConfigurationProperties();
+    Map<String, String> propertyMap = props.getPropValues();
+    SearchRequest searchRequest = new SearchRequest(propertyMap.get("IndexName"));
     searchRequest.scroll(scroll);
 
     SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder();
@@ -403,7 +407,9 @@ public class Requests {
       RestHighLevelClient client, String key, String groupCommunity, String searchTerm, int limit)
       throws IOException {
     BoolQueryBuilder query = QueryBuilders.boolQuery();
-    SearchRequest searchRequest = new SearchRequest("lookup");
+    GetConfigurationProperties props = new GetConfigurationProperties();
+    Map<String, String> propertyMap = props.getPropValues();
+    SearchRequest searchRequest = new SearchRequest(propertyMap.get("IndexName"));
     SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder();
     searchSourceBuilder.size(limit);
     if (key.length() > 0 && !key.equals(" ")) {
@@ -431,7 +437,9 @@ public class Requests {
   private SearchResponse searchInterfaceResponse(
       RestHighLevelClient client, String[] pSchedulers, String[] interfaces) throws IOException {
     BoolQueryBuilder query = QueryBuilders.boolQuery();
-    SearchRequest searchRequest = new SearchRequest("lookup");
+    GetConfigurationProperties props = new GetConfigurationProperties();
+    Map<String, String> propertyMap = props.getPropValues();
+    SearchRequest searchRequest = new SearchRequest(propertyMap.get("IndexName"));
     SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder();
 
     for (String pScheduler : pSchedulers) {
@@ -463,7 +471,9 @@ public class Requests {
   private SearchResponse searchServiceResponse(RestHighLevelClient client, String host)
       throws IOException {
     BoolQueryBuilder query = QueryBuilders.boolQuery();
-    SearchRequest searchRequest = new SearchRequest("lookup");
+    GetConfigurationProperties props = new GetConfigurationProperties();
+    Map<String, String> propertyMap = props.getPropValues();
+    SearchRequest searchRequest = new SearchRequest(propertyMap.get("IndexName"));
     SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder();
 
     query.must(termQuery("service-host.keyword", host));
