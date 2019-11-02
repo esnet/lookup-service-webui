@@ -21,7 +21,7 @@ setup(
         ("lswebui/cron", ["cron/cron-lswebui-cache_update"])
     ],
     install_requires=[
-        "Django==1.6.7",
+        "Django==1.11.23",
         "IPy",
         "YURL",
         "dnspython",
