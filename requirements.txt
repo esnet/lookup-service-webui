@@ -1,4 +1,4 @@
-Django==1.6.7
+Django==2.2.24
 IPy==0.81
 YURL==0.13
 dnspython==1.12.0
